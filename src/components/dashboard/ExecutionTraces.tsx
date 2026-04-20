@@ -15,10 +15,12 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { TraceDetail } from './TraceDetail'
+import { DataExport } from './DataExport'
 import { useQuery } from '@tanstack/react-query'
 import { Activity, ChevronLeft, ChevronRight, Search, BarChart3 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { cn } from '@/lib/utils'
+import { useAppStore } from '@/lib/store'
 import {
   ResponsiveContainer,
   BarChart,
@@ -80,16 +82,19 @@ export function ExecutionTraces() {
   const [selectedTrace, setSelectedTrace] = useState<TraceRecord | null>(null)
   const [showHistogram, setShowHistogram] = useState(false)
 
+  const timeRange = useAppStore((s) => s.timeRange)
+
   const queryParams = new URLSearchParams()
   queryParams.set('limit', String(pageSize))
   queryParams.set('offset', String(page * pageSize))
+  queryParams.set('timeRange', timeRange)
   if (filterRole !== 'all') queryParams.set('agentRole', filterRole)
   if (filterResult !== 'all') queryParams.set('evaluationResult', filterResult)
   if (filterTool) queryParams.set('toolName', filterTool)
   if (filterSession) queryParams.set('sessionId', filterSession)
 
   const { data, isLoading } = useQuery<{ traces: TraceRecord[]; total: number }>({
-    queryKey: ['traces', page, filterRole, filterResult, filterTool, filterSession],
+    queryKey: ['traces', page, filterRole, filterResult, filterTool, filterSession, timeRange],
     queryFn: async () => {
       const res = await fetch(`/api/traces?${queryParams.toString()}`)
       if (!res.ok) throw new Error('Failed')
@@ -98,9 +103,9 @@ export function ExecutionTraces() {
   })
 
   const { data: histData } = useQuery<{ traces: TraceRecord[]; total: number }>({
-    queryKey: ['traces-histogram'],
+    queryKey: ['traces-histogram', timeRange],
     queryFn: async () => {
-      const res = await fetch('/api/traces?limit=200')
+      const res = await fetch(`/api/traces?limit=200&timeRange=${timeRange}`)
       if (!res.ok) throw new Error('Failed')
       return res.json()
     },
@@ -151,16 +156,19 @@ export function ExecutionTraces() {
             </h2>
             <p className="text-sm text-muted-foreground">Monitor all agent tool call evaluations</p>
           </div>
-          {/* Histogram toggle hidden on very small screens */}
-          <Button
-          variant="outline"
-          size="sm"
-          className="h-8 text-xs gap-1 hidden sm:flex active:scale-[0.98] transition-transform"
-          onClick={() => setShowHistogram(!showHistogram)}
-        >
-          <BarChart3 className="h-3 w-3" />
-          {showHistogram ? 'Hide' : 'Show'} Latency Histogram
-          </Button>
+          <div className="flex items-center gap-2">
+            <DataExport dataType="traces" />
+            {/* Histogram toggle hidden on very small screens */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs gap-1 hidden sm:flex active:scale-[0.98] transition-transform"
+              onClick={() => setShowHistogram(!showHistogram)}
+            >
+              <BarChart3 className="h-3 w-3" />
+              {showHistogram ? 'Hide' : 'Show'} Latency Histogram
+            </Button>
+          </div>
         </div>
       </div>
 

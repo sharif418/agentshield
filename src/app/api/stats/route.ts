@@ -1,8 +1,24 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 
-export async function GET() {
+function getTimeRangeCutoff(timeRange: string | null): Date {
+  const range = timeRange ?? '24h';
+  const now = Date.now();
+  switch (range) {
+    case '24h': return new Date(now - 24 * 60 * 60 * 1000);
+    case '7d': return new Date(now - 7 * 24 * 60 * 60 * 1000);
+    case '30d': return new Date(now - 30 * 24 * 60 * 60 * 1000);
+    case '90d': return new Date(now - 90 * 24 * 60 * 60 * 1000);
+    default: return new Date(now - 24 * 60 * 60 * 1000);
+  }
+}
+
+export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const timeRange = searchParams.get('timeRange');
+    const cutoff = getTimeRangeCutoff(timeRange);
+
     const [
       totalPolicies,
       policiesByLevel,
@@ -21,11 +37,14 @@ export async function GET() {
         _count: { permissionLevel: true },
       }),
 
-      db.executionTrace.count(),
+      db.executionTrace.count({
+        where: { timestamp: { gte: cutoff } },
+      }),
 
       db.executionTrace.groupBy({
         by: ['evaluationResult'],
         _count: { evaluationResult: true },
+        where: { timestamp: { gte: cutoff } },
       }),
 
       db.approvalRequest.count({
@@ -34,9 +53,7 @@ export async function GET() {
 
       db.executionTrace.findMany({
         where: {
-          timestamp: {
-            gte: new Date(Date.now() - 24 * 60 * 60 * 1000),
-          },
+          timestamp: { gte: cutoff },
         },
         orderBy: { timestamp: 'desc' },
         include: { policy: true },
@@ -45,6 +62,7 @@ export async function GET() {
 
       db.executionTrace.aggregate({
         _avg: { latency: true },
+        where: { timestamp: { gte: cutoff } },
       }),
 
       db.auditLog.count(),

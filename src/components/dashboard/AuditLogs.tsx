@@ -15,9 +15,10 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { useQuery } from '@tanstack/react-query'
-import { FileText, Lock, Download, ChevronLeft, ChevronRight, Shield, ShieldCheck, ShieldX, Activity, CheckSquare, ChevronDown, ChevronRight as ChevronR } from 'lucide-react'
+import { FileText, Lock, ChevronLeft, ChevronRight, Shield, ShieldCheck, ShieldX, Activity, CheckSquare, ChevronDown, ChevronRight as ChevronR } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { motion, AnimatePresence } from 'framer-motion'
+import { DataExport } from './DataExport'
 
 interface AuditLog {
   id: string
@@ -85,17 +86,6 @@ export function AuditLogs() {
     })
   }
 
-  const handleExport = () => {
-    if (!data?.logs) return
-    const blob = new Blob([JSON.stringify(data.logs, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `audit-logs-${new Date().toISOString().split('T')[0]}.json`
-    a.click()
-    URL.revokeObjectURL(url)
-  }
-
   return (
     <div className="p-4 md:p-6 space-y-4">
       <div className="section-header-gradient rounded-xl px-4 py-3 -mx-4 -mt-2 md:-mx-6 md:-mt-4 mb-2">
@@ -110,9 +100,7 @@ export function AuditLogs() {
             </h2>
             <p className="text-sm text-muted-foreground">Complete, immutable record of all system events</p>
           </div>
-          <Button variant="outline" className="h-8 text-xs active:scale-[0.98] transition-transform" onClick={handleExport}>
-            <Download className="h-3 w-3 mr-1" /> Export JSON
-          </Button>
+          <DataExport dataType="audit" />
         </div>
       </div>
 

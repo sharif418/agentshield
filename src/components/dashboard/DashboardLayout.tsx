@@ -66,16 +66,16 @@ const sectionIcons: Record<SectionId, React.ReactNode> = {
 const sectionKeys: SectionId[] = ['dashboard', 'policies', 'approvals', 'traces', 'reasoning', 'livestream', 'agents', 'simulator', 'audit', 'webhooks', 'sdk']
 
 export function DashboardLayout() {
-  const { activeSection, wsConnected, commandOpen, setCommandOpen, setActiveSection, lastRefresh, setLastRefresh, dbRecordCount, setDbRecordCount } = useAppStore()
+  const { activeSection, wsConnected, commandOpen, setCommandOpen, setActiveSection, lastRefresh, setLastRefresh, dbRecordCount, setDbRecordCount, timeRange } = useAppStore()
   useWebSocket()
 
   const ActiveSection = sectionComponents[activeSection] ?? DashboardOverview
 
   // Fetch stats for footer DB count
   const { data: statsData } = useQuery({
-    queryKey: ['stats-footer'],
+    queryKey: ['stats-footer', timeRange],
     queryFn: async () => {
-      const res = await fetch('/api/stats')
+      const res = await fetch(`/api/stats?timeRange=${timeRange}`)
       if (!res.ok) return null
       const data = await res.json()
       setLastRefresh(new Date())

@@ -26,8 +26,9 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { PolicyForm } from './PolicyForm'
+import { PolicyVersionHistory } from './PolicyVersionHistory'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Search, Pencil, Trash2, Shield, Download, Upload } from 'lucide-react'
+import { Plus, Search, Pencil, Trash2, Shield, Download, Upload, Clock } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 
@@ -73,6 +74,7 @@ export function PolicyManager() {
   const [formOpen, setFormOpen] = useState(false)
   const [editPolicy, setEditPolicy] = useState<Policy | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Policy | null>(null)
+  const [historyPolicyId, setHistoryPolicyId] = useState<string | null>(null)
 
   const queryParams = new URLSearchParams()
   if (filterRole !== 'all') queryParams.set('agentRole', filterRole)
@@ -300,6 +302,14 @@ export function PolicyManager() {
                           <Button
                             variant="ghost"
                             size="icon"
+                            className="h-7 w-7 hover:bg-muted transition-colors duration-200 active:scale-95"
+                            onClick={() => setHistoryPolicyId(policy.policyId)}
+                          >
+                            <Clock className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-500/10 transition-colors duration-200 active:scale-95"
                             onClick={() => setDeleteTarget(policy)}
                           >
@@ -318,6 +328,15 @@ export function PolicyManager() {
 
       {/* Create/Edit Dialog */}
       <PolicyForm open={formOpen} onOpenChange={setFormOpen} policy={editPolicy} />
+
+      {/* Version History Sheet */}
+      {historyPolicyId && (
+        <PolicyVersionHistory
+          policyId={historyPolicyId}
+          open={!!historyPolicyId}
+          onOpenChange={(open) => { if (!open) setHistoryPolicyId(null) }}
+        />
+      )}
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>

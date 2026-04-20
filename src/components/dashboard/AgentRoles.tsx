@@ -31,6 +31,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useAppStore } from '@/lib/store'
 import { formatDistanceToNow } from 'date-fns'
 
 interface Policy {
@@ -312,6 +313,8 @@ export function AgentRoles() {
   const [detailAgent, setDetailAgent] = useState<AgentStats | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
 
+  const timeRange = useAppStore((s) => s.timeRange)
+
   const { data: policiesData } = useQuery({
     queryKey: ['agents-policies'],
     queryFn: async () => {
@@ -322,9 +325,9 @@ export function AgentRoles() {
   })
 
   const { data: tracesData } = useQuery({
-    queryKey: ['agents-traces'],
+    queryKey: ['agents-traces', timeRange],
     queryFn: async () => {
-      const res = await fetch('/api/traces?limit=200')
+      const res = await fetch(`/api/traces?limit=200&timeRange=${timeRange}`)
       if (!res.ok) return { traces: [] as Trace[], total: 0 }
       return res.json() as Promise<{ traces: Trace[]; total: number }>
     },

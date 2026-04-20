@@ -1,6 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 
+function getTimeRangeCutoff(timeRange: string | null): Date | null {
+  const range = timeRange ?? '24h';
+  const now = Date.now();
+  switch (range) {
+    case '24h': return new Date(now - 24 * 60 * 60 * 1000);
+    case '7d': return new Date(now - 7 * 24 * 60 * 60 * 1000);
+    case '30d': return new Date(now - 30 * 24 * 60 * 60 * 1000);
+    case '90d': return new Date(now - 90 * 24 * 60 * 60 * 1000);
+    default: return new Date(now - 24 * 60 * 60 * 1000);
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -8,6 +20,7 @@ export async function GET(request: NextRequest) {
     const agentRole = searchParams.get('agentRole');
     const evaluationResult = searchParams.get('evaluationResult');
     const toolName = searchParams.get('toolName');
+    const timeRange = searchParams.get('timeRange');
     const limit = parseInt(searchParams.get('limit') ?? '50');
     const offset = parseInt(searchParams.get('offset') ?? '0');
 
@@ -16,6 +29,9 @@ export async function GET(request: NextRequest) {
     if (agentRole) where.agentRole = agentRole;
     if (evaluationResult) where.evaluationResult = evaluationResult;
     if (toolName) where.toolName = toolName;
+
+    const cutoff = getTimeRangeCutoff(timeRange);
+    if (cutoff) where.timestamp = { gte: cutoff };
 
     const [traces, total] = await Promise.all([
       db.executionTrace.findMany({

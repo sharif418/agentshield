@@ -3,12 +3,12 @@ import { db } from '@/lib/db';
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ policyId: string }> }
 ) {
   try {
-    const { id } = await params;
+    const { policyId } = await params;
     const policy = await db.policy.findUnique({
-      where: { policyId: id },
+      where: { policyId },
     });
 
     if (!policy) {
@@ -30,14 +30,14 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ policyId: string }> }
 ) {
   try {
-    const { id } = await params;
+    const { policyId } = await params;
     const body = await request.json();
 
     const existing = await db.policy.findUnique({
-      where: { policyId: id },
+      where: { policyId },
     });
 
     if (!existing) {
@@ -59,7 +59,7 @@ export async function PUT(
     if (body.enabled !== undefined) updateData.enabled = body.enabled;
 
     const policy = await db.policy.update({
-      where: { policyId: id },
+      where: { policyId },
       data: updateData,
     });
 
@@ -87,13 +87,13 @@ export async function PUT(
 
 export async function DELETE(
   _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ policyId: string }> }
 ) {
   try {
-    const { id } = await params;
+    const { policyId } = await params;
 
     const existing = await db.policy.findUnique({
-      where: { policyId: id },
+      where: { policyId },
     });
 
     if (!existing) {
@@ -104,7 +104,7 @@ export async function DELETE(
     }
 
     await db.policy.delete({
-      where: { policyId: id },
+      where: { policyId },
     });
 
     await db.auditLog.create({

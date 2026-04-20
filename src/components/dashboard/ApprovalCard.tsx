@@ -13,7 +13,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog'
-import { CheckCircle, XCircle, Edit3, Clock, Bot, Wrench, Loader2, ChevronDown, ChevronUp } from 'lucide-react'
+import { CheckCircle, XCircle, Edit3, Clock, Bot, Wrench, Loader2, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
@@ -64,6 +64,29 @@ function formatJsonSafe(str: string): string {
   } catch {
     return str
   }
+}
+
+// Urgency level based on wait time
+type UrgencyLevel = 'normal' | 'waiting' | 'urgent'
+
+function getUrgency(createdAt: string): { level: UrgencyLevel; label: string; pct: number } {
+  const now = Date.now()
+  const created = new Date(createdAt).getTime()
+  const hoursElapsed = (now - created) / (1000 * 60 * 60)
+
+  if (hoursElapsed > 4) {
+    // Urgent: > 4 hours, fill percentage based on max 8h scale
+    const pct = Math.min((hoursElapsed / 8) * 100, 100)
+    return { level: 'urgent', label: 'Urgent', pct }
+  }
+  if (hoursElapsed > 1) {
+    // Waiting: 1-4 hours
+    const pct = (hoursElapsed / 4) * 100
+    return { level: 'waiting', label: 'Waiting', pct }
+  }
+  // Normal: < 1 hour
+  const pct = (hoursElapsed / 1) * 100
+  return { level: 'normal', label: '', pct }
 }
 
 function LiveTimeWaiting({ createdAt }: { createdAt: string }) {
@@ -133,6 +156,9 @@ export function ApprovalCard({ approval }: ApprovalCardProps) {
 
   const isPending = approval.status === 'PENDING'
 
+  // Calculate urgency for pending approvals
+  const urgency = isPending ? getUrgency(approval.createdAt) : null
+
   return (
     <>
       <Card className="group hover:shadow-md hover:border-emerald-500/30 transition-all duration-300 border-0 shadow-sm">
@@ -149,6 +175,24 @@ export function ApprovalCard({ approval }: ApprovalCardProps) {
                   <Badge variant="outline" className={`transition-transform duration-150 hover:scale-105 ${statusColors[approval.status] ?? ''}`}>
                     {approval.status}
                   </Badge>
+                  {/* Urgency badge */}
+                  {urgency && urgency.level !== 'normal' && (
+                    <Badge
+                      variant="outline"
+                      className={
+                        urgency.level === 'urgent'
+                          ? 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20 text-[10px] gap-1 urgency-pulse'
+                          : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20 text-[10px] gap-1'
+                      }
+                    >
+                      {urgency.level === 'urgent' ? (
+                        <AlertTriangle className="h-3 w-3" />
+                      ) : (
+                        <Clock className="h-3 w-3" />
+                      )}
+                      {urgency.label}
+                    </Badge>
+                  )}
                 </div>
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Wrench className="h-3 w-3" />
@@ -158,6 +202,32 @@ export function ApprovalCard({ approval }: ApprovalCardProps) {
             </div>
             <LiveTimeWaiting createdAt={approval.createdAt} />
           </div>
+
+          {/* Wait time progress bar */}
+          {urgency && (
+            <div className="space-y-0.5">
+              <div className="flex items-center justify-between text-[10px]">
+                <span className="text-muted-foreground">Wait time</span>
+                <span className={
+                  urgency.level === 'urgent' ? 'text-red-500 font-medium'
+                  : urgency.level === 'waiting' ? 'text-amber-500 font-medium'
+                  : 'text-muted-foreground'
+                }>
+                  {urgency.level === 'urgent' ? '>4h' : urgency.level === 'waiting' ? '1-4h' : '<1h'}
+                </span>
+              </div>
+              <div className="h-1 bg-muted/50 rounded-full overflow-hidden">
+                <div
+                  className={
+                    urgency.level === 'urgent' ? 'h-full bg-red-500 rounded-full transition-all duration-500'
+                    : urgency.level === 'waiting' ? 'h-full bg-amber-500 rounded-full transition-all duration-500'
+                    : 'h-full bg-emerald-500 rounded-full transition-all duration-500'
+                  }
+                  style={{ width: `${urgency.pct}%` }}
+                />
+              </div>
+            </div>
+          )}
 
           {/* Requested Action */}
           <div className="space-y-1">

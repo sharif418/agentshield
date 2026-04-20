@@ -382,3 +382,84 @@
 .fade-in-up {
   animation: fadeInUp 0.3s ease-out;
 }
+
+/* ===== Additional Visual Effects (Task 5+6) ===== */
+
+/* Card shine effect - diagonal light sweep on hover */
+@keyframes cardShine {
+  0% {
+    transform: translateX(-100%) rotate(15deg);
+  }
+  100% {
+    transform: translateX(200%) rotate(15deg);
+  }
+}
+
+.card-shine {
+  position: relative;
+  overflow: hidden;
+}
+
+.card-shine::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 40%;
+  height: 200%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    oklch(1 0 0 / 0.06),
+    transparent
+  );
+  transform: translateX(-100%) rotate(15deg);
+  transition: none;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.card-shine:hover::after {
+  animation: cardShine 0.6s ease forwards;
+}
+
+/* Urgency pulse - red pulse for urgent approval items */
+@keyframes urgencyPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0);
+  }
+}
+
+.urgency-pulse {
+  animation: urgencyPulse 2s ease-in-out infinite;
+}
+
+/* Gauge glow - subtle glow for gauge/SVG components */
+@keyframes gaugeGlow {
+  0%, 100% {
+    filter: drop-shadow(0 0 2px rgba(16, 185, 129, 0.15));
+  }
+  50% {
+    filter: drop-shadow(0 0 6px rgba(16, 185, 129, 0.25));
+  }
+}
+
+.gauge-glow {
+  animation: gaugeGlow 3s ease-in-out infinite;
+}
+
+.dark .gauge-glow {
+  animation: gaugeGlowDark 3s ease-in-out infinite;
+}
+
+@keyframes gaugeGlowDark {
+  0%, 100% {
+    filter: drop-shadow(0 0 2px rgba(16, 185, 129, 0.2));
+  }
+  50% {
+    filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.35));
+  }
+}

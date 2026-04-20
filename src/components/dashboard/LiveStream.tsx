@@ -125,7 +125,7 @@ function Sparkline({ data, width = 120, height = 28 }: { data: number[]; width?:
 }
 
 export function LiveStream() {
-  const { wsConnected } = useAppStore()
+  const { wsConnected, timeRange } = useAppStore()
   const [events, setEvents] = useState<StreamEvent[]>([])
   const [paused, setPaused] = useState(false)
   const [soundEnabled, setSoundEnabled] = useState(false)
@@ -156,9 +156,9 @@ export function LiveStream() {
 
   // Fetch traces for initial data and polling
   const { data: tracesData } = useQuery({
-    queryKey: ['livestream-traces'],
+    queryKey: ['livestream-traces', timeRange],
     queryFn: async () => {
-      const res = await fetch('/api/traces?limit=50')
+      const res = await fetch(`/api/traces?limit=50&timeRange=${timeRange}`)
       if (!res.ok) return { traces: [] }
       return res.json() as Promise<{ traces: StreamEvent[] }>
     },

@@ -3,7 +3,7 @@
 import { Card, CardContent } from '@/components/ui/card'
 import { type LucideIcon } from 'lucide-react'
 import { useMotionValue, useMotionValueEvent, animate } from 'framer-motion'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useMemo } from 'react'
 import { cn } from '@/lib/utils'
 
 interface StatCardProps {
@@ -17,6 +17,7 @@ interface StatCardProps {
   gradient?: string
   iconBg?: string
   isPercentage?: boolean
+  sparklineData?: number[]
 }
 
 function AnimatedNumber({ value, suffix = '', isPercentage = false }: { value: number; suffix?: string; isPercentage?: boolean }) {
@@ -36,13 +37,47 @@ function AnimatedNumber({ value, suffix = '', isPercentage = false }: { value: n
   })
 
   return (
-    <span className="text-2xl font-bold tabular-nums">
+    <span className="text-[1.65rem] font-extrabold tabular-nums leading-tight">
       {displayValue}{isPercentage ? '%' : ''}{suffix}
     </span>
   )
 }
 
-export function StatCard({ title, value, icon: Icon, trend, trendUp, suffix = '', loading, gradient, iconBg, isPercentage }: StatCardProps) {
+// Mini sparkline SVG with 5 data points
+function MiniSparkline({ data, color = '#10b981' }: { data: number[]; color?: string }) {
+  const width = 60
+  const height = 20
+  const padding = 2
+
+  const points = useMemo(() => {
+    if (data.length < 2) return []
+    const max = Math.max(...data, 1)
+    const min = Math.min(...data, 0)
+    const range = max - min || 1
+    return data.map((v, i) => {
+      const x = padding + (i / (data.length - 1)) * (width - padding * 2)
+      const y = padding + (1 - (v - min) / range) * (height - padding * 2)
+      return `${x},${y}`
+    }).join(' ')
+  }, [data])
+
+  if (data.length < 2) return null
+
+  return (
+    <svg width={width} height={height} className="opacity-50 group-hover:opacity-80 transition-opacity duration-300">
+      <polyline
+        points={points}
+        fill="none"
+        stroke={color}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+export function StatCard({ title, value, icon: Icon, trend, trendUp, suffix = '', loading, gradient, iconBg, isPercentage, sparklineData }: StatCardProps) {
   const [prevValue, setPrevValue] = useState(value)
   const [pulseIcon, setPulseIcon] = useState(false)
   const iconRef = useRef<HTMLDivElement>(null)
@@ -57,6 +92,27 @@ export function StatCard({ title, value, icon: Icon, trend, trendUp, suffix = ''
     const timer = setTimeout(() => setPrevValue(value), 0)
     return () => clearTimeout(timer)
   }, [value, prevValue])
+
+  // Generate fake sparkline data if not provided
+  const sparkPoints = useMemo(() => {
+    if (sparklineData) return sparklineData
+    // Generate 5 pseudo-random points based on value
+    const base = value || 1
+    return [
+      base * 0.6,
+      base * 0.8,
+      base * 0.7,
+      base * 0.9,
+      base * 1.0,
+    ]
+  }, [sparklineData, value])
+
+  // Determine sparkline color from gradient
+  const sparkColor = gradient?.includes('violet') ? '#8b5cf6'
+    : gradient?.includes('amber') ? '#f59e0b'
+    : gradient?.includes('cyan') ? '#06b6d4'
+    : gradient?.includes('teal') ? '#14b8a6'
+    : '#10b981'
 
   if (loading) {
     return (
@@ -75,12 +131,22 @@ export function StatCard({ title, value, icon: Icon, trend, trendUp, suffix = ''
   }
 
   return (
-    <Card className="relative overflow-hidden group hover:shadow-md transition-all duration-300 border-0 shadow-sm gradient-border-hover shimmer-hover">
+    <Card className="relative overflow-hidden group hover:shadow-md transition-all duration-300 border-0 shadow-sm gradient-border-hover shimmer-hover card-shine">
+      {/* Inner shadow at top for depth */}
+      <div className="absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-black/[0.03] to-transparent dark:from-white/[0.02] dark:to-transparent pointer-events-none" />
+
       {/* Gradient background */}
       <div className={cn(
         'absolute inset-0 opacity-[0.04] group-hover:opacity-[0.08] transition-opacity duration-300',
         gradient ?? 'bg-gradient-to-br from-emerald-500 to-teal-600'
       )} />
+
+      {/* Gradient line at bottom */}
+      <div className={cn(
+        'absolute bottom-0 inset-x-0 h-[2px]',
+        gradient ?? 'bg-gradient-to-r from-emerald-500 to-teal-600'
+      )} style={{ opacity: 0.5 }} />
+
       <CardContent className="p-4 md:p-6 relative">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
@@ -89,15 +155,18 @@ export function StatCard({ title, value, icon: Icon, trend, trendUp, suffix = ''
             </p>
             <AnimatedNumber value={value} suffix={suffix} isPercentage={isPercentage} />
           </div>
-          <div
-            ref={iconRef}
-            className={cn(
-              'flex h-10 w-10 items-center justify-center rounded-lg shrink-0 group-hover:scale-110 transition-transform duration-300',
-              iconBg ?? 'bg-emerald-600/10 text-emerald-600 dark:text-emerald-400',
-              pulseIcon && 'icon-pulse'
-            )}
-          >
-            <Icon className="h-5 w-5" />
+          <div className="flex flex-col items-end gap-1">
+            <div
+              ref={iconRef}
+              className={cn(
+                'flex h-10 w-10 items-center justify-center rounded-lg shrink-0 group-hover:scale-110 transition-transform duration-300',
+                iconBg ?? 'bg-emerald-600/10 text-emerald-600 dark:text-emerald-400',
+                pulseIcon && 'icon-pulse'
+              )}
+            >
+              <Icon className="h-5 w-5" />
+            </div>
+            <MiniSparkline data={sparkPoints} color={sparkColor} />
           </div>
         </div>
         {trend && (

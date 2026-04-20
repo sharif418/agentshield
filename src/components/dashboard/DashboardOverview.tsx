@@ -25,6 +25,7 @@ import {
 } from 'recharts'
 import { useAppStore } from '@/lib/store'
 import { motion } from 'framer-motion'
+import { useState, useEffect } from 'react'
 
 const PERMISSION_COLORS: Record<string, string> = {
   ALLOW: '#10b981',
@@ -53,10 +54,15 @@ interface DashboardStats {
 }
 
 export function DashboardOverview() {
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setTimeout(() => setMounted(true), 0) }, [])
+
+  const timeRange = useAppStore((s) => s.timeRange)
+
   const { data: stats, isLoading } = useQuery<DashboardStats>({
-    queryKey: ['stats'],
+    queryKey: ['stats', timeRange],
     queryFn: async () => {
-      const res = await fetch('/api/stats')
+      const res = await fetch(`/api/stats?timeRange=${timeRange}`)
       if (!res.ok) throw new Error('Failed to fetch stats')
       return res.json()
     },
@@ -72,9 +78,9 @@ export function DashboardOverview() {
 
   // Build area chart data for last 7 days
   const { data: tracesData } = useQuery({
-    queryKey: ['traces-chart'],
+    queryKey: ['traces-chart', timeRange],
     queryFn: async () => {
-      const res = await fetch('/api/traces?limit=200')
+      const res = await fetch(`/api/traces?limit=200&timeRange=${timeRange}`)
       if (!res.ok) throw new Error('Failed')
       const data = await res.json()
       return data.traces as Array<{
@@ -222,7 +228,7 @@ export function DashboardOverview() {
             <CardTitle className="text-sm font-semibold">Policy Distribution</CardTitle>
           </CardHeader>
           <CardContent>
-            {policyPieData.length > 0 ? (
+            {mounted && policyPieData.length > 0 ? (
               <ResponsiveContainer width="100%" height={220}>
                 <PieChart>
                   <Pie
@@ -237,6 +243,8 @@ export function DashboardOverview() {
                     fontSize={11}
                     strokeWidth={2}
                     stroke="var(--background)"
+                    animationBegin={0}
+                    animationDuration={600}
                   >
                     {policyPieData.map((entry) => (
                       <Cell key={entry.name} fill={PERMISSION_COLORS[entry.name] ?? '#8884d8'} />
@@ -257,6 +265,10 @@ export function DashboardOverview() {
                   />
                 </PieChart>
               </ResponsiveContainer>
+            ) : !mounted ? (
+              <div className="h-[220px] flex items-center justify-center">
+                <div className="h-16 w-16 rounded-full border-4 border-muted animate-pulse" />
+              </div>
             ) : (
               <div className="h-[220px] flex items-center justify-center text-muted-foreground text-sm">
                 No policy data
@@ -274,7 +286,7 @@ export function DashboardOverview() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {areaChartData.length > 0 ? (
+            {mounted && areaChartData.length > 0 ? (
               <ResponsiveContainer width="100%" height={220}>
                 <AreaChart data={areaChartData}>
                   <defs>
@@ -312,6 +324,10 @@ export function DashboardOverview() {
                   <Area type="monotone" dataKey="REQUIRE_APPROVAL" stackId="1" stroke={PERMISSION_COLORS.REQUIRE_APPROVAL} fill="url(#approvalGrad)" strokeWidth={2} />
                 </AreaChart>
               </ResponsiveContainer>
+            ) : !mounted ? (
+              <div className="h-[220px] flex items-center justify-center">
+                <div className="w-3/4 h-24 bg-muted/30 animate-pulse rounded" />
+              </div>
             ) : (
               <div className="h-[220px] flex items-center justify-center text-muted-foreground text-sm">
                 No trace data
@@ -381,7 +397,7 @@ export function DashboardOverview() {
           </CardContent>
         </Card>
 
-        {/* Policy Coverage Card */}
+        {/* Policy Coverage Card with Compliance Gauge */}
         <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-300 glow-hover glass-card">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
@@ -390,11 +406,76 @@ export function DashboardOverview() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="text-center">
-              <span className="text-3xl font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">{policyCoverage.pct}%</span>
-              <p className="text-xs text-muted-foreground mt-1">{policyCoverage.covered} of {policyCoverage.total} agent roles covered</p>
+            {/* Compliance Gauge */}
+            <div className="flex justify-center">
+              <svg width="160" height="90" viewBox="0 0 160 90" className="gauge-glow">
+                {/* Background arc */}
+                <path
+                  d="M 20 80 A 60 60 0 0 1 140 80"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeOpacity={0.08}
+                  strokeWidth="10"
+                  strokeLinecap="round"
+                />
+                {/* Colored arc */}
+                <path
+                  d="M 20 80 A 60 60 0 0 1 140 80"
+                  fill="none"
+                  stroke={
+                    policyCoverage.pct > 80 ? '#10b981'
+                    : policyCoverage.pct >= 50 ? '#f59e0b'
+                    : '#ef4444'
+                  }
+                  strokeOpacity={0.8}
+                  strokeWidth="10"
+                  strokeLinecap="round"
+                  strokeDasharray={`${policyCoverage.pct * 1.884} 188.4`}
+                />
+                {/* Tick marks at 25%, 50%, 75%, 100% */}
+                {[25, 50, 75, 100].map((pct) => {
+                  const angle = Math.PI - (pct / 100) * Math.PI
+                  const cx = 80
+                  const cy = 80
+                  const outerR = 68
+                  const innerR = 62
+                  const x1 = cx + innerR * Math.cos(angle)
+                  const y1 = cy - innerR * Math.sin(angle)
+                  const x2 = cx + outerR * Math.cos(angle)
+                  const y2 = cy - outerR * Math.sin(angle)
+                  return (
+                    <line
+                      key={pct}
+                      x1={x1}
+                      y1={y1}
+                      x2={x2}
+                      y2={y2}
+                      stroke="currentColor"
+                      strokeOpacity={0.2}
+                      strokeWidth={1.5}
+                    />
+                  )
+                })}
+                {/* Percentage text */}
+                <text
+                  x="80"
+                  y="68"
+                  textAnchor="middle"
+                  className="fill-foreground text-lg font-bold tabular-nums"
+                >
+                  {policyCoverage.pct}%
+                </text>
+                <text
+                  x="80"
+                  y="82"
+                  textAnchor="middle"
+                  className="fill-muted-foreground text-[9px]"
+                >
+                  coverage
+                </text>
+              </svg>
             </div>
-            <Progress value={policyCoverage.pct} className="h-2" />
+            <p className="text-xs text-muted-foreground text-center">{policyCoverage.covered} of {policyCoverage.total} agent roles covered</p>
             <div className="space-y-2">
               {policyCoverage.roles.map((rc) => (
                 <div key={rc.role} className="flex items-center justify-between text-xs">

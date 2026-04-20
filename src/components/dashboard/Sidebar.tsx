@@ -16,6 +16,8 @@ import {
   FlaskConical,
   ChevronLeft,
   ChevronRight,
+  ShieldCheck,
+  CheckCircle,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -24,6 +26,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import { useQuery } from '@tanstack/react-query'
 
 const navItems: { id: SectionId; label: string; icon: React.ReactNode; shortcut: string }[] = [
   { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" />, shortcut: '1' },
@@ -39,9 +42,29 @@ const navItems: { id: SectionId; label: string; icon: React.ReactNode; shortcut:
   { id: 'sdk', label: 'SDK & Docs', icon: <Code2 className="h-5 w-5" />, shortcut: 'W' },
 ]
 
+interface SidebarStats {
+  totalPolicies: number
+  pendingApprovals: number
+}
+
 export function Sidebar() {
   const { activeSection, setActiveSection, sidebarCollapsed, setSidebarCollapsed } =
     useAppStore()
+
+  // Fetch quick stats for the sidebar
+  const { data: stats } = useQuery<SidebarStats>({
+    queryKey: ['sidebar-stats'],
+    queryFn: async () => {
+      const res = await fetch('/api/stats')
+      if (!res.ok) return { totalPolicies: 0, pendingApprovals: 0 }
+      const data = await res.json()
+      return {
+        totalPolicies: data.totalPolicies ?? 0,
+        pendingApprovals: data.pendingApprovals ?? 0,
+      }
+    },
+    refetchInterval: 30000,
+  })
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -117,12 +140,38 @@ export function Sidebar() {
           })}
         </nav>
 
-        {/* Collapse toggle */}
-        <div className="border-t border-border p-2 shrink-0">
+        {/* Quick Stats section */}
+        {!sidebarCollapsed && (
+          <div className="px-3 pb-2 space-y-1">
+            <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+              <ShieldCheck className="h-3 w-3" />
+              <span>{stats?.totalPolicies ?? 0} policies</span>
+            </div>
+            <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+              <CheckCircle className="h-3 w-3" />
+              <span>{stats?.pendingApprovals ?? 0} approvals</span>
+            </div>
+          </div>
+        )}
+
+        {/* Separator before environment indicator */}
+        <div className="border-t border-border mx-2" />
+
+        {/* Environment indicator + Collapse toggle */}
+        <div className="p-2 shrink-0 flex items-center gap-2">
+          {/* Environment pill */}
+          {!sidebarCollapsed && (
+            <span className="inline-flex items-center rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+              DEV
+            </span>
+          )}
           <Button
             variant="ghost"
             size="icon"
-            className="w-full h-8 hover:bg-muted/50 transition-colors duration-200"
+            className={cn(
+              'hover:bg-muted/50 transition-colors duration-200',
+              sidebarCollapsed ? 'w-full h-8' : 'h-8 ml-auto'
+            )}
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
           >
             {sidebarCollapsed ? (
