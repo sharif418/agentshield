@@ -20,6 +20,10 @@ interface AppState {
   setSidebarCollapsed: (collapsed: boolean) => void
   wsConnected: boolean
   setWsConnected: (connected: boolean) => void
+  wsReconnecting: boolean
+  setWsReconnecting: (reconnecting: boolean) => void
+  wsReconnectAttempt: number
+  setWsReconnectAttempt: (attempt: number) => void
   commandOpen: boolean
   setCommandOpen: (open: boolean) => void
   lastRefresh: Date | null
@@ -39,6 +43,10 @@ export const useAppStore = create<AppState>((set) => ({
   setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
   wsConnected: false,
   setWsConnected: (connected) => set({ wsConnected: connected }),
+  wsReconnecting: false,
+  setWsReconnecting: (reconnecting) => set({ wsReconnecting: reconnecting }),
+  wsReconnectAttempt: 0,
+  setWsReconnectAttempt: (attempt) => set({ wsReconnectAttempt: attempt }),
   commandOpen: false,
   setCommandOpen: (open) => set({ commandOpen: open }),
   lastRefresh: null,

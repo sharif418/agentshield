@@ -210,10 +210,10 @@ export function ApprovalQueue() {
           </div>
         ) : pendingApprovals.length === 0 ? (
           <Card className="border-0 shadow-sm">
-            <CardContent className="py-12 flex flex-col items-center text-muted-foreground">
-              <CheckCircle className="h-12 w-12 mb-3 text-emerald-500/40" />
-              <p className="text-sm font-medium">All clear!</p>
-              <p className="text-xs">No pending approval requests — everything is reviewed</p>
+            <CardContent className="py-16 flex flex-col items-center text-muted-foreground">
+              <CheckCircle className="h-16 w-16 mb-4 text-emerald-500/20 subtle-pulse" />
+              <p className="text-sm font-bold">All clear!</p>
+              <p className="text-xs mt-1">All approval requests have been resolved</p>
             </CardContent>
           </Card>
         ) : (

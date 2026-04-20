@@ -112,6 +112,23 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+/* Dark mode enhanced contrast - improves WCAG AA compliance for body text */
+.dark .dark-mode-enhanced {
+  --foreground: oklch(0.99 0 0);
+  --card-foreground: oklch(0.99 0 0);
+  --popover-foreground: oklch(0.99 0 0);
+  --muted-foreground: oklch(0.76 0 0);
+  --secondary-foreground: oklch(0.99 0 0);
+  --accent-foreground: oklch(0.99 0 0);
+  --border: oklch(1 0 0 / 14%);
+  --input: oklch(1 0 0 / 18%);
+}
+
+/* Ensure muted-foreground has sufficient contrast in dark mode (WCAG AA: 4.5:1 min) */
+.dark .text-muted-foreground {
+  color: oklch(0.68 0 0);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -462,4 +479,35 @@
   50% {
     filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.35));
   }
+}
+
+/* ===== Skeleton Shimmer Loading ===== */
+
+.skeleton-shimmer {
+  position: relative;
+  overflow: hidden;
+  background: hsl(var(--muted));
+}
+
+.skeleton-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, hsl(var(--muted-foreground) / 0.05), transparent);
+  animation: skeletonShimmer 1.5s infinite;
+}
+
+@keyframes skeletonShimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* Subtle pulse animation for empty state icons */
+@keyframes subtlePulse {
+  0%, 100% { opacity: 0.2; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(1.05); }
+}
+
+.subtle-pulse {
+  animation: subtlePulse 2.5s ease-in-out infinite;
 }

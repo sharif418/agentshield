@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
@@ -28,9 +29,10 @@ import {
 import { PolicyForm } from './PolicyForm'
 import { PolicyVersionHistory } from './PolicyVersionHistory'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Search, Pencil, Trash2, Shield, Download, Upload, Clock } from 'lucide-react'
+import { Plus, Search, Pencil, Trash2, Shield, Download, Upload, Clock, ToggleLeft, ToggleRight, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { motion, AnimatePresence } from 'framer-motion'
 
 interface Policy {
   id: string
@@ -75,6 +77,7 @@ export function PolicyManager() {
   const [editPolicy, setEditPolicy] = useState<Policy | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Policy | null>(null)
   const [historyPolicyId, setHistoryPolicyId] = useState<string | null>(null)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
   const queryParams = new URLSearchParams()
   if (filterRole !== 'all') queryParams.set('agentRole', filterRole)
@@ -127,6 +130,43 @@ export function PolicyManager() {
     },
     onError: () => toast.error('Failed to delete policy'),
   })
+
+  const bulkMutation = useMutation({
+    mutationFn: async ({ policyIds, action }: { policyIds: string[], action: 'enable' | 'disable' | 'delete' }) => {
+      const res = await fetch('/api/policies/bulk', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ policyIds, action }),
+      })
+      if (!res.ok) throw new Error('Bulk operation failed')
+      return res.json()
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['policies'] })
+      queryClient.invalidateQueries({ queryKey: ['stats'] })
+      const label = variables.action === 'enable' ? 'enabled' : variables.action === 'disable' ? 'disabled' : 'deleted'
+      toast.success(`${variables.policyIds.length} policies ${label}`)
+      setSelectedIds(new Set())
+    },
+    onError: () => toast.error('Bulk operation failed'),
+  })
+
+  const toggleSelect = (policyId: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(policyId)) next.delete(policyId)
+      else next.add(policyId)
+      return next
+    })
+  }
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filteredPolicies.length) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(filteredPolicies.map(p => p.policyId)))
+    }
+  }
 
   const handleExport = () => {
     const blob = new Blob([JSON.stringify(policies, null, 2)], { type: 'application/json' })
@@ -226,6 +266,60 @@ export function PolicyManager() {
         </Select>
       </div>
 
+      {/* Bulk Action Bar */}
+      <AnimatePresence>
+        {selectedIds.size > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="sticky top-0 z-20 flex items-center gap-2 rounded-lg border bg-card/95 backdrop-blur-sm px-4 py-2 shadow-md"
+          >
+            <Badge variant="secondary" className="text-xs font-mono tabular-nums">{selectedIds.size} selected</Badge>
+            <div className="flex-1" />
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs text-emerald-600 border-emerald-200 hover:bg-emerald-50 dark:text-emerald-400 dark:border-emerald-800 dark:hover:bg-emerald-950/50 active:scale-[0.98] transition-transform"
+              onClick={() => bulkMutation.mutate({ policyIds: Array.from(selectedIds), action: 'enable' })}
+              disabled={bulkMutation.isPending}
+            >
+              <ToggleRight className="h-3 w-3 mr-1" /> Enable
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs text-amber-600 border-amber-200 hover:bg-amber-50 dark:text-amber-400 dark:border-amber-800 dark:hover:bg-amber-950/50 active:scale-[0.98] transition-transform"
+              onClick={() => bulkMutation.mutate({ policyIds: Array.from(selectedIds), action: 'disable' })}
+              disabled={bulkMutation.isPending}
+            >
+              <ToggleLeft className="h-3 w-3 mr-1" /> Disable
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-950/50 active:scale-[0.98] transition-transform"
+              onClick={() => {
+                if (confirm(`Delete ${selectedIds.size} policies? This cannot be undone.`)) {
+                  bulkMutation.mutate({ policyIds: Array.from(selectedIds), action: 'delete' })
+                }
+              }}
+              disabled={bulkMutation.isPending}
+            >
+              <Trash2 className="h-3 w-3 mr-1" /> Delete
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs active:scale-95 transition-transform"
+              onClick={() => setSelectedIds(new Set())}
+            >
+              <X className="h-3 w-3 mr-1" /> Clear
+            </Button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Policy Table - horizontally scrollable on mobile */}
       <Card className="border-0 shadow-sm">
         <CardContent className="p-0">
@@ -246,7 +340,14 @@ export function PolicyManager() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="text-xs sticky-first-col bg-card">Name</TableHead>
+                    <TableHead className="text-xs w-10">
+                      <Checkbox
+                        checked={filteredPolicies.length > 0 && selectedIds.size === filteredPolicies.length}
+                        onCheckedChange={toggleSelectAll}
+                        className="h-3.5 w-3.5"
+                      />
+                    </TableHead>
+                    <TableHead className="text-xs">Name</TableHead>
                     <TableHead className="text-xs">Agent Role</TableHead>
                     <TableHead className="text-xs">Resource</TableHead>
                     <TableHead className="text-xs">Action</TableHead>
@@ -266,7 +367,14 @@ export function PolicyManager() {
                         rowBorder[policy.permissionLevel] ?? ''
                       )}
                     >
-                      <TableCell className="text-sm font-medium max-w-[180px] truncate sticky-first-col bg-card">
+                      <TableCell className="w-10 sticky-first-col bg-card">
+                        <Checkbox
+                          checked={selectedIds.has(policy.policyId)}
+                          onCheckedChange={() => toggleSelect(policy.policyId)}
+                          className="h-3.5 w-3.5"
+                        />
+                      </TableCell>
+                      <TableCell className="text-sm font-medium max-w-[180px] truncate">
                         {policy.name}
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground">{policy.agentRole}</TableCell>

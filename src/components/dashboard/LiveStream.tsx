@@ -361,10 +361,10 @@ export function LiveStream() {
         >
           {filteredEvents.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-gray-500 gap-3">
-              <Radio className="h-10 w-10 opacity-20" />
+              <Radio className="h-16 w-16 opacity-20" />
               <div className="text-center">
-                <p className="text-sm font-medium text-gray-400">Waiting for events...</p>
-                <p className="text-[10px] mt-1">New policy evaluations will appear here in real-time</p>
+                <p className="text-sm font-bold text-gray-400">Waiting for events...</p>
+                <p className="text-xs mt-1">Events will appear here as policy evaluations occur</p>
               </div>
               {!paused && (
                 <div className="flex items-center gap-1 mt-2">

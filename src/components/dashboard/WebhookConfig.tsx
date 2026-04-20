@@ -256,10 +256,21 @@ export function WebhookConfigComponent() {
         </div>
       ) : webhooks.length === 0 ? (
         <Card className="border-0 shadow-sm glass-card glow-hover">
-          <CardContent className="py-12 flex flex-col items-center text-muted-foreground">
-            <WebhookIcon className="h-12 w-12 mb-3 opacity-40" />
-            <p className="text-sm font-medium">No webhooks configured</p>
-            <p className="text-xs mt-1">Create one to start receiving notifications for policy events</p>
+          <CardContent className="py-16 flex flex-col items-center text-muted-foreground">
+            <WebhookIcon className="h-16 w-16 mb-4 opacity-20" />
+            <p className="text-sm font-bold">No webhooks configured</p>
+            <p className="text-xs mt-1 mb-4">Set up webhooks to receive real-time notifications</p>
+            <Button
+              className="h-8 text-xs bg-emerald-600 hover:bg-emerald-700 text-white active:scale-[0.98] transition-transform gap-1.5"
+              onClick={() => {
+                setEditWebhook(null)
+                resetForm()
+                setFormOpen(true)
+              }}
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Create Webhook
+            </Button>
           </CardContent>
         </Card>
       ) : (

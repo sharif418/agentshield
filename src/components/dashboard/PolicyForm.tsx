@@ -15,10 +15,10 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog'
-import { Badge } from '@/components/ui/badge'
 import { Loader2 } from 'lucide-react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { ConditionRuleBuilder } from '@/components/dashboard/ConditionRuleBuilder'
 
 interface Policy {
   id: string
@@ -85,7 +85,6 @@ export function PolicyForm({ open, onOpenChange, policy }: PolicyFormProps) {
   })
   const [priority, setPriority] = useState(policy?.priority ?? 0)
   const [enabled, setEnabled] = useState(policy?.enabled ?? true)
-  const [jsonError, setJsonError] = useState<string | null>(null)
 
   const createMutation = useMutation({
     mutationFn: async (body: Record<string, unknown>) => {
@@ -136,20 +135,6 @@ export function PolicyForm({ open, onOpenChange, policy }: PolicyFormProps) {
     setConditionRules('')
     setPriority(0)
     setEnabled(true)
-    setJsonError(null)
-  }
-
-  const validateConditionRules = (value: string) => {
-    if (!value.trim()) {
-      setJsonError(null)
-      return
-    }
-    try {
-      JSON.parse(value)
-      setJsonError(null)
-    } catch (e) {
-      setJsonError('Invalid JSON format')
-    }
   }
 
   const handleSubmit = () => {
@@ -276,17 +261,11 @@ export function PolicyForm({ open, onOpenChange, policy }: PolicyFormProps) {
 
           {/* Condition Rules */}
           <div className="space-y-1.5">
-            <Label className="text-xs">Condition Rules (JSON)</Label>
-            <Textarea
-              className={`text-xs font-mono min-h-[80px] ${jsonError ? 'border-red-500' : ''}`}
-              placeholder='{"operation": {"$in": ["INSERT", "UPDATE"]}}'
+            <Label className="text-xs">Condition Rules</Label>
+            <ConditionRuleBuilder
               value={conditionRules}
-              onChange={(e) => {
-                setConditionRules(e.target.value)
-                validateConditionRules(e.target.value)
-              }}
+              onChange={setConditionRules}
             />
-            {jsonError && <p className="text-xs text-red-500">{jsonError}</p>}
           </div>
 
           {/* Priority */}

@@ -824,3 +824,191 @@ Created a GlobalTimeRange selector component that appears in the DashboardLayout
 ### Verification:
 - `bun run lint` passes with no errors
 - Component renders in the top bar with Clock icon and 4 time range buttons
+
+---
+Task ID: 5
+Agent: Bulk Operations Developer
+Task: Add Policy Bulk Operations API and UI
+
+Work Log:
+- Created Checkbox UI component at `/src/components/ui/checkbox.tsx` using @radix-ui/react-checkbox (already installed)
+- Updated bulk operations API route at `/src/app/api/policies/bulk/route.ts` - added `immutable: true` to audit log entries, changed actor to 'dashboard_user', cleaned up formatting
+- Updated PolicyManager.tsx with full bulk operations UI:
+  - Added imports: Checkbox, motion/AnimatePresence, ToggleLeft/ToggleRight/X icons
+  - Added `selectedIds` state (Set<string>) for tracking selected policies
+  - Added `bulkMutation` using useMutation for PATCH /api/policies/bulk
+  - Added `toggleSelect` and `toggleSelectAll` helper functions
+  - Added checkbox column as first column in table header (with select-all checkbox)
+  - Added checkbox column as first column in each table row (with individual checkboxes)
+  - Moved `sticky-first-col bg-card` from Name column to checkbox column
+  - Added floating bulk action bar with AnimatePresence animation (appears when items selected)
+  - Bulk action bar includes: selected count badge, Enable/Disable/Delete buttons, Clear button
+  - Color-coded buttons: emerald for Enable, amber for Disable, red for Delete
+  - Delete action includes confirmation dialog
+  - All buttons have active:scale transitions for tactile feedback
+- Ran `bun run lint` - passes with 0 errors
+
+Stage Summary:
+- Checkbox UI component created (shadcn/ui pattern with @radix-ui/react-checkbox)
+- Bulk operations API route updated with immutable audit logs
+- PolicyManager now supports multi-select with checkboxes and floating bulk action bar
+- Three bulk actions available: Enable, Disable, Delete
+- All changes lint clean
+
+---
+Task ID: 4
+Agent: Styling Improvement Specialist
+Task: Mandatory styling improvements - enhanced dark mode, transitions, richer empty states
+
+Work Log:
+- Added `.dark-mode-enhanced` class with improved dark mode CSS variable overrides (higher contrast foreground, card-foreground, popover-foreground, muted-foreground, border, input) in globals.css
+- Added `.dark .text-muted-foreground` override to oklch(0.68 0 0) for WCAG AA text contrast compliance in dark mode
+- Added `dark-mode-enhanced` class to root container div in DashboardLayout.tsx
+- Added `.skeleton-shimmer` CSS class with shimmer animation for loading states in globals.css
+- Added `.subtle-pulse` CSS class with gentle opacity/scale pulse animation for empty state icons in globals.css
+- Enhanced empty state in ExecutionTraces.tsx: larger Search icon (h-16 w-16, opacity-20), bold title, "Run a policy evaluation to see traces here" subtitle, "Try Simulator" CTA button (navigates to simulator section)
+- Enhanced empty state in AuditLogs.tsx: larger FileText icon (h-16 w-16, opacity-20), bold title, "Audit entries appear when policies are created or modified" subtitle
+- Enhanced empty state in ApprovalQueue.tsx: larger CheckCircle icon (h-16 w-16, text-emerald-500/20, subtle-pulse animation), bold title, "All approval requests have been resolved" subtitle
+- Enhanced empty state in WebhookConfig.tsx: larger WebhookIcon (h-16 w-16, opacity-20), bold title, "Set up webhooks to receive real-time notifications" subtitle, "Create Webhook" CTA button
+- Enhanced empty state in LiveStream.tsx: larger Radio icon (h-16 w-16, opacity-20), bold title, "Events will appear here as policy evaluations occur" subtitle
+- Enhanced card hover effects in DashboardOverview.tsx: added `hover:-translate-y-0.5`, `transition-all duration-300`, `hover:border-emerald-500/20` to all cards (Policy Distribution, Trace Activity, Recent Activity, Policy Coverage)
+- Enhanced section transitions in DashboardLayout.tsx: changed from simple fade to scale+fade with custom cubic-bezier (initial: opacity 0, y 12, scale 0.995; animate: opacity 1, y 0, scale 1; exit: opacity 0, y -8, scale 0.998; duration 0.25, ease [0.25, 0.46, 0.45, 0.94])
+- Enhanced footer in DashboardLayout.tsx: added "Showing: 24h/7d/30d/90d" time range indicator with emerald color, added subtle separators (|) between all footer items, made version number clickable button with hover effect
+- Improved loading skeletons in DashboardOverview.tsx: replaced simple `animate-pulse rounded` divs with `skeleton-shimmer` class; pie chart skeleton uses circular shimmer; area chart skeleton uses rectangular shimmer with gradient bar skeletons; recent activity skeleton matches actual row layout (dot + text + badge areas)
+
+Stage Summary:
+- 6 CSS classes added to globals.css: `.dark-mode-enhanced`, `.dark .text-muted-foreground`, `.skeleton-shimmer`, `@keyframes skeletonShimmer`, `.subtle-pulse`, `@keyframes subtlePulse`
+- 5 empty states enhanced with larger icons, bold titles, helpful subtitles, and CTA buttons where appropriate
+- All dashboard cards now have subtle lift, scale, and emerald border highlight on hover
+- Section transitions improved with scale effect and custom cubic-bezier easing
+- Footer now shows current time range, has separators between items, and clickable version
+- Loading skeletons replaced with detailed shimmer patterns matching actual content layout
+- `bun run lint` passes with 0 errors
+
+---
+
+## Cron Review Round 5: Condition Rule Builder, Bulk Operations, Enhanced Styling
+**Date:** 2026-04-21
+**Status:** ✅ Complete
+
+### Current Project Status Assessment
+The AgentShield Policy Engine Dashboard is a comprehensive 11-section single-page application with full-stack functionality. All API endpoints work correctly, lint passes with 0 errors, and the page compiles and serves successfully. The project now has 26 dashboard components, 14 API route files, and a rich feature set including visual condition builders, bulk operations, and auto-reconnecting WebSocket.
+
+### QA Testing Performed
+- API testing via curl: stats, evaluate, export CSV, policy history, bulk operations - all return 200
+- `bun run lint` passes with 0 errors
+- Dev server runs successfully (unstable under memory pressure with agent-browser - known sandbox limitation)
+- Verified bulk operations API: PATCH /api/policies/bulk returns correct response with audit logging
+
+### New Feature: Policy Condition Rule Visual Builder
+
+#### ConditionRuleBuilder Component (`ConditionRuleBuilder.tsx`)
+- Full visual condition rule builder replacing raw JSON textarea in PolicyForm
+- Parses JSON condition rules into a visual tree of condition nodes
+- Supports all condition operators: $and, $or, $contains, $equals, $in, $gt, $lt
+- AND groups with emerald border/background, labeled "ALL of"
+- OR groups with amber border/background, labeled "ANY of"
+- Click-to-toggle between AND/OR group types
+- Condition rows with: field name input (with datalist suggestions), operator dropdown, value input, delete button
+- Add Condition / Add Group buttons at each group level
+- Collapsible groups with ChevronDown/ChevronRight toggle
+- Visual / Raw JSON toggle with live sync between modes
+- Real-time JSON preview panel at the bottom
+- Framer Motion animations for add/remove (AnimatePresence)
+- Empty state with GitBranch icon and helpful text
+- Smart JSON parsing: handles single fields, $and/$or groups, nested structures
+
+#### Integration into PolicyForm
+- Replaced raw JSON textarea with ConditionRuleBuilder
+- Toggle between Visual mode (tree builder) and Raw JSON mode (textarea)
+- Values synced between both modes
+
+### New Feature: Policy Bulk Operations
+
+#### Bulk Operations API (`/api/policies/bulk/route.ts`)
+- PATCH /api/policies/bulk - Bulk update policies
+- Request body: { policyIds: string[], action: 'enable' | 'disable' | 'delete' }
+- For enable/disable: updates the `enabled` field using Prisma updateMany
+- For delete: deletes policies using Prisma deleteMany
+- Creates immutable audit log entries for each operation
+- Returns: { updated: number } count
+
+#### PolicyManager Bulk Selection UI
+- Checkbox column as first column in policy table (Checkbox component from @radix-ui/react-checkbox)
+- Select All checkbox in header row
+- Track selected policy IDs in state: selectedIds (Set<string>)
+- Floating bulk action bar (AnimatePresence + motion.div) when items selected:
+  - "N selected" badge (font-mono tabular-nums)
+  - Enable button (emerald themed)
+  - Disable button (amber themed)
+  - Delete button (red themed, with confirmation dialog)
+  - Clear Selection button
+- After bulk operation, clears selection and refetches data
+- Toast notifications for success/error
+
+### Styling Improvements
+
+#### 1. Enhanced Dark Mode Contrast (`globals.css`)
+- Added `.dark-mode-enhanced` class with CSS variable overrides for better contrast
+- `.dark .text-muted-foreground` override to `oklch(0.68 0 0)` for WCAG AA compliance
+- Applied `dark-mode-enhanced` class to root container in DashboardLayout.tsx
+
+#### 2. Richer Empty States (5 components)
+- ExecutionTraces: Larger icon, "Run a policy evaluation to see traces here" subtitle, "Try Simulator" CTA button
+- AuditLogs: Larger icon, "Audit entries appear when policies are created or modified" subtitle
+- ApprovalQueue: Larger CheckCircle icon with subtle-pulse animation, "All approval requests have been resolved" subtitle
+- WebhookConfig: Larger icon, "Set up webhooks to receive real-time notifications" subtitle, "Create Webhook" CTA button
+- LiveStream: Larger icon, "Events will appear here as policy evaluations occur" subtitle
+
+#### 3. Enhanced Card Hover Effects (DashboardOverview.tsx)
+- All cards: `hover:-translate-y-0.5` (subtle lift), `transition-all duration-300`, `hover:border-emerald-500/20`
+
+#### 4. Enhanced Section Transitions (DashboardLayout.tsx)
+- Scale+fade animation: initial={{ opacity: 0, y: 12, scale: 0.995 }}, animate={{ opacity: 1, y: 0, scale: 1 }}
+- Custom cubic-bezier easing: [0.25, 0.46, 0.45, 0.94] for smooth, natural feel
+
+#### 5. Enhanced Footer (DashboardLayout.tsx)
+- Shows current time range (e.g., "Showing: 24h") with emerald accent
+- Subtle separators between footer items
+- Clickable version number with hover effect
+
+#### 6. Better Loading Skeletons (`globals.css`)
+- Added `.skeleton-shimmer` CSS class with shimmer animation
+- Added `.subtle-pulse` animation for empty state icons
+- Replaced simple pulse divs with detailed skeleton patterns
+
+### Files Created
+- `/src/components/dashboard/ConditionRuleBuilder.tsx` (~725 lines) - Visual condition rule builder
+- `/src/app/api/policies/bulk/route.ts` - Bulk operations API endpoint
+- `/src/components/ui/checkbox.tsx` - shadcn/ui Checkbox component
+
+### Files Modified
+- `/src/app/globals.css` - Added dark-mode-enhanced, skeleton-shimmer, subtle-pulse classes
+- `/src/components/dashboard/DashboardLayout.tsx` - Enhanced section transitions, footer improvements, dark-mode-enhanced class
+- `/src/components/dashboard/DashboardOverview.tsx` - Enhanced card hover effects, better loading skeletons
+- `/src/components/dashboard/PolicyForm.tsx` - Integrated ConditionRuleBuilder
+- `/src/components/dashboard/PolicyManager.tsx` - Added bulk selection UI with checkboxes and action bar
+- `/src/components/dashboard/ExecutionTraces.tsx` - Richer empty state with CTA button
+- `/src/components/dashboard/AuditLogs.tsx` - Richer empty state
+- `/src/components/dashboard/ApprovalQueue.tsx` - Richer empty state with pulse animation
+- `/src/components/dashboard/WebhookConfig.tsx` - Richer empty state with CTA button
+- `/src/components/dashboard/LiveStream.tsx` - Richer empty state
+
+### Verification
+- `bun run lint` passes with 0 errors
+- Bulk operations API tested via curl (PATCH /api/policies/bulk returns { updated: N })
+- All existing API endpoints continue to work
+- ConditionRuleBuilder renders with visual tree and raw JSON toggle
+
+### Known Issues / Risks
+1. **Server stability**: Dev server may crash under memory pressure during rapid API testing. Use single requests with pauses.
+2. **WebSocket service**: Must be manually started with `cd mini-services/approval-ws && bun --hot index.ts`
+3. **ConditionRuleBuilder edge cases**: Very deeply nested conditions ($and containing $or containing $and) may not parse perfectly in visual mode - raw JSON mode serves as fallback.
+
+### Priority Recommendations for Next Phase
+1. Wire evaluate API to broadcast events via WebSocket for real-time stream updates
+2. Add policy conflict resolution workflow (auto-suggest fixes for detected conflicts)
+3. Add user authentication and role-based access control
+4. Add customizable dashboard layout (drag-and-drop widget arrangement)
+5. Add rate limiting dashboard showing evaluation frequency per agent
+6. Add PDF export for compliance reports

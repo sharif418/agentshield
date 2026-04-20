@@ -66,7 +66,7 @@ const sectionIcons: Record<SectionId, React.ReactNode> = {
 const sectionKeys: SectionId[] = ['dashboard', 'policies', 'approvals', 'traces', 'reasoning', 'livestream', 'agents', 'simulator', 'audit', 'webhooks', 'sdk']
 
 export function DashboardLayout() {
-  const { activeSection, wsConnected, commandOpen, setCommandOpen, setActiveSection, lastRefresh, setLastRefresh, dbRecordCount, setDbRecordCount, timeRange } = useAppStore()
+  const { activeSection, wsConnected, wsReconnecting, wsReconnectAttempt, commandOpen, setCommandOpen, setActiveSection, lastRefresh, setLastRefresh, dbRecordCount, setDbRecordCount, timeRange } = useAppStore()
   useWebSocket()
 
   const ActiveSection = sectionComponents[activeSection] ?? DashboardOverview
@@ -157,7 +157,7 @@ export function DashboardLayout() {
   }, [lastRefresh])
 
   return (
-    <div className="min-h-screen flex flex-col bg-background mesh-bg">
+    <div className="min-h-screen flex flex-col bg-background mesh-bg dark-mode-enhanced">
       <div className="flex flex-1 overflow-hidden">
         {/* Desktop Sidebar */}
         <div className="hidden md:flex">
@@ -229,6 +229,14 @@ export function DashboardLayout() {
                           </span>
                           <span className="hidden sm:inline text-emerald-600 dark:text-emerald-400">Live</span>
                         </>
+                      ) : wsReconnecting ? (
+                        <>
+                          <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500" />
+                          </span>
+                          <span className="hidden sm:inline text-amber-600 dark:text-amber-400">Reconnecting</span>
+                        </>
                       ) : (
                         <>
                           <WifiOff className="h-3 w-3 text-muted-foreground" />
@@ -240,7 +248,9 @@ export function DashboardLayout() {
                   <TooltipContent side="bottom" className="text-xs">
                     {wsConnected
                       ? 'Connected to real-time approval notification service via WebSocket'
-                      : 'Not connected to real-time service. Approval notifications will not update automatically.'}
+                      : wsReconnecting
+                        ? `Reconnecting... attempt ${wsReconnectAttempt} of ∞`
+                        : 'Not connected to real-time service. Approval notifications will not update automatically.'}
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -254,10 +264,10 @@ export function DashboardLayout() {
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeSection}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.2, ease: 'easeInOut' }}
+                initial={{ opacity: 0, y: 12, scale: 0.995 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -8, scale: 0.998 }}
+                transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
                 className="h-full"
               >
                 <ActiveSection />
@@ -270,11 +280,17 @@ export function DashboardLayout() {
       {/* Enhanced Footer */}
       <footer className="border-t border-border bg-card/60 backdrop-blur-md py-2 px-4 flex items-center justify-between text-xs text-muted-foreground shrink-0 z-10">
         <div className="flex items-center gap-3">
-          <span>AgentShield Policy Engine v1.0.0</span>
+          <button className="hover:text-foreground transition-colors duration-200 cursor-default" type="button">
+            AgentShield Policy Engine v1.0.0
+          </button>
           <span className="hidden sm:inline text-border">|</span>
           <span className="hidden sm:flex items-center gap-1">
             <Database className="h-3 w-3" />
             {dbRecordCount} records
+          </span>
+          <span className="hidden md:inline text-border">|</span>
+          <span className="hidden md:flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+            Showing: {timeRange === '24h' ? '24h' : timeRange === '7d' ? '7 days' : timeRange === '30d' ? '30 days' : '90 days'}
           </span>
         </div>
         <div className="flex items-center gap-3">
@@ -284,10 +300,12 @@ export function DashboardLayout() {
               Updated {refreshStr}
             </span>
           )}
+          <span className="hidden md:inline text-border">|</span>
           <span className="hidden md:inline">Development</span>
+          <span className="hidden sm:inline text-border">|</span>
           <div className="flex items-center gap-1.5">
-            <span className={`h-1.5 w-1.5 rounded-full ${wsConnected ? 'bg-emerald-500' : 'bg-red-400'}`} />
-            <span>{wsConnected ? 'Connected' : 'Disconnected'}</span>
+            <span className={`h-1.5 w-1.5 rounded-full ${wsConnected ? 'bg-emerald-500' : wsReconnecting ? 'bg-amber-500' : 'bg-red-400'}`} />
+            <span>{wsConnected ? 'Connected' : wsReconnecting ? 'Reconnecting' : 'Disconnected'}</span>
           </div>
         </div>
       </footer>

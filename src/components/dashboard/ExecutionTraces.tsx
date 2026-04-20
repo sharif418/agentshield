@@ -17,7 +17,7 @@ import {
 import { TraceDetail } from './TraceDetail'
 import { DataExport } from './DataExport'
 import { useQuery } from '@tanstack/react-query'
-import { Activity, ChevronLeft, ChevronRight, Search, BarChart3 } from 'lucide-react'
+import { Activity, ChevronLeft, ChevronRight, Search, BarChart3, FlaskConical } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/lib/store'
@@ -271,10 +271,19 @@ export function ExecutionTraces() {
               ))}
             </div>
           ) : !data?.traces.length ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <Search className="h-10 w-10 mx-auto mb-3 opacity-40" />
-              <p className="text-sm font-medium">No traces match your filters</p>
-              <p className="text-xs mt-1">Try adjusting your search criteria or clearing filters</p>
+            <div className="text-center py-16 text-muted-foreground">
+              <Search className="h-16 w-16 mx-auto mb-4 opacity-20" />
+              <p className="text-sm font-bold">No traces match your filters</p>
+              <p className="text-xs mt-1 mb-4">Run a policy evaluation to see traces here</p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 text-xs gap-1.5 active:scale-[0.98] transition-transform"
+                onClick={() => useAppStore.getState().setActiveSection('simulator')}
+              >
+                <FlaskConical className="h-3.5 w-3.5" />
+                Try Simulator
+              </Button>
             </div>
           ) : (
             <div className="overflow-x-auto">

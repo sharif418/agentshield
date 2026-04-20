@@ -223,7 +223,7 @@ export function DashboardOverview() {
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
         {/* Policy Distribution Pie */}
-        <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-300 glow-hover glass-card">
+        <Card className="border-0 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 hover:border-emerald-500/20 glow-hover glass-card">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold">Policy Distribution</CardTitle>
           </CardHeader>
@@ -267,7 +267,7 @@ export function DashboardOverview() {
               </ResponsiveContainer>
             ) : !mounted ? (
               <div className="h-[220px] flex items-center justify-center">
-                <div className="h-16 w-16 rounded-full border-4 border-muted animate-pulse" />
+                <div className="h-16 w-16 rounded-full skeleton-shimmer" />
               </div>
             ) : (
               <div className="h-[220px] flex items-center justify-center text-muted-foreground text-sm">
@@ -278,7 +278,7 @@ export function DashboardOverview() {
         </Card>
 
         {/* Trace Activity Area Chart */}
-        <Card className="lg:col-span-2 border-0 shadow-sm hover:shadow-md transition-shadow duration-300 glow-hover glass-card">
+        <Card className="lg:col-span-2 border-0 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 hover:border-emerald-500/20 glow-hover glass-card">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
@@ -325,8 +325,13 @@ export function DashboardOverview() {
                 </AreaChart>
               </ResponsiveContainer>
             ) : !mounted ? (
-              <div className="h-[220px] flex items-center justify-center">
-                <div className="w-3/4 h-24 bg-muted/30 animate-pulse rounded" />
+              <div className="h-[220px] flex flex-col items-center justify-center gap-2">
+                <div className="w-3/4 h-24 skeleton-shimmer rounded" />
+                <div className="flex gap-1 w-3/4">
+                  {Array.from({ length: 7 }).map((_, i) => (
+                    <div key={i} className="flex-1 h-2 skeleton-shimmer rounded" />
+                  ))}
+                </div>
               </div>
             ) : (
               <div className="h-[220px] flex items-center justify-center text-muted-foreground text-sm">
@@ -346,7 +351,7 @@ export function DashboardOverview() {
       {/* Recent Activity + Evaluate Panel + Policy Coverage - stack on mobile */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         {/* Recent Activity Feed */}
-        <Card className="md:col-span-2 border-0 shadow-sm hover:shadow-md transition-shadow duration-300 glow-hover glass-card">
+        <Card className="md:col-span-2 border-0 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 hover:border-emerald-500/20 glow-hover glass-card">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
               <Activity className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
@@ -358,7 +363,14 @@ export function DashboardOverview() {
               {isLoading ? (
                 <div className="space-y-2">
                   {Array.from({ length: 5 }).map((_, i) => (
-                    <div key={i} className="h-10 bg-muted animate-pulse rounded" />
+                    <div key={i} className="flex items-center gap-3 py-1.5 px-2">
+                      <div className="h-2 w-2 rounded-full skeleton-shimmer shrink-0" />
+                      <div className="h-3 w-16 skeleton-shimmer rounded" />
+                      <div className="h-3 w-6 skeleton-shimmer rounded" />
+                      <div className="h-3 w-20 skeleton-shimmer rounded" />
+                      <div className="ml-auto h-5 w-16 skeleton-shimmer rounded" />
+                      <div className="h-3 w-10 skeleton-shimmer rounded" />
+                    </div>
                   ))}
                 </div>
               ) : stats?.recentTraces?.length ? (
@@ -398,7 +410,7 @@ export function DashboardOverview() {
         </Card>
 
         {/* Policy Coverage Card with Compliance Gauge */}
-        <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-300 glow-hover glass-card">
+        <Card className="border-0 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 hover:border-emerald-500/20 glow-hover glass-card">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
               <Target className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />

@@ -8,6 +8,8 @@ import { useQueryClient } from '@tanstack/react-query'
 export function useWebSocket() {
   const socketRef = useRef<Socket | null>(null)
   const setWsConnected = useAppStore((s) => s.setWsConnected)
+  const setWsReconnecting = useAppStore((s) => s.setWsReconnecting)
+  const setWsReconnectAttempt = useAppStore((s) => s.setWsReconnectAttempt)
   const queryClient = useQueryClient()
 
   const connect = useCallback(() => {
@@ -16,17 +18,49 @@ export function useWebSocket() {
     const socket = io('/?XTransformPort=3003', {
       transports: ['websocket', 'polling'],
       reconnection: true,
-      reconnectionAttempts: 10,
-      reconnectionDelay: 3000,
+      reconnectionAttempts: Infinity, // unlimited retries
+      reconnectionDelay: 1000, // initial delay: 1s
+      reconnectionDelayMax: 30000, // max delay: 30s
+      randomizationFactor: 0.5, // add jitter to avoid thundering herd
+      timeout: 10000,
     })
 
     socket.on('connect', () => {
       setWsConnected(true)
+      setWsReconnecting(false)
+      setWsReconnectAttempt(0)
       socket.emit('subscribe:approvals', {})
     })
 
-    socket.on('disconnect', () => {
+    socket.on('disconnect', (reason) => {
       setWsConnected(false)
+      // If the server initiated the disconnect, Socket.IO will auto-reconnect
+      // If the client initiated it, we don't set reconnecting
+      if (reason === 'io server disconnect') {
+        // Server forcefully disconnected - Socket.IO will still try to reconnect
+        setWsReconnecting(true)
+      }
+    })
+
+    socket.on('reconnect_attempt', (attempt) => {
+      setWsReconnecting(true)
+      setWsReconnectAttempt(attempt)
+    })
+
+    socket.on('reconnect', () => {
+      setWsReconnecting(false)
+      setWsReconnectAttempt(0)
+      // Re-emit pending events after successful reconnect
+      socket.emit('subscribe:approvals', {})
+      // Invalidate queries to refresh data that may have changed during disconnection
+      queryClient.invalidateQueries({ queryKey: ['approvals'] })
+      queryClient.invalidateQueries({ queryKey: ['stats'] })
+    })
+
+    socket.on('reconnect_failed', () => {
+      // This won't fire since reconnectionAttempts is Infinity,
+      // but handle it just in case
+      setWsReconnecting(false)
     })
 
     socket.on('approval:new', () => {
@@ -44,7 +78,7 @@ export function useWebSocket() {
     })
 
     socketRef.current = socket
-  }, [setWsConnected, queryClient])
+  }, [setWsConnected, setWsReconnecting, setWsReconnectAttempt, queryClient])
 
   const disconnect = useCallback(() => {
     if (socketRef.current) {
@@ -52,8 +86,10 @@ export function useWebSocket() {
       socketRef.current.disconnect()
       socketRef.current = null
       setWsConnected(false)
+      setWsReconnecting(false)
+      setWsReconnectAttempt(0)
     }
-  }, [setWsConnected])
+  }, [setWsConnected, setWsReconnecting, setWsReconnectAttempt])
 
   useEffect(() => {
     connect()

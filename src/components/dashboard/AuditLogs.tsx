@@ -137,10 +137,10 @@ export function AuditLogs() {
               ))}
             </div>
           ) : !data?.logs.length ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <FileText className="h-10 w-10 mx-auto mb-3 opacity-40" />
-              <p className="text-sm font-medium">No audit entries yet</p>
-              <p className="text-xs mt-1">Audit logs will appear as system events occur</p>
+            <div className="text-center py-16 text-muted-foreground">
+              <FileText className="h-16 w-16 mx-auto mb-4 opacity-20" />
+              <p className="text-sm font-bold">No audit entries yet</p>
+              <p className="text-xs mt-1">Audit entries appear when policies are created or modified</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
