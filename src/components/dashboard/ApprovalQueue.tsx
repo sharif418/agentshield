@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/table'
 import { ApprovalCard } from './ApprovalCard'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { CheckSquare, Inbox, CheckCircle, XCircle } from 'lucide-react'
+import { CheckSquare, CheckCircle, XCircle } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { useAppStore } from '@/lib/store'
 import { useState } from 'react'
@@ -52,7 +52,7 @@ const statusColors: Record<string, string> = {
   PENDING: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
   APPROVED: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
   REJECTED: 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20',
-  MODIFIED: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
+  MODIFIED: 'bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20',
 }
 
 export function ApprovalQueue() {
@@ -124,10 +124,10 @@ export function ApprovalQueue() {
   }
 
   return (
-    <div className="p-4 md:p-6 space-y-6">
+    <div className="p-4 md:p-6 space-y-4 md:space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
-          <h2 className="text-lg font-semibold flex items-center gap-2">
+          <h2 className="text-lg font-semibold tracking-tight flex items-center gap-2">
             <CheckSquare className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
             Approval Queue
           </h2>
@@ -148,13 +148,13 @@ export function ApprovalQueue() {
         </div>
       </div>
 
-      {/* Batch Actions */}
+      {/* Batch Actions - sticky on mobile */}
       {selectedIds.size > 0 && (
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border">
-          <span className="text-xs font-medium">{selectedIds.size} selected</span>
+        <div className="sticky top-0 z-20 flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border backdrop-blur-sm">
+          <span className="text-xs font-medium tabular-nums">{selectedIds.size} selected</span>
           <Button
             size="sm"
-            className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
+            className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700 text-white active:scale-[0.98] transition-transform"
             onClick={() => batchMutation.mutate({ ids: Array.from(selectedIds), status: 'APPROVED' })}
             disabled={batchMutation.isPending}
           >
@@ -163,7 +163,7 @@ export function ApprovalQueue() {
           <Button
             size="sm"
             variant="destructive"
-            className="h-7 text-xs"
+            className="h-7 text-xs active:scale-[0.98] transition-transform"
             onClick={() => batchMutation.mutate({ ids: Array.from(selectedIds), status: 'REJECTED' })}
             disabled={batchMutation.isPending}
           >
@@ -184,7 +184,7 @@ export function ApprovalQueue() {
       <div>
         <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
           Pending
-          <Badge variant="secondary" className="text-xs">{pendingApprovals.length}</Badge>
+          <Badge variant="secondary" className="text-xs font-mono tabular-nums">{pendingApprovals.length}</Badge>
           {pendingApprovals.length > 0 && (
             <Checkbox
               checked={selectedIds.size === pendingApprovals.length && pendingApprovals.length > 0}
@@ -209,9 +209,9 @@ export function ApprovalQueue() {
         ) : pendingApprovals.length === 0 ? (
           <Card className="border-0 shadow-sm">
             <CardContent className="py-12 flex flex-col items-center text-muted-foreground">
-              <Inbox className="h-10 w-10 mb-2 opacity-40" />
-              <p className="text-sm font-medium">No pending approvals</p>
-              <p className="text-xs">All requests have been reviewed</p>
+              <CheckCircle className="h-12 w-12 mb-3 text-emerald-500/40" />
+              <p className="text-sm font-medium">All clear!</p>
+              <p className="text-xs">No pending approval requests — everything is reviewed</p>
             </CardContent>
           </Card>
         ) : (
@@ -247,42 +247,44 @@ export function ApprovalQueue() {
               </div>
             ) : (
               <ScrollArea className="max-h-96">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-xs">Request ID</TableHead>
-                      <TableHead className="text-xs">Agent</TableHead>
-                      <TableHead className="text-xs">Tool</TableHead>
-                      <TableHead className="text-xs">Status</TableHead>
-                      <TableHead className="text-xs">Reviewer</TableHead>
-                      <TableHead className="text-xs">Time</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {historyApprovals.map((a) => (
-                      <TableRow key={a.requestId}>
-                        <TableCell className="text-xs font-mono max-w-[120px] truncate">
-                          {a.requestId}
-                        </TableCell>
-                        <TableCell className="text-xs">{a.trace.agentRole}</TableCell>
-                        <TableCell className="text-xs">{a.trace.toolName}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className={statusColors[a.status] ?? ''}>
-                            {a.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-xs text-muted-foreground">
-                          {a.humanReviewerId ?? '-'}
-                        </TableCell>
-                        <TableCell className="text-xs text-muted-foreground">
-                          {a.reviewTimestamp
-                            ? formatDistanceToNow(new Date(a.reviewTimestamp), { addSuffix: true })
-                            : '-'}
-                        </TableCell>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="text-xs">Request ID</TableHead>
+                        <TableHead className="text-xs">Agent</TableHead>
+                        <TableHead className="text-xs">Tool</TableHead>
+                        <TableHead className="text-xs">Status</TableHead>
+                        <TableHead className="text-xs">Reviewer</TableHead>
+                        <TableHead className="text-xs">Time</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {historyApprovals.map((a) => (
+                        <TableRow key={a.requestId} className="transition-all duration-150 hover:bg-muted/30">
+                          <TableCell className="text-xs font-mono max-w-[120px] truncate">
+                            {a.requestId}
+                          </TableCell>
+                          <TableCell className="text-xs">{a.trace.agentRole}</TableCell>
+                          <TableCell className="text-xs">{a.trace.toolName}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className={`transition-transform duration-150 hover:scale-105 ${statusColors[a.status] ?? ''}`}>
+                              {a.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-xs text-muted-foreground">
+                            {a.humanReviewerId ?? '-'}
+                          </TableCell>
+                          <TableCell className="text-xs text-muted-foreground">
+                            {a.reviewTimestamp
+                              ? formatDistanceToNow(new Date(a.reviewTimestamp), { addSuffix: true })
+                              : '-'}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </ScrollArea>
             )}
           </CardContent>

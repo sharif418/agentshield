@@ -59,7 +59,6 @@ const rowBg: Record<string, string> = {
   REQUIRE_APPROVAL: 'hover:bg-amber-500/[0.04] dark:hover:bg-amber-500/[0.06]',
 }
 
-// Subtle left-border indicator for permission level
 const rowBorder: Record<string, string> = {
   ALLOW: 'border-l-2 border-l-emerald-500/40',
   BLOCK: 'border-l-2 border-l-red-500/40',
@@ -127,7 +126,6 @@ export function PolicyManager() {
     onError: () => toast.error('Failed to delete policy'),
   })
 
-  // Export policies as JSON
   const handleExport = () => {
     const blob = new Blob([JSON.stringify(policies, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
@@ -139,7 +137,6 @@ export function PolicyManager() {
     toast.success(`Exported ${policies.length} policies`)
   }
 
-  // Import policies from JSON
   const handleImport = () => {
     const input = document.createElement('input')
     input.type = 'file'
@@ -166,18 +163,18 @@ export function PolicyManager() {
     <div className="p-4 md:p-6 space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
-          <h2 className="text-lg font-semibold">Policy Management</h2>
-          <Badge variant="secondary" className="text-xs font-mono">{policies.length}</Badge>
+          <h2 className="text-lg font-semibold tracking-tight">Policy Management</h2>
+          <Badge variant="secondary" className="text-xs font-mono tabular-nums">{policies.length}</Badge>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" className="h-8 text-xs" onClick={handleExport}>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button variant="outline" className="h-8 text-xs active:scale-[0.98] transition-transform" onClick={handleExport}>
             <Download className="h-3 w-3 mr-1" /> Export
           </Button>
-          <Button variant="outline" className="h-8 text-xs" onClick={handleImport}>
+          <Button variant="outline" className="h-8 text-xs active:scale-[0.98] transition-transform" onClick={handleImport}>
             <Upload className="h-3 w-3 mr-1" /> Import
           </Button>
           <Button
-            className="h-8 text-sm bg-emerald-600 hover:bg-emerald-700 text-white"
+            className="h-8 text-sm bg-emerald-600 hover:bg-emerald-700 text-white active:scale-[0.98] transition-transform"
             onClick={() => {
               setEditPolicy(null)
               setFormOpen(true)
@@ -189,7 +186,7 @@ export function PolicyManager() {
       </div>
       <p className="text-sm text-muted-foreground -mt-2">Create and manage AI agent governance policies</p>
 
-      {/* Filter Bar */}
+      {/* Filter Bar - wraps on mobile */}
       <div className="flex flex-col sm:flex-row gap-2">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
@@ -225,7 +222,7 @@ export function PolicyManager() {
         </Select>
       </div>
 
-      {/* Policy Table */}
+      {/* Policy Table - horizontally scrollable on mobile */}
       <Card className="border-0 shadow-sm">
         <CardContent className="p-0">
           {isLoading ? (
@@ -236,15 +233,16 @@ export function PolicyManager() {
             </div>
           ) : filteredPolicies.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
-              <Shield className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">No policies found</p>
+              <Shield className="h-10 w-10 mx-auto mb-3 opacity-40" />
+              <p className="text-sm font-medium">No policies configured</p>
+              <p className="text-xs mt-1">Create your first policy to start governing AI agent actions</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="text-xs">Name</TableHead>
+                    <TableHead className="text-xs sticky-first-col bg-card">Name</TableHead>
                     <TableHead className="text-xs">Agent Role</TableHead>
                     <TableHead className="text-xs">Resource</TableHead>
                     <TableHead className="text-xs">Action</TableHead>
@@ -259,23 +257,23 @@ export function PolicyManager() {
                     <TableRow
                       key={policy.policyId}
                       className={cn(
-                        'transition-colors',
+                        'transition-all duration-150',
                         rowBg[policy.permissionLevel] ?? '',
                         rowBorder[policy.permissionLevel] ?? ''
                       )}
                     >
-                      <TableCell className="text-sm font-medium max-w-[180px] truncate">
+                      <TableCell className="text-sm font-medium max-w-[180px] truncate sticky-first-col bg-card">
                         {policy.name}
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground">{policy.agentRole}</TableCell>
                       <TableCell className="text-xs text-muted-foreground">{policy.resource}</TableCell>
                       <TableCell className="text-xs text-muted-foreground">{policy.action}</TableCell>
                       <TableCell>
-                        <Badge className={decisionColor[policy.permissionLevel] ?? ''} variant="outline">
+                        <Badge className={`transition-transform duration-150 hover:scale-105 text-xs ${decisionColor[policy.permissionLevel] ?? ''}`} variant="outline">
                           {policy.permissionLevel === 'REQUIRE_APPROVAL' ? 'APPROVAL' : policy.permissionLevel}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-xs font-mono">{policy.priority}</TableCell>
+                      <TableCell className="text-xs font-mono tabular-nums">{policy.priority}</TableCell>
                       <TableCell>
                         <Switch
                           checked={policy.enabled}
@@ -289,7 +287,7 @@ export function PolicyManager() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7 hover:bg-muted"
+                            className="h-7 w-7 hover:bg-muted transition-colors duration-200 active:scale-95"
                             onClick={() => {
                               setEditPolicy(policy)
                               setFormOpen(true)
@@ -300,7 +298,7 @@ export function PolicyManager() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-500/10"
+                            className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-500/10 transition-colors duration-200 active:scale-95"
                             onClick={() => setDeleteTarget(policy)}
                           >
                             <Trash2 className="h-3 w-3" />

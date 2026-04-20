@@ -55,7 +55,7 @@ const approvalStatusColors: Record<string, string> = {
   PENDING: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
   APPROVED: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
   REJECTED: 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20',
-  MODIFIED: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
+  MODIFIED: 'bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20',
 }
 
 function formatJsonSafe(str: string): string {
@@ -73,7 +73,7 @@ export function TraceDetail({ open, onOpenChange, trace }: TraceDetailProps) {
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="sm:max-w-lg w-full overflow-y-auto custom-scrollbar">
         <SheetHeader>
-          <SheetTitle className="text-sm font-semibold flex items-center gap-2">
+          <SheetTitle className="text-sm font-semibold tracking-tight flex items-center gap-2">
             <Activity className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
             Trace Detail
           </SheetTitle>
@@ -92,12 +92,12 @@ export function TraceDetail({ open, onOpenChange, trace }: TraceDetailProps) {
             ].map((row) => (
               <div key={row.label} className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">{row.label}</span>
-                <span className={`text-xs ${row.mono ? 'font-mono' : 'font-medium'}`}>{row.value}</span>
+                <span className={`text-xs ${row.mono ? 'font-mono tabular-nums' : 'font-medium'}`}>{row.value}</span>
               </div>
             ))}
             <div className="flex items-center justify-between">
               <span className="text-xs text-muted-foreground">Result</span>
-              <Badge variant="outline" className={decisionColor[trace.evaluationResult] ?? ''}>
+              <Badge variant="outline" className={`transition-transform duration-150 hover:scale-105 ${decisionColor[trace.evaluationResult] ?? ''}`}>
                 {trace.evaluationResult}
               </Badge>
             </div>
@@ -130,7 +130,7 @@ export function TraceDetail({ open, onOpenChange, trace }: TraceDetailProps) {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-muted-foreground">Permission</span>
-                  <Badge variant="outline" className={decisionColor[trace.policy.permissionLevel] ?? ''}>
+                  <Badge variant="outline" className={`transition-transform duration-150 hover:scale-105 ${decisionColor[trace.policy.permissionLevel] ?? ''}`}>
                     {trace.policy.permissionLevel}
                   </Badge>
                 </div>
@@ -140,7 +140,7 @@ export function TraceDetail({ open, onOpenChange, trace }: TraceDetailProps) {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-muted-foreground">Priority</span>
-                  <span className="text-xs font-mono">{trace.policy.priority}</span>
+                  <span className="text-xs font-mono tabular-nums">{trace.policy.priority}</span>
                 </div>
               </div>
             ) : (
@@ -163,7 +163,7 @@ export function TraceDetail({ open, onOpenChange, trace }: TraceDetailProps) {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-muted-foreground">Status</span>
-                    <Badge variant="outline" className={approvalStatusColors[trace.approval.status] ?? ''}>
+                    <Badge variant="outline" className={`transition-transform duration-150 hover:scale-105 ${approvalStatusColors[trace.approval.status] ?? ''}`}>
                       {trace.approval.status}
                     </Badge>
                   </div>

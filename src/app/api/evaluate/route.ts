@@ -1,12 +1,82 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 
+/**
+ * Infer the action from the arguments and tool name when no explicit action is provided.
+ * This enables the policy engine to make accurate decisions even when the caller
+ * doesn't specify the action directly.
+ */
+function inferAction(args: Record<string, unknown>, toolName: string): string | null {
+  // Check explicit operation/action/method fields first
+  if (args.operation) return String(args.operation).toUpperCase();
+  if (args.action) return String(args.action).toUpperCase();
+  if (args.method) return String(args.method).toUpperCase();
+
+  // SQL query inference
+  if (args.query && typeof args.query === 'string') {
+    const sqlKeyword = args.query.trim().split(/\s+/)[0]?.toUpperCase();
+    const sqlActionMap: Record<string, string> = {
+      'SELECT': 'SELECT', 'INSERT': 'INSERT', 'UPDATE': 'UPDATE',
+      'DELETE': 'DELETE', 'DROP': 'DROP', 'TRUNCATE': 'TRUNCATE',
+      'ALTER': 'ADMIN', 'CREATE': 'ADMIN', 'GRANT': 'ADMIN',
+    };
+    if (sqlKeyword && sqlActionMap[sqlKeyword]) return sqlActionMap[sqlKeyword];
+  }
+
+  // HTTP method inference
+  if (args.httpMethod) return String(args.httpMethod).toUpperCase();
+
+  // Email-specific inference
+  if (toolName === 'EmailAPI' && args.to) return 'SEND';
+  if (toolName === 'EmailAPI') return 'READ';
+
+  // Slack-specific inference
+  if (toolName === 'SlackAPI' && args.channel && args.text) return 'POST_MESSAGE';
+  if (toolName === 'SlackAPI') return 'READ';
+
+  return null;
+}
+
+/**
+ * Enrich args with inferred operation from SQL queries so that condition rules
+ * can match. For example, {"query":"DROP TABLE users"} gets operation:"DROP_TABLE".
+ */
+function enrichArgsFromQuery(args: Record<string, unknown>): Record<string, unknown> {
+  // Only enrich if there's a query but no explicit operation
+  if (!args.query || typeof args.query !== 'string' || args.operation) return args;
+
+  const query = args.query as string;
+  const upper = query.trim().toUpperCase();
+
+  const sqlOperationMap: { re: RegExp; op: string }[] = [
+    { re: /^DROP\s+TABLE/, op: 'DROP_TABLE' },
+    { re: /^DROP\s+DATABASE/, op: 'DROP_DATABASE' },
+    { re: /^DROP\s/, op: 'DROP' },
+    { re: /^TRUNCATE/, op: 'TRUNCATE' },
+    { re: /^ALTER/, op: 'ALTER' },
+    { re: /^CREATE/, op: 'CREATE' },
+    { re: /^GRANT/, op: 'GRANT' },
+    { re: /^INSERT/, op: 'INSERT' },
+    { re: /^UPDATE/, op: 'UPDATE' },
+    { re: /^DELETE/, op: 'DELETE' },
+    { re: /^SELECT/, op: 'SELECT' },
+  ];
+
+  for (const { re, op } of sqlOperationMap) {
+    if (re.test(upper)) {
+      return { ...args, operation: op };
+    }
+  }
+
+  return args;
+}
+
 export async function POST(request: NextRequest) {
   const startTime = performance.now();
 
   try {
     const body = await request.json();
-    const { agentRole, toolName, arguments: args } = body;
+    const { agentRole, toolName, arguments: rawArgs } = body;
 
     if (!agentRole || !toolName) {
       return NextResponse.json(
@@ -16,8 +86,10 @@ export async function POST(request: NextRequest) {
     }
 
     const sessionId = body.sessionId ?? `SES-${Date.now().toString(36)}`;
-    // Infer action from request body or from arguments
-    const action = body.action ?? (args?.operation as string | undefined) ?? null;
+    // Infer action from request body, or smart-infer from original arguments/toolName
+    const action = body.action ?? inferAction((rawArgs as Record<string, unknown>) ?? {}, toolName);
+    // Enrich args with inferred operation from SQL queries for condition matching
+    const args = enrichArgsFromQuery((rawArgs as Record<string, unknown>) ?? {});
 
     // 1. Find all enabled policies matching agentRole and resource/toolName
     // If action is specified, also filter by action for more precise matching
@@ -46,60 +118,126 @@ export async function POST(request: NextRequest) {
 
     // 2. Sort by priority (already done by orderBy)
 
-    // 3. Evaluate policies in priority order
-    for (const policy of policies) {
-      // Check condition rules if present
-      let conditionMatches = true;
-      if (policy.conditionRules) {
-        try {
-          const rules = JSON.parse(policy.conditionRules);
-          conditionMatches = evaluateConditions(rules, args ?? {});
-        } catch {
-          // If rules can't be parsed, treat as matching
-          conditionMatches = true;
+    // 3. Evaluate policies
+    // When action is null (could not be inferred), use most-restrictive logic:
+    // BLOCK > REQUIRE_APPROVAL > ALLOW across ALL matching policies (zero-trust).
+    // When action is specified, use standard priority-based evaluation.
+    if (action) {
+      // Standard priority-based evaluation (action was successfully inferred or provided)
+      for (const policy of policies) {
+        // Check condition rules if present
+        let conditionMatches = true;
+        if (policy.conditionRules) {
+          try {
+            const rules = JSON.parse(policy.conditionRules);
+            conditionMatches = evaluateConditions(rules, args ?? {});
+          } catch {
+            conditionMatches = true;
+          }
+        }
+
+        if (!conditionMatches) continue;
+
+        // BLOCK takes highest precedence
+        if (policy.permissionLevel === 'BLOCK') {
+          decision = 'BLOCK';
+          matchedPolicy = {
+            policyId: policy.policyId,
+            name: policy.name,
+            permissionLevel: policy.permissionLevel,
+            priority: policy.priority,
+            action: policy.action,
+          };
+          reason = `Blocked by policy: ${policy.name}`;
+          break;
+        }
+
+        // REQUIRE_APPROVAL - note but continue checking for BLOCK
+        if (policy.permissionLevel === 'REQUIRE_APPROVAL' && decision === 'ALLOW') {
+          decision = 'REQUIRE_APPROVAL';
+          matchedPolicy = {
+            policyId: policy.policyId,
+            name: policy.name,
+            permissionLevel: policy.permissionLevel,
+            priority: policy.priority,
+            action: policy.action,
+          };
+          reason = `Requires approval per policy: ${policy.name}`;
+        }
+
+        // ALLOW - note but lower priority policies could override
+        if (policy.permissionLevel === 'ALLOW' && decision === 'ALLOW') {
+          matchedPolicy = {
+            policyId: policy.policyId,
+            name: policy.name,
+            permissionLevel: policy.permissionLevel,
+            priority: policy.priority,
+            action: policy.action,
+          };
+          reason = `Allowed by policy: ${policy.name}`;
         }
       }
+    } else {
+      // Zero-trust mode: action could not be inferred.
+      // Collect all matching policies and return the most restrictive decision.
+      const blockPolicies: typeof policies = [];
+      const approvalPolicies: typeof policies = [];
+      const allowPolicies: typeof policies = [];
 
-      if (!conditionMatches) continue;
+      for (const policy of policies) {
+        let conditionMatches = true;
+        if (policy.conditionRules) {
+          try {
+            const rules = JSON.parse(policy.conditionRules);
+            conditionMatches = evaluateConditions(rules, args ?? {});
+          } catch {
+            conditionMatches = true;
+          }
+        }
+        if (!conditionMatches) continue;
 
-      // BLOCK takes highest precedence
-      if (policy.permissionLevel === 'BLOCK') {
+        if (policy.permissionLevel === 'BLOCK') blockPolicies.push(policy);
+        else if (policy.permissionLevel === 'REQUIRE_APPROVAL') approvalPolicies.push(policy);
+        else if (policy.permissionLevel === 'ALLOW') allowPolicies.push(policy);
+      }
+
+      // Most restrictive decision wins (zero-trust)
+      if (blockPolicies.length > 0) {
+        // Pick the highest-priority BLOCK policy
         decision = 'BLOCK';
         matchedPolicy = {
-          policyId: policy.policyId,
-          name: policy.name,
-          permissionLevel: policy.permissionLevel,
-          priority: policy.priority,
-          action: policy.action,
+          policyId: blockPolicies[0].policyId,
+          name: blockPolicies[0].name,
+          permissionLevel: blockPolicies[0].permissionLevel,
+          priority: blockPolicies[0].priority,
+          action: blockPolicies[0].action,
         };
-        reason = `Blocked by policy: ${policy.name}`;
-        break;
-      }
-
-      // REQUIRE_APPROVAL - note but continue checking for BLOCK
-      if (policy.permissionLevel === 'REQUIRE_APPROVAL' && decision === 'ALLOW') {
+        reason = `Blocked by policy: ${blockPolicies[0].name} (zero-trust: action unknown)`;
+      } else if (approvalPolicies.length > 0) {
         decision = 'REQUIRE_APPROVAL';
         matchedPolicy = {
-          policyId: policy.policyId,
-          name: policy.name,
-          permissionLevel: policy.permissionLevel,
-          priority: policy.priority,
-          action: policy.action,
+          policyId: approvalPolicies[0].policyId,
+          name: approvalPolicies[0].name,
+          permissionLevel: approvalPolicies[0].permissionLevel,
+          priority: approvalPolicies[0].priority,
+          action: approvalPolicies[0].action,
         };
-        reason = `Requires approval per policy: ${policy.name}`;
-        // Don't break - continue to check for BLOCK policies with lower priority
-      }
-
-      // ALLOW - note but lower priority policies could override
-      if (policy.permissionLevel === 'ALLOW' && decision === 'ALLOW') {
+        reason = `Requires approval per policy: ${approvalPolicies[0].name} (zero-trust: action unknown)`;
+      } else if (allowPolicies.length > 0) {
+        decision = 'ALLOW';
         matchedPolicy = {
-          policyId: policy.policyId,
-          name: policy.name,
-          permissionLevel: policy.permissionLevel,
-          priority: policy.priority,
-          action: policy.action,
+          policyId: allowPolicies[0].policyId,
+          name: allowPolicies[0].name,
+          permissionLevel: allowPolicies[0].permissionLevel,
+          priority: allowPolicies[0].priority,
+          action: allowPolicies[0].action,
         };
-        reason = `Allowed by policy: ${policy.name}`;
+        reason = `Allowed by policy: ${allowPolicies[0].name}`;
+      } else {
+        // No matching policies at all - default deny
+        decision = 'BLOCK';
+        matchedPolicy = null;
+        reason = 'No matching policy found (default deny: action unknown)';
       }
     }
 
@@ -113,7 +251,7 @@ export async function POST(request: NextRequest) {
         sessionId,
         agentRole,
         toolName,
-        intentPayload: JSON.stringify(args ?? {}),
+        intentPayload: JSON.stringify(rawArgs ?? {}),
         evaluationResult: decision,
         matchedPolicyId: matchedPolicy ? (matchedPolicy.policyId as string) : null,
         latency: parseFloat(latency.toFixed(3)),

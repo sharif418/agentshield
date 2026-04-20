@@ -100,7 +100,7 @@ export function AuditLogs() {
     <div className="p-4 md:p-6 space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
-          <h2 className="text-lg font-semibold flex items-center gap-2">
+          <h2 className="text-lg font-semibold tracking-tight flex items-center gap-2">
             <FileText className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
             Audit Logs
             <Badge variant="outline" className="text-xs border-emerald-500/30 text-emerald-600 dark:text-emerald-400">
@@ -109,7 +109,7 @@ export function AuditLogs() {
           </h2>
           <p className="text-sm text-muted-foreground">Complete, immutable record of all system events</p>
         </div>
-        <Button variant="outline" className="h-8 text-xs" onClick={handleExport}>
+        <Button variant="outline" className="h-8 text-xs active:scale-[0.98] transition-transform" onClick={handleExport}>
           <Download className="h-3 w-3 mr-1" /> Export JSON
         </Button>
       </div>
@@ -137,7 +137,7 @@ export function AuditLogs() {
         />
       </div>
 
-      {/* Table */}
+      {/* Table - horizontally scrollable */}
       <Card className="border-0 shadow-sm">
         <CardContent className="p-0">
           {isLoading ? (
@@ -147,8 +147,10 @@ export function AuditLogs() {
               ))}
             </div>
           ) : !data?.logs.length ? (
-            <div className="text-center py-12 text-muted-foreground text-sm">
-              No audit logs found
+            <div className="text-center py-12 text-muted-foreground">
+              <FileText className="h-10 w-10 mx-auto mb-3 opacity-40" />
+              <p className="text-sm font-medium">No audit entries yet</p>
+              <p className="text-xs mt-1">Audit logs will appear as system events occur</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -159,26 +161,26 @@ export function AuditLogs() {
                     <TableHead className="text-xs">Timestamp</TableHead>
                     <TableHead className="text-xs">Event Type</TableHead>
                     <TableHead className="text-xs">Actor</TableHead>
-                    <TableHead className="text-xs">Details</TableHead>
+                    <TableHead className="text-xs min-w-[200px]">Details</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {data.logs.map((log) => {
                     const isExpanded = expandedRows.has(log.id)
                     return (
-                      <TableRow key={log.id} className="transition-colors">
+                      <TableRow key={log.id} className="transition-all duration-150 hover:bg-muted/30">
                         <TableCell className="w-8">
                           <div className={eventTypeColors[log.eventType] ?? 'text-muted-foreground'}>
                             {eventTypeIcons[log.eventType] ?? <FileText className="h-3.5 w-3.5" />}
                           </div>
                         </TableCell>
-                        <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                        <TableCell className="text-xs text-muted-foreground whitespace-nowrap tabular-nums">
                           {formatDistanceToNow(new Date(log.timestamp), { addSuffix: true })}
                         </TableCell>
                         <TableCell>
                           <Badge
                             variant="outline"
-                            className={`${eventTypeColors[log.eventType] ?? 'bg-gray-500/10 text-gray-600 border-gray-500/20'} gap-1`}
+                            className={`transition-transform duration-150 hover:scale-105 gap-1 ${eventTypeColors[log.eventType] ?? 'bg-gray-500/10 text-gray-600 border-gray-500/20'}`}
                           >
                             {eventTypeIcons[log.eventType] && (
                               <span className="inline-flex">{eventTypeIcons[log.eventType]}</span>
@@ -187,9 +189,9 @@ export function AuditLogs() {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-xs font-mono">{log.actor}</TableCell>
-                        <TableCell className="max-w-[200px]">
+                        <TableCell className="max-w-[300px]">
                           <button
-                            className="text-xs text-left text-muted-foreground hover:text-foreground transition-colors truncate flex items-center gap-1 w-full"
+                            className="text-xs text-left text-muted-foreground hover:text-foreground transition-colors duration-200 truncate flex items-center gap-1 w-full"
                             onClick={() => toggleRow(log.id)}
                           >
                             {isExpanded ? <ChevronDown className="h-3 w-3 shrink-0" /> : <ChevronR className="h-3 w-3 shrink-0" />}
@@ -222,14 +224,14 @@ export function AuditLogs() {
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
-          <span className="text-xs text-muted-foreground">
+          <span className="text-xs text-muted-foreground tabular-nums">
             Page {page + 1} of {totalPages} ({data?.total ?? 0} logs)
           </span>
           <div className="flex items-center gap-1">
             <Button
               variant="outline"
               size="icon"
-              className="h-7 w-7"
+              className="h-7 w-7 active:scale-95 transition-transform"
               disabled={page === 0}
               onClick={() => setPage(page - 1)}
             >
@@ -238,7 +240,7 @@ export function AuditLogs() {
             <Button
               variant="outline"
               size="icon"
-              className="h-7 w-7"
+              className="h-7 w-7 active:scale-95 transition-transform"
               disabled={page >= totalPages - 1}
               onClick={() => setPage(page + 1)}
             >

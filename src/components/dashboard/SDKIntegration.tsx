@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Code2, Copy, Check, Play, Zap, Terminal, Box, ArrowRight, ArrowLeft } from 'lucide-react'
+import { Code2, Copy, Check, Play, Zap, Terminal, Box, ArrowRight } from 'lucide-react'
 import { Light as SyntaxHighlighter } from 'react-syntax-highlighter'
 import tsx from 'react-syntax-highlighter/dist/esm/languages/hljs/typescript'
 import python from 'react-syntax-highlighter/dist/esm/languages/hljs/python'
@@ -287,7 +287,7 @@ function CopyButton({ text }: { text: string }) {
     <Button
       variant="ghost"
       size="icon"
-      className="h-6 w-6 absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+      className="h-6 w-6 absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity active:scale-95"
       onClick={handleCopy}
     >
       {copied ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3" />}
@@ -295,7 +295,6 @@ function CopyButton({ text }: { text: string }) {
   )
 }
 
-// Interactive playground component
 function EvaluatePlayground() {
   const [agentRole, setAgentRole] = useState('DataAgent')
   const [toolName, setToolName] = useState('PostgreSQL')
@@ -331,7 +330,7 @@ function EvaluatePlayground() {
   }
 
   return (
-    <Card className="border-0 shadow-sm">
+    <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-300">
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-semibold flex items-center gap-2">
           <Play className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
@@ -362,7 +361,7 @@ function EvaluatePlayground() {
           <Input className="h-8 text-sm font-mono" value={args} onChange={(e) => setArgs(e.target.value)} />
         </div>
         <Button
-          className="w-full h-8 text-sm bg-emerald-600 hover:bg-emerald-700 text-white"
+          className="w-full h-8 text-sm bg-emerald-600 hover:bg-emerald-700 text-white active:scale-[0.98] transition-transform"
           onClick={handleEval}
           disabled={evalMutation.isPending}
         >
@@ -404,7 +403,7 @@ export function SDKIntegration() {
   return (
     <div className="p-4 md:p-6 space-y-4">
       <div>
-        <h2 className="text-lg font-semibold flex items-center gap-2">
+        <h2 className="text-lg font-semibold tracking-tight flex items-center gap-2">
           <Code2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
           SDK & Integration
         </h2>
@@ -414,7 +413,7 @@ export function SDKIntegration() {
       </div>
 
       {/* Architecture Diagram */}
-      <Card className="border-0 shadow-sm">
+      <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-300">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-semibold flex items-center gap-2">
             <Box className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
@@ -433,7 +432,7 @@ export function SDKIntegration() {
               { label: 'Decision', color: 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/20' },
             ].map((item, i) =>
               item.color ? (
-                <Badge key={i} variant="outline" className={`${item.color} px-3 py-1.5 text-xs font-medium`}>
+                <Badge key={i} variant="outline" className={`${item.color} px-3 py-1.5 text-xs font-medium transition-transform duration-150 hover:scale-105`}>
                   {item.label}
                 </Badge>
               ) : (
@@ -442,15 +441,15 @@ export function SDKIntegration() {
             )}
           </div>
           <div className="flex items-center justify-center gap-4 mt-2 flex-wrap text-xs text-muted-foreground">
-            <span>ALLOW → Proceed</span>
-            <span>BLOCK → Reject</span>
-            <span>REQUIRE_APPROVAL → Human Review → Webhook Notification</span>
+            <span className="text-emerald-600 dark:text-emerald-400">ALLOW → Proceed</span>
+            <span className="text-red-600 dark:text-red-400">BLOCK → Reject</span>
+            <span className="text-amber-600 dark:text-amber-400">REQUIRE_APPROVAL → Human Review → Webhook</span>
           </div>
         </CardContent>
       </Card>
 
       {/* Installation */}
-      <Card className="border-0 shadow-sm">
+      <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-300">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-semibold flex items-center gap-2">
             <Terminal className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
@@ -458,13 +457,13 @@ export function SDKIntegration() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-2 mb-3">
+          <div className="flex items-center gap-2 mb-3 overflow-x-auto">
             {LANGUAGES.map((lang) => (
               <Button
                 key={lang}
                 variant={language === lang ? 'default' : 'outline'}
                 size="sm"
-                className={`h-7 text-xs ${language === lang ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : ''}`}
+                className={`h-7 text-xs shrink-0 active:scale-[0.98] transition-transform ${language === lang ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : ''}`}
                 onClick={() => setLanguage(lang)}
               >
                 {lang}
@@ -472,22 +471,22 @@ export function SDKIntegration() {
             ))}
           </div>
           <div className="relative group bg-muted/50 dark:bg-muted/30 rounded-lg p-3 font-mono text-sm flex items-center justify-between">
-            <span className="text-xs">{installCmd}</span>
-            <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity" onClick={copyInstall}>
+            <span className="text-xs overflow-x-auto">{installCmd}</span>
+            <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-2 active:scale-95" onClick={copyInstall}>
               {copiedInstall ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3" />}
             </Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* Framework Selector */}
-      <div className="flex items-center gap-2 flex-wrap">
+      {/* Framework Selector - scrollable on mobile */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1">
         {FRAMEWORKS.map((fw) => (
           <Button
             key={fw}
             variant={framework === fw ? 'secondary' : 'ghost'}
             size="sm"
-            className={`h-7 text-xs ${framework === fw ? 'bg-emerald-600/10 text-emerald-600 dark:text-emerald-400' : ''}`}
+            className={`h-7 text-xs shrink-0 active:scale-[0.98] transition-transform ${framework === fw ? 'bg-emerald-600/10 text-emerald-600 dark:text-emerald-400' : ''}`}
             onClick={() => setFramework(fw)}
           >
             {fw}
@@ -495,7 +494,7 @@ export function SDKIntegration() {
         ))}
       </div>
 
-      {/* Code Block */}
+      {/* Code Block - horizontally scrollable */}
       <Card className="border-0 shadow-sm">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-semibold flex items-center gap-2">
@@ -504,7 +503,7 @@ export function SDKIntegration() {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="relative group">
+          <div className="relative group overflow-x-auto">
             <CopyButton text={code} />
             <SyntaxHighlighter
               language={language === 'TypeScript' ? 'typescript' : 'python'}
@@ -523,11 +522,11 @@ export function SDKIntegration() {
       </Card>
 
       {/* Interactive Playground + API Reference */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         <EvaluatePlayground />
 
         {/* API Reference */}
-        <Card className="border-0 shadow-sm">
+        <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-300">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold">API Reference</CardTitle>
           </CardHeader>
@@ -571,9 +570,9 @@ export function SDKIntegration() {
                 Connect to <code className="font-mono text-[10px]">/?XTransformPort=3003</code>
               </p>
               <div className="flex flex-wrap gap-1">
-                <Badge variant="outline" className="text-[10px]">approval:new</Badge>
-                <Badge variant="outline" className="text-[10px]">approval:updated</Badge>
-                <Badge variant="outline" className="text-[10px]">approval:reminder</Badge>
+                <Badge variant="outline" className="text-[10px] transition-transform duration-150 hover:scale-105">approval:new</Badge>
+                <Badge variant="outline" className="text-[10px] transition-transform duration-150 hover:scale-105">approval:updated</Badge>
+                <Badge variant="outline" className="text-[10px] transition-transform duration-150 hover:scale-105">approval:reminder</Badge>
               </div>
             </div>
           </CardContent>

@@ -61,7 +61,6 @@ const eventOptions = [
   'APPROVAL_DECISION',
 ]
 
-// Delivery history mock
 interface DeliveryRecord {
   id: string
   timestamp: string
@@ -91,7 +90,6 @@ export function WebhookConfigComponent() {
   const [deleteTarget, setDeleteTarget] = useState<WebhookConfigType | null>(null)
   const [showDelivery, setShowDelivery] = useState<string | null>(null)
 
-  // Form state
   const [name, setName] = useState('')
   const [url, setUrl] = useState('')
   const [channel, setChannel] = useState('slack')
@@ -206,7 +204,6 @@ export function WebhookConfigComponent() {
   }
 
   const testWebhook = (wh: WebhookConfigType) => {
-    // Simulate a test webhook delivery
     toast.success(`Test event sent to ${wh.name}`, {
       description: `Channel: ${wh.channel} — Simulated delivery (200 OK)`,
     })
@@ -223,16 +220,16 @@ export function WebhookConfigComponent() {
 
   return (
     <div className="p-4 md:p-6 space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
-          <h2 className="text-lg font-semibold flex items-center gap-2">
+          <h2 className="text-lg font-semibold tracking-tight flex items-center gap-2">
             <WebhookIcon className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
             Webhook Configuration
           </h2>
           <p className="text-sm text-muted-foreground">Manage notification webhooks for policy events</p>
         </div>
         <Button
-          className="h-8 text-sm bg-emerald-600 hover:bg-emerald-700 text-white"
+          className="h-8 text-sm bg-emerald-600 hover:bg-emerald-700 text-white active:scale-[0.98] transition-transform"
           onClick={() => {
             setEditWebhook(null)
             resetForm()
@@ -258,9 +255,9 @@ export function WebhookConfigComponent() {
       ) : webhooks.length === 0 ? (
         <Card className="border-0 shadow-sm">
           <CardContent className="py-12 flex flex-col items-center text-muted-foreground">
-            <WebhookIcon className="h-10 w-10 mb-2 opacity-40" />
+            <WebhookIcon className="h-12 w-12 mb-3 opacity-40" />
             <p className="text-sm font-medium">No webhooks configured</p>
-            <p className="text-xs">Create one to start receiving notifications</p>
+            <p className="text-xs mt-1">Create one to start receiving notifications for policy events</p>
           </CardContent>
         </Card>
       ) : (
@@ -270,22 +267,22 @@ export function WebhookConfigComponent() {
             const isShowingDelivery = showDelivery === wh.id
 
             return (
-              <Card key={wh.id} className={cn('group hover:shadow-lg transition-all duration-300 border-0 shadow-sm border-l-2', chConfig.border)}>
+              <Card key={wh.id} className={cn('group hover:shadow-md hover:border-emerald-500/30 transition-all duration-300 border-0 shadow-sm border-l-2', chConfig.border)}>
                 <CardContent className="p-4 space-y-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className={cn('flex h-8 w-8 items-center justify-center rounded-lg bg-muted/50', chConfig.color)}>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className={cn('flex h-8 w-8 items-center justify-center rounded-lg bg-muted/50 shrink-0', chConfig.color)}>
                         {chConfig.icon}
                       </div>
-                      <div>
+                      <div className="min-w-0">
                         <h3 className="font-medium text-sm">{wh.name}</h3>
                         <p className="text-xs text-muted-foreground truncate max-w-[200px]">{wh.url}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Badge variant="outline" className={cn('text-xs capitalize', chConfig.badge)}>{wh.channel}</Badge>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Badge variant="outline" className={cn('text-xs capitalize transition-transform duration-150 hover:scale-105', chConfig.badge)}>{wh.channel}</Badge>
                       {wh.enabled ? (
-                        <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20" variant="outline">
+                        <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 transition-transform duration-150 hover:scale-105" variant="outline">
                           Active
                         </Badge>
                       ) : (
@@ -308,7 +305,7 @@ export function WebhookConfigComponent() {
 
                   {/* Delivery History */}
                   <button
-                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors duration-200"
                     onClick={() => setShowDelivery(isShowingDelivery ? null : wh.id)}
                   >
                     {isShowingDelivery ? 'Hide' : 'Show'} delivery history ({deliveryHistory(wh.channel).length})
@@ -320,7 +317,7 @@ export function WebhookConfigComponent() {
                           <span className={d.status === 'success' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500'}>
                             {d.status === 'success' ? '●' : '✕'} {d.statusCode}
                           </span>
-                          <span className="text-muted-foreground font-mono">
+                          <span className="text-muted-foreground font-mono tabular-nums">
                             {new Date(d.timestamp).toLocaleTimeString()}
                           </span>
                         </div>
@@ -332,7 +329,7 @@ export function WebhookConfigComponent() {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="h-7 text-xs"
+                      className="h-7 text-xs active:scale-[0.98] transition-transform"
                       onClick={() => testWebhook(wh)}
                     >
                       <Send className="h-3 w-3 mr-1" /> Test
@@ -340,7 +337,7 @@ export function WebhookConfigComponent() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-7 text-xs hover:bg-muted"
+                      className="h-7 text-xs hover:bg-muted transition-colors duration-200"
                       onClick={() => openEdit(wh)}
                     >
                       <Pencil className="h-3 w-3 mr-1" /> Edit
@@ -348,7 +345,7 @@ export function WebhookConfigComponent() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-7 text-xs text-red-500 hover:text-red-600 hover:bg-red-500/10"
+                      className="h-7 text-xs text-red-500 hover:text-red-600 hover:bg-red-500/10 transition-colors duration-200 active:scale-95"
                       onClick={() => setDeleteTarget(wh)}
                     >
                       <Trash2 className="h-3 w-3 mr-1" /> Delete
@@ -361,11 +358,11 @@ export function WebhookConfigComponent() {
         </div>
       )}
 
-      {/* Create/Edit Dialog */}
+      {/* Create/Edit Dialog - full screen on mobile */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-lg dialog-fullscreen-mobile backdrop-blur-sm">
           <DialogHeader>
-            <DialogTitle>{editWebhook ? 'Edit Webhook' : 'Create Webhook'}</DialogTitle>
+            <DialogTitle className="tracking-tight">{editWebhook ? 'Edit Webhook' : 'Create Webhook'}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-1.5">
@@ -419,7 +416,7 @@ export function WebhookConfigComponent() {
                     key={event}
                     type="button"
                     onClick={() => toggleEvent(event)}
-                    className={`px-2 py-1 rounded text-xs border transition-colors ${
+                    className={`px-2 py-1 rounded text-xs border transition-all duration-200 active:scale-[0.98] ${
                       events.includes(event)
                         ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
                         : 'border-border text-muted-foreground hover:border-muted-foreground/30'
@@ -436,11 +433,11 @@ export function WebhookConfigComponent() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setFormOpen(false)} className="h-8 text-sm">
+            <Button variant="outline" onClick={() => setFormOpen(false)} className="h-8 text-sm active:scale-[0.98] transition-transform">
               Cancel
             </Button>
             <Button
-              className="h-8 text-sm bg-emerald-600 hover:bg-emerald-700 text-white"
+              className="h-8 text-sm bg-emerald-600 hover:bg-emerald-700 text-white active:scale-[0.98] transition-transform"
               onClick={handleSubmit}
               disabled={createMutation.isPending || updateMutation.isPending}
             >
@@ -456,7 +453,7 @@ export function WebhookConfigComponent() {
       {/* Delete Confirmation */}
       {deleteTarget && (
         <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
-          <DialogContent>
+          <DialogContent className="backdrop-blur-sm">
             <DialogHeader>
               <DialogTitle>Delete Webhook</DialogTitle>
             </DialogHeader>
@@ -464,12 +461,12 @@ export function WebhookConfigComponent() {
               Are you sure you want to delete &quot;{deleteTarget.name}&quot;?
             </p>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setDeleteTarget(null)} className="h-8 text-sm">
+              <Button variant="outline" onClick={() => setDeleteTarget(null)} className="h-8 text-sm active:scale-[0.98] transition-transform">
                 Cancel
               </Button>
               <Button
                 variant="destructive"
-                className="h-8 text-sm"
+                className="h-8 text-sm active:scale-[0.98] transition-transform"
                 onClick={() => deleteMutation.mutate(deleteTarget.id)}
               >
                 Delete
@@ -482,5 +479,4 @@ export function WebhookConfigComponent() {
   )
 }
 
-// Export with the name expected by DashboardLayout
 export { WebhookConfigComponent as WebhookConfig }

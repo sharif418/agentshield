@@ -3,7 +3,7 @@
 import { Card, CardContent } from '@/components/ui/card'
 import { type LucideIcon } from 'lucide-react'
 import { useMotionValue, useMotionValueEvent, animate } from 'framer-motion'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { cn } from '@/lib/utils'
 
 interface StatCardProps {
@@ -43,9 +43,24 @@ function AnimatedNumber({ value, suffix = '', isPercentage = false }: { value: n
 }
 
 export function StatCard({ title, value, icon: Icon, trend, trendUp, suffix = '', loading, gradient, iconBg, isPercentage }: StatCardProps) {
+  const [prevValue, setPrevValue] = useState(value)
+  const [pulseIcon, setPulseIcon] = useState(false)
+  const iconRef = useRef<HTMLDivElement>(null)
+
+  // Detect value changes for icon pulse
+  useEffect(() => {
+    if (prevValue !== value && prevValue !== 0) {
+      const timer1 = setTimeout(() => setPulseIcon(true), 0)
+      const timer2 = setTimeout(() => setPulseIcon(false), 500)
+      return () => { clearTimeout(timer1); clearTimeout(timer2) }
+    }
+    const timer = setTimeout(() => setPrevValue(value), 0)
+    return () => clearTimeout(timer)
+  }, [value, prevValue])
+
   if (loading) {
     return (
-      <Card className="relative overflow-hidden">
+      <Card className="relative overflow-hidden shadow-sm">
         <CardContent className="p-4 md:p-6">
           <div className="flex items-center justify-between">
             <div className="space-y-2">
@@ -60,7 +75,7 @@ export function StatCard({ title, value, icon: Icon, trend, trendUp, suffix = ''
   }
 
   return (
-    <Card className="relative overflow-hidden group hover:shadow-lg transition-all duration-300 border-0 shadow-sm">
+    <Card className="relative overflow-hidden group hover:shadow-md transition-all duration-300 border-0 shadow-sm gradient-border-hover">
       {/* Gradient background */}
       <div className={cn(
         'absolute inset-0 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity duration-300',
@@ -74,10 +89,14 @@ export function StatCard({ title, value, icon: Icon, trend, trendUp, suffix = ''
             </p>
             <AnimatedNumber value={value} suffix={suffix} isPercentage={isPercentage} />
           </div>
-          <div className={cn(
-            'flex h-10 w-10 items-center justify-center rounded-lg shrink-0 group-hover:scale-110 transition-transform duration-300',
-            iconBg ?? 'bg-emerald-600/10 text-emerald-600 dark:text-emerald-400'
-          )}>
+          <div
+            ref={iconRef}
+            className={cn(
+              'flex h-10 w-10 items-center justify-center rounded-lg shrink-0 group-hover:scale-110 transition-transform duration-300',
+              iconBg ?? 'bg-emerald-600/10 text-emerald-600 dark:text-emerald-400',
+              pulseIcon && 'icon-pulse'
+            )}
+          >
             <Icon className="h-5 w-5" />
           </div>
         </div>

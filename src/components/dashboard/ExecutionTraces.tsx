@@ -64,7 +64,6 @@ const decisionColor: Record<string, string> = {
   REQUIRE_APPROVAL: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
 }
 
-// Row background tinting by result
 const rowBorder: Record<string, string> = {
   ALLOW: 'border-l-2 border-l-emerald-500/40',
   BLOCK: 'border-l-2 border-l-red-500/40',
@@ -98,7 +97,6 @@ export function ExecutionTraces() {
     },
   })
 
-  // Fetch all traces for histogram
   const { data: histData } = useQuery<{ traces: TraceRecord[]; total: number }>({
     queryKey: ['traces-histogram'],
     queryFn: async () => {
@@ -109,7 +107,6 @@ export function ExecutionTraces() {
     enabled: showHistogram,
   })
 
-  // Build latency histogram
   const latencyHistogram = useMemo(() => {
     if (!histData?.traces) return []
     const buckets = [
@@ -127,7 +124,6 @@ export function ExecutionTraces() {
     return buckets
   }, [histData])
 
-  // Group traces by sessionId
   const sessionGroups = useMemo(() => {
     if (!data?.traces) return []
     const groups: Record<string, TraceRecord[]> = {}
@@ -148,16 +144,17 @@ export function ExecutionTraces() {
     <div className="p-4 md:p-6 space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
-          <h2 className="text-lg font-semibold flex items-center gap-2">
+          <h2 className="text-lg font-semibold tracking-tight flex items-center gap-2">
             <Activity className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
             Execution Traces
           </h2>
           <p className="text-sm text-muted-foreground">Monitor all agent tool call evaluations</p>
         </div>
+        {/* Histogram toggle hidden on very small screens */}
         <Button
           variant="outline"
           size="sm"
-          className="h-8 text-xs gap-1"
+          className="h-8 text-xs gap-1 hidden sm:flex active:scale-[0.98] transition-transform"
           onClick={() => setShowHistogram(!showHistogram)}
         >
           <BarChart3 className="h-3 w-3" />
@@ -196,17 +193,17 @@ export function ExecutionTraces() {
         </Card>
       )}
 
-      {/* Session Grouping Summary */}
+      {/* Session Grouping Summary - wraps on mobile */}
       {sessionGroups.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {sessionGroups.slice(0, 5).map((group) => (
             <button
               key={group.sessionId}
-              className="px-2 py-1 rounded-md text-xs bg-muted/50 hover:bg-muted border border-border transition-colors"
+              className="px-2 py-1 rounded-md text-xs bg-muted/50 hover:bg-muted border border-border transition-colors duration-200 active:scale-[0.98]"
               onClick={() => { setFilterSession(group.sessionId); setPage(0) }}
             >
               <span className="font-mono">{group.sessionId.substring(0, 12)}...</span>
-              <Badge variant="secondary" className="ml-1 text-[10px] h-4">{group.count}</Badge>
+              <Badge variant="secondary" className="ml-1 text-[10px] h-4 tabular-nums">{group.count}</Badge>
             </button>
           ))}
         </div>
@@ -254,7 +251,7 @@ export function ExecutionTraces() {
         </Select>
       </div>
 
-      {/* Traces Table */}
+      {/* Traces Table - horizontally scrollable */}
       <Card className="border-0 shadow-sm">
         <CardContent className="p-0">
           {isLoading ? (
@@ -264,15 +261,17 @@ export function ExecutionTraces() {
               ))}
             </div>
           ) : !data?.traces.length ? (
-            <div className="text-center py-12 text-muted-foreground text-sm">
-              No traces found
+            <div className="text-center py-12 text-muted-foreground">
+              <Search className="h-10 w-10 mx-auto mb-3 opacity-40" />
+              <p className="text-sm font-medium">No traces match your filters</p>
+              <p className="text-xs mt-1">Try adjusting your search criteria or clearing filters</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="text-xs">Trace ID</TableHead>
+                    <TableHead className="text-xs sticky-first-col bg-card">Trace ID</TableHead>
                     <TableHead className="text-xs">Session</TableHead>
                     <TableHead className="text-xs">Agent Role</TableHead>
                     <TableHead className="text-xs">Tool</TableHead>
@@ -286,7 +285,7 @@ export function ExecutionTraces() {
                     <TableRow
                       key={trace.traceId}
                       className={cn(
-                        'cursor-pointer transition-colors',
+                        'cursor-pointer transition-all duration-150',
                         rowBorder[trace.evaluationResult] ?? '',
                         trace.evaluationResult === 'BLOCK' ? 'hover:bg-red-500/[0.04] dark:hover:bg-red-500/[0.06]' :
                         trace.evaluationResult === 'ALLOW' ? 'hover:bg-emerald-500/[0.04] dark:hover:bg-emerald-500/[0.06]' :
@@ -294,7 +293,7 @@ export function ExecutionTraces() {
                       )}
                       onClick={() => setSelectedTrace(trace)}
                     >
-                      <TableCell className="text-xs font-mono max-w-[100px] truncate">
+                      <TableCell className="text-xs font-mono max-w-[100px] truncate sticky-first-col bg-card">
                         {trace.traceId}
                       </TableCell>
                       <TableCell className="text-xs font-mono max-w-[80px] truncate text-muted-foreground">
@@ -303,11 +302,11 @@ export function ExecutionTraces() {
                       <TableCell className="text-xs">{trace.agentRole}</TableCell>
                       <TableCell className="text-xs">{trace.toolName}</TableCell>
                       <TableCell>
-                        <Badge variant="outline" className={decisionColor[trace.evaluationResult] ?? ''}>
+                        <Badge variant="outline" className={`transition-transform duration-150 hover:scale-105 ${decisionColor[trace.evaluationResult] ?? ''}`}>
                           {trace.evaluationResult === 'REQUIRE_APPROVAL' ? 'APPROVAL' : trace.evaluationResult}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-xs font-mono">{trace.latency.toFixed(1)}ms</TableCell>
+                      <TableCell className="text-xs font-mono tabular-nums">{trace.latency.toFixed(1)}ms</TableCell>
                       <TableCell className="text-xs text-muted-foreground">
                         {formatDistanceToNow(new Date(trace.timestamp), { addSuffix: true })}
                       </TableCell>
@@ -323,14 +322,14 @@ export function ExecutionTraces() {
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
-          <span className="text-xs text-muted-foreground">
+          <span className="text-xs text-muted-foreground tabular-nums">
             Page {page + 1} of {totalPages} ({data?.total ?? 0} traces)
           </span>
           <div className="flex items-center gap-1">
             <Button
               variant="outline"
               size="icon"
-              className="h-7 w-7"
+              className="h-7 w-7 active:scale-95 transition-transform"
               disabled={page === 0}
               onClick={() => setPage(page - 1)}
             >
@@ -339,7 +338,7 @@ export function ExecutionTraces() {
             <Button
               variant="outline"
               size="icon"
-              className="h-7 w-7"
+              className="h-7 w-7 active:scale-95 transition-transform"
               disabled={page >= totalPages - 1}
               onClick={() => setPage(page + 1)}
             >

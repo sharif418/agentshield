@@ -55,7 +55,7 @@ const statusColors: Record<string, string> = {
   PENDING: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
   APPROVED: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
   REJECTED: 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20',
-  MODIFIED: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
+  MODIFIED: 'bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20',
 }
 
 function formatJsonSafe(str: string): string {
@@ -66,7 +66,6 @@ function formatJsonSafe(str: string): string {
   }
 }
 
-// Live time waiting indicator
 function LiveTimeWaiting({ createdAt }: { createdAt: string }) {
   const [timeStr, setTimeStr] = useState('')
 
@@ -75,7 +74,7 @@ function LiveTimeWaiting({ createdAt }: { createdAt: string }) {
       setTimeStr(formatDistanceToNow(new Date(createdAt), { addSuffix: true }))
     }
     update()
-    const interval = setInterval(update, 15000) // Update every 15s
+    const interval = setInterval(update, 15000)
     return () => clearInterval(interval)
   }, [createdAt])
 
@@ -136,7 +135,7 @@ export function ApprovalCard({ approval }: ApprovalCardProps) {
 
   return (
     <>
-      <Card className="group hover:shadow-lg transition-all duration-300 border-0 shadow-sm">
+      <Card className="group hover:shadow-md hover:border-emerald-500/30 transition-all duration-300 border-0 shadow-sm">
         <CardContent className="p-4 space-y-3">
           {/* Header */}
           <div className="flex items-start justify-between gap-2">
@@ -147,7 +146,7 @@ export function ApprovalCard({ approval }: ApprovalCardProps) {
               <div>
                 <div className="flex items-center gap-2">
                   <span className="font-medium text-sm">{approval.trace.agentRole}</span>
-                  <Badge variant="outline" className={statusColors[approval.status] ?? ''}>
+                  <Badge variant="outline" className={`transition-transform duration-150 hover:scale-105 ${statusColors[approval.status] ?? ''}`}>
                     {approval.status}
                   </Badge>
                 </div>
@@ -171,7 +170,7 @@ export function ApprovalCard({ approval }: ApprovalCardProps) {
           {/* Collapsible Agent Context */}
           <Collapsible open={contextOpen} onOpenChange={setContextOpen}>
             <CollapsibleTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-6 text-xs w-full justify-center hover:bg-muted">
+              <Button variant="ghost" size="sm" className="h-6 text-xs w-full justify-center hover:bg-muted transition-colors duration-200">
                 {contextOpen ? <ChevronUp className="h-3 w-3 mr-1" /> : <ChevronDown className="h-3 w-3 mr-1" />}
                 {contextOpen ? 'Hide' : 'Show'} Agent Context
               </Button>
@@ -217,7 +216,7 @@ export function ApprovalCard({ approval }: ApprovalCardProps) {
             <div className="flex items-center gap-2 pt-1">
               <Button
                 size="sm"
-                className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700 text-white flex-1"
+                className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700 text-white flex-1 active:scale-[0.98] transition-transform"
                 onClick={() => actionMutation.mutate({ requestId: approval.requestId, status: 'APPROVED' })}
                 disabled={actionMutation.isPending}
               >
@@ -226,7 +225,7 @@ export function ApprovalCard({ approval }: ApprovalCardProps) {
               <Button
                 size="sm"
                 variant="destructive"
-                className="h-7 text-xs flex-1"
+                className="h-7 text-xs flex-1 active:scale-[0.98] transition-transform"
                 onClick={() => actionMutation.mutate({ requestId: approval.requestId, status: 'REJECTED' })}
                 disabled={actionMutation.isPending}
               >
@@ -235,7 +234,7 @@ export function ApprovalCard({ approval }: ApprovalCardProps) {
               <Button
                 size="sm"
                 variant="outline"
-                className="h-7 text-xs border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 flex-1"
+                className="h-7 text-xs border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 flex-1 active:scale-[0.98] transition-transform"
                 onClick={() => setModifyOpen(true)}
               >
                 <Edit3 className="h-3 w-3 mr-1" /> Modify
@@ -245,11 +244,11 @@ export function ApprovalCard({ approval }: ApprovalCardProps) {
         </CardContent>
       </Card>
 
-      {/* Modify Dialog */}
+      {/* Modify Dialog - full screen on mobile */}
       <Dialog open={modifyOpen} onOpenChange={setModifyOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-lg dialog-fullscreen-mobile backdrop-blur-sm">
           <DialogHeader>
-            <DialogTitle>Modify Action</DialogTitle>
+            <DialogTitle className="tracking-tight">Modify Action</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 py-2">
             <div className="space-y-1.5">
@@ -268,11 +267,11 @@ export function ApprovalCard({ approval }: ApprovalCardProps) {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setModifyOpen(false)} className="h-8 text-sm">
+            <Button variant="outline" onClick={() => setModifyOpen(false)} className="h-8 text-sm active:scale-[0.98] transition-transform">
               Cancel
             </Button>
             <Button
-              className="h-8 text-sm bg-amber-600 hover:bg-amber-700 text-white"
+              className="h-8 text-sm bg-amber-600 hover:bg-amber-700 text-white active:scale-[0.98] transition-transform"
               onClick={() => actionMutation.mutate({ requestId: approval.requestId, status: 'MODIFIED', modifiedAction })}
               disabled={actionMutation.isPending}
             >

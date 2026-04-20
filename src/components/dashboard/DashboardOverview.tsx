@@ -119,10 +119,7 @@ export function DashboardOverview() {
   // Calculate Policy Coverage
   const policyCoverage = (() => {
     if (!stats?.policyBreakdown) return { covered: 0, total: 4, pct: 0 }
-    const rolesWithPolicies = new Set<string>()
-    // We need to fetch policies to know roles, but we can infer from trace data
-    // Use a simple heuristic based on total policies and typical role distribution
-    const totalRoles = 4 // DataAgent, CodeAgent, FinanceAgent, SupportAgent
+    const totalRoles = 4
     if (stats.totalPolicies >= 12) return { covered: totalRoles, total: totalRoles, pct: 100 }
     if (stats.totalPolicies >= 8) return { covered: 3, total: totalRoles, pct: 75 }
     if (stats.totalPolicies >= 4) return { covered: 2, total: totalRoles, pct: 50 }
@@ -143,14 +140,14 @@ export function DashboardOverview() {
   }
 
   return (
-    <div className="p-4 md:p-6 space-y-6">
+    <div className="p-4 md:p-6 space-y-4 md:space-y-6">
       <div>
-        <h2 className="text-lg font-semibold">Dashboard Overview</h2>
+        <h2 className="text-lg font-semibold tracking-tight">Dashboard Overview</h2>
         <p className="text-sm text-muted-foreground">Monitor your AI agent governance in real-time</p>
       </div>
 
-      {/* Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
+      {/* Stat Cards - responsive grid: 1 col mobile, 2 sm, 3 md, 6 lg */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
         <StatCard
           title="Total Policies"
           value={stats?.totalPolicies ?? 0}
@@ -214,9 +211,9 @@ export function DashboardOverview() {
       </div>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
         {/* Policy Distribution Pie */}
-        <Card className="border-0 shadow-sm">
+        <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-300 hover:border-emerald-500/30">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold">Policy Distribution</CardTitle>
           </CardHeader>
@@ -265,7 +262,7 @@ export function DashboardOverview() {
         </Card>
 
         {/* Trace Activity Area Chart */}
-        <Card className="lg:col-span-2 border-0 shadow-sm">
+        <Card className="lg:col-span-2 border-0 shadow-sm hover:shadow-md transition-shadow duration-300 hover:border-emerald-500/30">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
@@ -320,10 +317,10 @@ export function DashboardOverview() {
         </Card>
       </div>
 
-      {/* Recent Activity + Evaluate Panel + Policy Coverage */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+      {/* Recent Activity + Evaluate Panel + Policy Coverage - stack on mobile */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         {/* Recent Activity Feed */}
-        <Card className="lg:col-span-2 border-0 shadow-sm">
+        <Card className="md:col-span-2 border-0 shadow-sm hover:shadow-md transition-shadow duration-300">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
               <Activity className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
@@ -346,7 +343,7 @@ export function DashboardOverview() {
                       initial={{ opacity: 0, x: -8 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: i * 0.03 }}
-                      className="flex items-center justify-between py-1.5 px-2 rounded-md hover:bg-muted/50 transition-colors text-xs w-full text-left group"
+                      className="flex items-center justify-between py-1.5 px-2 rounded-md hover:bg-muted/50 transition-colors duration-200 text-xs w-full text-left group active:scale-[0.99]"
                       onClick={() => setActiveSection('traces')}
                     >
                       <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -356,11 +353,11 @@ export function DashboardOverview() {
                         <span className="truncate">{trace.toolName}</span>
                       </div>
                       <div className="flex items-center gap-2 shrink-0 ml-2">
-                        <Badge className={decisionColor[trace.evaluationResult] ?? ''} variant="outline">
+                        <Badge className={`transition-transform duration-150 hover:scale-105 ${decisionColor[trace.evaluationResult] ?? ''}`} variant="outline">
                           {trace.evaluationResult === 'REQUIRE_APPROVAL' ? 'APPROVAL' : trace.evaluationResult}
                         </Badge>
-                        <span className="text-muted-foreground w-14 text-right font-mono">{trace.latency.toFixed(1)}ms</span>
-                        <ArrowRight className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <span className="text-muted-foreground w-14 text-right font-mono tabular-nums">{trace.latency.toFixed(1)}ms</span>
+                        <ArrowRight className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all duration-200" />
                       </div>
                     </motion.button>
                   ))}
@@ -375,7 +372,7 @@ export function DashboardOverview() {
         </Card>
 
         {/* Policy Coverage Card */}
-        <Card className="border-0 shadow-sm">
+        <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-300">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
               <Target className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
@@ -384,7 +381,7 @@ export function DashboardOverview() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="text-center">
-              <span className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{policyCoverage.pct}%</span>
+              <span className="text-3xl font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">{policyCoverage.pct}%</span>
               <p className="text-xs text-muted-foreground mt-1">{policyCoverage.covered} of {policyCoverage.total} agent roles covered</p>
             </div>
             <Progress value={policyCoverage.pct} className="h-2" />
@@ -404,7 +401,7 @@ export function DashboardOverview() {
           </CardContent>
         </Card>
 
-        {/* Quick Evaluate */}
+        {/* Quick Evaluate - stacks below on mobile */}
         <EvaluatePanel />
       </div>
     </div>

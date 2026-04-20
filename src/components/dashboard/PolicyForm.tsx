@@ -189,9 +189,9 @@ export function PolicyForm({ open, onOpenChange, policy }: PolicyFormProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto custom-scrollbar">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto custom-scrollbar dialog-fullscreen-mobile backdrop-blur-sm">
         <DialogHeader>
-          <DialogTitle>{isEdit ? 'Edit Policy' : 'Create New Policy'}</DialogTitle>
+          <DialogTitle className="tracking-tight">{isEdit ? 'Edit Policy' : 'Create New Policy'}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
@@ -261,7 +261,7 @@ export function PolicyForm({ open, onOpenChange, policy }: PolicyFormProps) {
                   key={pl.value}
                   type="button"
                   onClick={() => setPermissionLevel(pl.value)}
-                  className={`flex items-center gap-1.5 p-2 rounded-lg border text-xs font-medium transition-all ${
+                  className={`flex items-center gap-1.5 p-2 rounded-lg border text-xs font-medium transition-all duration-200 active:scale-[0.98] ${
                     permissionLevel === pl.value
                       ? `${pl.color} ring-2 ring-offset-1 ring-current`
                       : 'border-border hover:border-muted-foreground/30 text-muted-foreground'
@@ -293,7 +293,7 @@ export function PolicyForm({ open, onOpenChange, policy }: PolicyFormProps) {
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label className="text-xs">Priority</Label>
-              <span className="text-xs font-mono text-muted-foreground">{priority}</span>
+              <span className="text-xs font-mono tabular-nums text-muted-foreground">{priority}</span>
             </div>
             <Slider
               value={[priority]}
@@ -312,11 +312,11 @@ export function PolicyForm({ open, onOpenChange, policy }: PolicyFormProps) {
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} className="h-8 text-sm">
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="h-8 text-sm active:scale-[0.98] transition-transform">
             Cancel
           </Button>
           <Button
-            className="h-8 text-sm bg-emerald-600 hover:bg-emerald-700 text-white"
+            className="h-8 text-sm bg-emerald-600 hover:bg-emerald-700 text-white active:scale-[0.98] transition-transform"
             onClick={handleSubmit}
             disabled={isPending}
           >

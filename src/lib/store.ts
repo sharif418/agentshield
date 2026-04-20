@@ -9,6 +9,8 @@ export type SectionId =
   | 'audit'
   | 'webhooks'
   | 'sdk'
+  | 'livestream'
+  | 'agents'
 
 interface AppState {
   activeSection: SectionId
@@ -19,6 +21,10 @@ interface AppState {
   setWsConnected: (connected: boolean) => void
   commandOpen: boolean
   setCommandOpen: (open: boolean) => void
+  lastRefresh: Date | null
+  setLastRefresh: (date: Date) => void
+  dbRecordCount: number
+  setDbRecordCount: (count: number) => void
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -30,6 +36,10 @@ export const useAppStore = create<AppState>((set) => ({
   setWsConnected: (connected) => set({ wsConnected: connected }),
   commandOpen: false,
   setCommandOpen: (open) => set({ commandOpen: open }),
+  lastRefresh: null,
+  setLastRefresh: (date) => set({ lastRefresh: date }),
+  dbRecordCount: 0,
+  setDbRecordCount: (count) => set({ dbRecordCount: count }),
 }))
 
 export const sectionLabels: Record<SectionId, string> = {
@@ -41,4 +51,6 @@ export const sectionLabels: Record<SectionId, string> = {
   audit: 'Audit Logs',
   webhooks: 'Webhooks',
   sdk: 'SDK & Docs',
+  livestream: 'Live Stream',
+  agents: 'Agents',
 }

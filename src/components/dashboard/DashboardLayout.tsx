@@ -10,9 +10,11 @@ import { ReasoningGraph } from './ReasoningGraph'
 import { AuditLogs } from './AuditLogs'
 import { WebhookConfig } from './WebhookConfig'
 import { SDKIntegration } from './SDKIntegration'
+import { LiveStream } from './LiveStream'
+import { AgentRoles } from './AgentRoles'
 import { ThemeToggle } from './ThemeToggle'
 import { useWebSocket } from '@/lib/use-websocket'
-import { Shield, WifiOff, Menu, Search, LayoutDashboard, Activity, CheckSquare, GitBranch, FileText, Webhook, Code2 } from 'lucide-react'
+import { Shield, WifiOff, Menu, Search, LayoutDashboard, Activity, CheckSquare, GitBranch, FileText, Webhook, Code2, Clock, Database, ChevronRight, Radio, Bot } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet'
@@ -25,8 +27,10 @@ import {
   CommandList,
   CommandSeparator,
 } from '@/components/ui/command'
-import { useEffect, useCallback } from 'react'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { useEffect, useCallback, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { formatDistanceToNow } from 'date-fns'
 
 const sectionComponents: Record<string, React.ComponentType> = {
   dashboard: DashboardOverview,
@@ -34,6 +38,8 @@ const sectionComponents: Record<string, React.ComponentType> = {
   approvals: ApprovalQueue,
   traces: ExecutionTraces,
   reasoning: ReasoningGraph,
+  livestream: LiveStream,
+  agents: AgentRoles,
   audit: AuditLogs,
   webhooks: WebhookConfig,
   sdk: SDKIntegration,
@@ -45,18 +51,39 @@ const sectionIcons: Record<SectionId, React.ReactNode> = {
   approvals: <CheckSquare className="h-4 w-4" />,
   traces: <Activity className="h-4 w-4" />,
   reasoning: <GitBranch className="h-4 w-4" />,
+  livestream: <Radio className="h-4 w-4" />,
+  agents: <Bot className="h-4 w-4" />,
   audit: <FileText className="h-4 w-4" />,
   webhooks: <Webhook className="h-4 w-4" />,
   sdk: <Code2 className="h-4 w-4" />,
 }
 
-const sectionKeys: SectionId[] = ['dashboard', 'policies', 'approvals', 'traces', 'reasoning', 'audit', 'webhooks', 'sdk']
+const sectionKeys: SectionId[] = ['dashboard', 'policies', 'approvals', 'traces', 'reasoning', 'livestream', 'agents', 'audit', 'webhooks', 'sdk']
 
 export function DashboardLayout() {
-  const { activeSection, wsConnected, commandOpen, setCommandOpen, setActiveSection } = useAppStore()
+  const { activeSection, wsConnected, commandOpen, setCommandOpen, setActiveSection, lastRefresh, setLastRefresh, dbRecordCount, setDbRecordCount } = useAppStore()
   useWebSocket()
 
   const ActiveSection = sectionComponents[activeSection] ?? DashboardOverview
+
+  // Fetch stats for footer DB count
+  const { data: statsData } = useQuery({
+    queryKey: ['stats-footer'],
+    queryFn: async () => {
+      const res = await fetch('/api/stats')
+      if (!res.ok) return null
+      const data = await res.json()
+      setLastRefresh(new Date())
+      setDbRecordCount(
+        (data.totalPolicies ?? 0) +
+        (data.totalTraces ?? 0) +
+        (data.pendingApprovals ?? 0) +
+        (data.auditLogCount ?? 0)
+      )
+      return data
+    },
+    refetchInterval: 30000,
+  })
 
   // Fetch policies and traces for command palette search
   const { data: policiesData } = useQuery({
@@ -88,19 +115,18 @@ export function DashboardLayout() {
       return
     }
 
-    // Number keys 1-8 to switch sections (only when not in input)
+    // Number keys 1-9,0 to switch sections (only when not in input)
     if (
       !e.metaKey &&
       !e.ctrlKey &&
       !e.altKey &&
       !e.shiftKey &&
-      e.key >= '1' &&
-      e.key <= '8' &&
+      ((e.key >= '1' && e.key <= '9') || e.key === '0') &&
       !(e.target instanceof HTMLInputElement) &&
       !(e.target instanceof HTMLTextAreaElement) &&
       !(e.target instanceof HTMLSelectElement)
     ) {
-      const index = parseInt(e.key) - 1
+      const index = e.key === '0' ? 9 : parseInt(e.key) - 1
       if (index < sectionKeys.length) {
         setActiveSection(sectionKeys[index])
       }
@@ -111,6 +137,19 @@ export function DashboardLayout() {
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [handleKeyDown])
+
+  // Refresh time display
+  const [refreshStr, setRefreshStr] = useState('')
+  useEffect(() => {
+    const update = () => {
+      if (lastRefresh) {
+        setRefreshStr(formatDistanceToNow(lastRefresh, { addSuffix: true }))
+      }
+    }
+    update()
+    const interval = setInterval(update, 15000)
+    return () => clearInterval(interval)
+  }, [lastRefresh])
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -128,7 +167,7 @@ export function DashboardLayout() {
               {/* Mobile menu */}
               <Sheet>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="md:hidden h-8 w-8">
+                  <Button variant="ghost" size="icon" className="md:hidden h-8 w-8 active:scale-95 transition-transform">
                     <Menu className="h-4 w-4" />
                   </Button>
                 </SheetTrigger>
@@ -140,7 +179,16 @@ export function DashboardLayout() {
 
               <div className="flex items-center gap-2">
                 <Shield className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                <h1 className="font-semibold text-sm md:text-base">AgentShield</h1>
+                <h1 className="font-semibold text-sm md:text-base tracking-tight">AgentShield</h1>
+              </div>
+
+              {/* Breadcrumb / Section indicator */}
+              <div className="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground ml-2">
+                <ChevronRight className="h-3 w-3" />
+                <span className="flex items-center gap-1">
+                  {sectionIcons[activeSection]}
+                  <span className="font-medium text-foreground">{sectionLabels[activeSection]}</span>
+                </span>
               </div>
             </div>
 
@@ -149,7 +197,7 @@ export function DashboardLayout() {
               <Button
                 variant="outline"
                 size="sm"
-                className="h-8 text-xs text-muted-foreground gap-2 hidden sm:flex"
+                className="h-8 text-xs text-muted-foreground gap-2 hidden sm:flex active:scale-[0.98] transition-transform"
                 onClick={() => setCommandOpen(true)}
               >
                 <Search className="h-3 w-3" />
@@ -159,29 +207,40 @@ export function DashboardLayout() {
                 </kbd>
               </Button>
 
-              {/* Connection status */}
-              <div className="flex items-center gap-1.5 text-xs">
-                {wsConnected ? (
-                  <>
-                    <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-                    </span>
-                    <span className="hidden sm:inline text-emerald-600 dark:text-emerald-400">Live</span>
-                  </>
-                ) : (
-                  <>
-                    <WifiOff className="h-3 w-3 text-muted-foreground" />
-                    <span className="hidden sm:inline text-muted-foreground">Offline</span>
-                  </>
-                )}
-              </div>
+              {/* Connection status with tooltip */}
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center gap-1.5 text-xs cursor-help">
+                      {wsConnected ? (
+                        <>
+                          <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                          </span>
+                          <span className="hidden sm:inline text-emerald-600 dark:text-emerald-400">Live</span>
+                        </>
+                      ) : (
+                        <>
+                          <WifiOff className="h-3 w-3 text-muted-foreground" />
+                          <span className="hidden sm:inline text-muted-foreground">Offline</span>
+                        </>
+                      )}
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="text-xs">
+                    {wsConnected
+                      ? 'Connected to real-time approval notification service via WebSocket'
+                      : 'Not connected to real-time service. Approval notifications will not update automatically.'}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               <ThemeToggle />
             </div>
           </header>
 
           {/* Section Content */}
-          <main className="flex-1 overflow-y-auto custom-scrollbar">
+          <main className="flex-1 overflow-y-auto custom-scrollbar scroll-smooth">
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeSection}
@@ -198,11 +257,24 @@ export function DashboardLayout() {
         </div>
       </div>
 
-      {/* Footer */}
+      {/* Enhanced Footer */}
       <footer className="border-t border-border bg-card/80 backdrop-blur-sm py-2 px-4 flex items-center justify-between text-xs text-muted-foreground shrink-0">
-        <span>AgentShield Policy Engine v1.0.0</span>
         <div className="flex items-center gap-3">
-          <span className="hidden sm:inline">Secure AI Agent Governance</span>
+          <span>AgentShield Policy Engine v1.0.0</span>
+          <span className="hidden sm:inline text-border">|</span>
+          <span className="hidden sm:flex items-center gap-1">
+            <Database className="h-3 w-3" />
+            {dbRecordCount} records
+          </span>
+        </div>
+        <div className="flex items-center gap-3">
+          {refreshStr && (
+            <span className="hidden sm:flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              Updated {refreshStr}
+            </span>
+          )}
+          <span className="hidden md:inline">Development</span>
           <div className="flex items-center gap-1.5">
             <span className={`h-1.5 w-1.5 rounded-full ${wsConnected ? 'bg-emerald-500' : 'bg-red-400'}`} />
             <span>{wsConnected ? 'Connected' : 'Disconnected'}</span>

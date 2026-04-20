@@ -11,6 +11,8 @@ import {
   FileText,
   Webhook,
   Code2,
+  Radio,
+  Bot,
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react'
@@ -28,9 +30,11 @@ const navItems: { id: SectionId; label: string; icon: React.ReactNode; shortcut:
   { id: 'approvals', label: 'Approvals', icon: <CheckSquare className="h-5 w-5" />, shortcut: '3' },
   { id: 'traces', label: 'Traces', icon: <Activity className="h-5 w-5" />, shortcut: '4' },
   { id: 'reasoning', label: 'Reasoning', icon: <GitBranch className="h-5 w-5" />, shortcut: '5' },
-  { id: 'audit', label: 'Audit Logs', icon: <FileText className="h-5 w-5" />, shortcut: '6' },
-  { id: 'webhooks', label: 'Webhooks', icon: <Webhook className="h-5 w-5" />, shortcut: '7' },
-  { id: 'sdk', label: 'SDK & Docs', icon: <Code2 className="h-5 w-5" />, shortcut: '8' },
+  { id: 'livestream', label: 'Live Stream', icon: <Radio className="h-5 w-5" />, shortcut: '6' },
+  { id: 'agents', label: 'Agents', icon: <Bot className="h-5 w-5" />, shortcut: '7' },
+  { id: 'audit', label: 'Audit Logs', icon: <FileText className="h-5 w-5" />, shortcut: '8' },
+  { id: 'webhooks', label: 'Webhooks', icon: <Webhook className="h-5 w-5" />, shortcut: '9' },
+  { id: 'sdk', label: 'SDK & Docs', icon: <Code2 className="h-5 w-5" />, shortcut: '0' },
 ]
 
 export function Sidebar() {
@@ -67,13 +71,17 @@ export function Sidebar() {
                 variant={isActive ? 'secondary' : 'ghost'}
                 size={sidebarCollapsed ? 'icon' : 'default'}
                 className={cn(
-                  'w-full justify-start gap-3 transition-all duration-200',
+                  'w-full justify-start gap-3 transition-all duration-200 relative',
                   isActive && 'bg-emerald-600/10 text-emerald-600 dark:text-emerald-400 dark:bg-emerald-400/10 font-medium',
                   !isActive && 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
                   sidebarCollapsed && 'justify-center px-0'
                 )}
                 onClick={() => setActiveSection(item.id)}
               >
+                {/* Active left border indicator */}
+                {isActive && (
+                  <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-emerald-600 dark:bg-emerald-400 rounded-r" />
+                )}
                 <span className={cn(isActive && 'text-emerald-600 dark:text-emerald-400')}>
                   {item.icon}
                 </span>
@@ -112,7 +120,7 @@ export function Sidebar() {
           <Button
             variant="ghost"
             size="icon"
-            className="w-full h-8 hover:bg-muted/50"
+            className="w-full h-8 hover:bg-muted/50 transition-colors duration-200"
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
           >
             {sidebarCollapsed ? (
