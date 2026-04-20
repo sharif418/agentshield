@@ -1,0 +1,79 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Policy {
+  id              String   @id @default(cuid())
+  policyId        String   @unique
+  name            String
+  description     String?
+  agentRole       String
+  resource        String
+  action          String
+  permissionLevel String   // ALLOW, BLOCK, REQUIRE_APPROVAL
+  conditionRules  String?  // JSON string for context-aware rules
+  priority        Int      @default(0)
+  enabled         Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  traces ExecutionTrace[]
+}
+
+model ExecutionTrace {
+  id               String   @id @default(cuid())
+  traceId          String   @unique
+  sessionId        String
+  agentRole        String
+  toolName         String
+  intentPayload    String   // JSON string of full tool call arguments
+  evaluationResult String   // ALLOW, BLOCK, REQUIRE_APPROVAL
+  matchedPolicyId  String?
+  latency          Float    // milliseconds
+  timestamp        DateTime @default(now())
+
+  policy  Policy?  @relation(fields: [matchedPolicyId], references: [policyId])
+  approval ApprovalRequest?
+}
+
+model ApprovalRequest {
+  id               String   @id @default(cuid())
+  requestId        String   @unique
+  traceId          String   @unique
+  agentContext     String   // JSON - summary of prior state/conversation
+  requestedAction  String   // JSON - the proposed action details
+  status           String   @default("PENDING") // PENDING, APPROVED, REJECTED, MODIFIED
+  humanReviewerId  String?
+  reviewNotes      String?
+  modifiedAction   String?  // JSON - if supervisor modified the action
+  reviewTimestamp  DateTime?
+  createdAt        DateTime @default(now())
+
+  trace ExecutionTrace @relation(fields: [traceId], references: [traceId])
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  eventType   String   // POLICY_CREATED, POLICY_UPDATED, TRACE_EVALUATED, APPROVAL_DECISION, etc.
+  actor       String   // system, human_reviewer_id, or agent_role
+  details     String   // JSON string with full event details
+  timestamp   DateTime @default(now())
+  immutable   Boolean  @default(true) // Flag to prevent deletion
+}
+
+model WebhookConfig {
+  id        String   @id @default(cuid())
+  name      String
+  url       String
+  channel   String   // slack, teams, telegram
+  events    String   // JSON array of event types
+  secret    String?
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

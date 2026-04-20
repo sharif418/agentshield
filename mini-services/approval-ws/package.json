@@ -1,0 +1,12 @@
+{
+  "name": "approval-ws",
+  "version": "1.0.0",
+  "description": "WebSocket mini-service for real-time HITL approval notifications",
+  "type": "module",
+  "scripts": {
+    "dev": "bun --hot index.ts"
+  },
+  "dependencies": {
+    "socket.io": "^4.8.1"
+  }
+}

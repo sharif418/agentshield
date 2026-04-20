@@ -1,0 +1,283 @@
+'use client'
+
+import { useAppStore, sectionLabels, type SectionId } from '@/lib/store'
+import { Sidebar } from './Sidebar'
+import { DashboardOverview } from './DashboardOverview'
+import { PolicyManager } from './PolicyManager'
+import { ApprovalQueue } from './ApprovalQueue'
+import { ExecutionTraces } from './ExecutionTraces'
+import { ReasoningGraph } from './ReasoningGraph'
+import { AuditLogs } from './AuditLogs'
+import { WebhookConfig } from './WebhookConfig'
+import { SDKIntegration } from './SDKIntegration'
+import { ThemeToggle } from './ThemeToggle'
+import { useWebSocket } from '@/lib/use-websocket'
+import { Shield, WifiOff, Menu, Search, LayoutDashboard, Activity, CheckSquare, GitBranch, FileText, Webhook, Code2 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { AnimatePresence, motion } from 'framer-motion'
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet'
+import {
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+} from '@/components/ui/command'
+import { useEffect, useCallback } from 'react'
+import { useQuery } from '@tanstack/react-query'
+
+const sectionComponents: Record<string, React.ComponentType> = {
+  dashboard: DashboardOverview,
+  policies: PolicyManager,
+  approvals: ApprovalQueue,
+  traces: ExecutionTraces,
+  reasoning: ReasoningGraph,
+  audit: AuditLogs,
+  webhooks: WebhookConfig,
+  sdk: SDKIntegration,
+}
+
+const sectionIcons: Record<SectionId, React.ReactNode> = {
+  dashboard: <LayoutDashboard className="h-4 w-4" />,
+  policies: <Shield className="h-4 w-4" />,
+  approvals: <CheckSquare className="h-4 w-4" />,
+  traces: <Activity className="h-4 w-4" />,
+  reasoning: <GitBranch className="h-4 w-4" />,
+  audit: <FileText className="h-4 w-4" />,
+  webhooks: <Webhook className="h-4 w-4" />,
+  sdk: <Code2 className="h-4 w-4" />,
+}
+
+const sectionKeys: SectionId[] = ['dashboard', 'policies', 'approvals', 'traces', 'reasoning', 'audit', 'webhooks', 'sdk']
+
+export function DashboardLayout() {
+  const { activeSection, wsConnected, commandOpen, setCommandOpen, setActiveSection } = useAppStore()
+  useWebSocket()
+
+  const ActiveSection = sectionComponents[activeSection] ?? DashboardOverview
+
+  // Fetch policies and traces for command palette search
+  const { data: policiesData } = useQuery({
+    queryKey: ['policies-all-compact'],
+    queryFn: async () => {
+      const res = await fetch('/api/policies')
+      if (!res.ok) return []
+      return res.json() as Promise<Array<{ policyId: string; name: string; agentRole: string; permissionLevel: string }>>
+    },
+    enabled: commandOpen,
+  })
+
+  const { data: tracesData } = useQuery({
+    queryKey: ['traces-compact'],
+    queryFn: async () => {
+      const res = await fetch('/api/traces?limit=20')
+      if (!res.ok) return { traces: [] }
+      return res.json() as Promise<{ traces: Array<{ traceId: string; agentRole: string; toolName: string }> }>
+    },
+    enabled: commandOpen,
+  })
+
+  // Keyboard shortcuts
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    // Cmd+K / Ctrl+K for command palette
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      e.preventDefault()
+      setCommandOpen(!commandOpen)
+      return
+    }
+
+    // Number keys 1-8 to switch sections (only when not in input)
+    if (
+      !e.metaKey &&
+      !e.ctrlKey &&
+      !e.altKey &&
+      !e.shiftKey &&
+      e.key >= '1' &&
+      e.key <= '8' &&
+      !(e.target instanceof HTMLInputElement) &&
+      !(e.target instanceof HTMLTextAreaElement) &&
+      !(e.target instanceof HTMLSelectElement)
+    ) {
+      const index = parseInt(e.key) - 1
+      if (index < sectionKeys.length) {
+        setActiveSection(sectionKeys[index])
+      }
+    }
+  }, [commandOpen, setCommandOpen, setActiveSection])
+
+  useEffect(() => {
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [handleKeyDown])
+
+  return (
+    <div className="min-h-screen flex flex-col bg-background">
+      <div className="flex flex-1 overflow-hidden">
+        {/* Desktop Sidebar */}
+        <div className="hidden md:flex">
+          <Sidebar />
+        </div>
+
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col min-w-0">
+          {/* Top Bar */}
+          <header className="h-14 border-b border-border bg-card/80 backdrop-blur-sm flex items-center justify-between px-4 shrink-0">
+            <div className="flex items-center gap-3">
+              {/* Mobile menu */}
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon" className="md:hidden h-8 w-8">
+                    <Menu className="h-4 w-4" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="p-0 w-56">
+                  <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+                  <Sidebar />
+                </SheetContent>
+              </Sheet>
+
+              <div className="flex items-center gap-2">
+                <Shield className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                <h1 className="font-semibold text-sm md:text-base">AgentShield</h1>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {/* Search Button */}
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 text-xs text-muted-foreground gap-2 hidden sm:flex"
+                onClick={() => setCommandOpen(true)}
+              >
+                <Search className="h-3 w-3" />
+                <span className="max-w-[100px]">Search...</span>
+                <kbd className="ml-1 pointer-events-none inline-flex h-4 select-none items-center gap-0.5 rounded border bg-muted px-1 font-mono text-[10px] font-medium text-muted-foreground">
+                  ⌘K
+                </kbd>
+              </Button>
+
+              {/* Connection status */}
+              <div className="flex items-center gap-1.5 text-xs">
+                {wsConnected ? (
+                  <>
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                    </span>
+                    <span className="hidden sm:inline text-emerald-600 dark:text-emerald-400">Live</span>
+                  </>
+                ) : (
+                  <>
+                    <WifiOff className="h-3 w-3 text-muted-foreground" />
+                    <span className="hidden sm:inline text-muted-foreground">Offline</span>
+                  </>
+                )}
+              </div>
+              <ThemeToggle />
+            </div>
+          </header>
+
+          {/* Section Content */}
+          <main className="flex-1 overflow-y-auto custom-scrollbar">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeSection}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.2, ease: 'easeInOut' }}
+                className="h-full"
+              >
+                <ActiveSection />
+              </motion.div>
+            </AnimatePresence>
+          </main>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <footer className="border-t border-border bg-card/80 backdrop-blur-sm py-2 px-4 flex items-center justify-between text-xs text-muted-foreground shrink-0">
+        <span>AgentShield Policy Engine v1.0.0</span>
+        <div className="flex items-center gap-3">
+          <span className="hidden sm:inline">Secure AI Agent Governance</span>
+          <div className="flex items-center gap-1.5">
+            <span className={`h-1.5 w-1.5 rounded-full ${wsConnected ? 'bg-emerald-500' : 'bg-red-400'}`} />
+            <span>{wsConnected ? 'Connected' : 'Disconnected'}</span>
+          </div>
+        </div>
+      </footer>
+
+      {/* Command Palette */}
+      <CommandDialog open={commandOpen} onOpenChange={setCommandOpen}>
+        <CommandInput placeholder="Search policies, traces, sections..." />
+        <CommandList>
+          <CommandEmpty>No results found.</CommandEmpty>
+
+          <CommandGroup heading="Sections">
+            {sectionKeys.map((id, i) => (
+              <CommandItem
+                key={id}
+                onSelect={() => {
+                  setActiveSection(id)
+                  setCommandOpen(false)
+                }}
+                className="flex items-center gap-2"
+              >
+                {sectionIcons[id]}
+                <span>{sectionLabels[id]}</span>
+                <span className="ml-auto text-[10px] text-muted-foreground font-mono">{i + 1}</span>
+              </CommandItem>
+            ))}
+          </CommandGroup>
+
+          {policiesData && policiesData.length > 0 && (
+            <>
+              <CommandSeparator />
+              <CommandGroup heading="Policies">
+                {policiesData.slice(0, 8).map((p) => (
+                  <CommandItem
+                    key={p.policyId}
+                    onSelect={() => {
+                      setActiveSection('policies')
+                      setCommandOpen(false)
+                    }}
+                    className="flex items-center gap-2"
+                  >
+                    <Shield className="h-3 w-3 text-emerald-500" />
+                    <span className="truncate">{p.name}</span>
+                    <span className="ml-auto text-[10px] text-muted-foreground">{p.agentRole}</span>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </>
+          )}
+
+          {tracesData && tracesData.traces.length > 0 && (
+            <>
+              <CommandSeparator />
+              <CommandGroup heading="Recent Traces">
+                {tracesData.traces.slice(0, 6).map((t) => (
+                  <CommandItem
+                    key={t.traceId}
+                    onSelect={() => {
+                      setActiveSection('traces')
+                      setCommandOpen(false)
+                    }}
+                    className="flex items-center gap-2"
+                  >
+                    <Activity className="h-3 w-3 text-muted-foreground" />
+                    <span className="truncate font-mono text-xs">{t.traceId}</span>
+                    <span className="ml-auto text-[10px] text-muted-foreground">{t.agentRole} → {t.toolName}</span>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </>
+          )}
+        </CommandList>
+      </CommandDialog>
+    </div>
+  )
+}
