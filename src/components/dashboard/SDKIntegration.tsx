@@ -330,7 +330,7 @@ function EvaluatePlayground() {
   }
 
   return (
-    <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-300">
+    <Card className="border-0 shadow-sm glass-card glow-hover hover:shadow-md transition-shadow duration-300">
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-semibold flex items-center gap-2">
           <Play className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
@@ -402,8 +402,8 @@ export function SDKIntegration() {
 
   return (
     <div className="p-4 md:p-6 space-y-4">
-      <div>
-        <h2 className="text-lg font-semibold tracking-tight flex items-center gap-2">
+      <div className="section-header-gradient rounded-xl px-4 py-3 -mx-4 -mt-2 md:-mx-6 md:-mt-4 mb-2">
+        <h2 className="text-lg font-bold tracking-tight flex items-center gap-2 bg-gradient-to-r from-emerald-700 to-teal-600 dark:from-emerald-400 dark:to-teal-400 bg-clip-text text-transparent">
           <Code2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
           SDK & Integration
         </h2>
@@ -413,7 +413,7 @@ export function SDKIntegration() {
       </div>
 
       {/* Architecture Diagram */}
-      <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-300">
+      <Card className="border-0 shadow-sm glass-card glow-hover hover:shadow-md transition-shadow duration-300">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-semibold flex items-center gap-2">
             <Box className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
@@ -449,7 +449,7 @@ export function SDKIntegration() {
       </Card>
 
       {/* Installation */}
-      <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-300">
+      <Card className="border-0 shadow-sm glass-card glow-hover hover:shadow-md transition-shadow duration-300">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-semibold flex items-center gap-2">
             <Terminal className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
@@ -495,7 +495,7 @@ export function SDKIntegration() {
       </div>
 
       {/* Code Block - horizontally scrollable */}
-      <Card className="border-0 shadow-sm">
+      <Card className="border-0 shadow-sm glass-card glow-hover">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-semibold flex items-center gap-2">
             <Badge variant="outline" className="text-xs">{language}</Badge>
@@ -526,7 +526,7 @@ export function SDKIntegration() {
         <EvaluatePlayground />
 
         {/* API Reference */}
-        <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-300">
+        <Card className="border-0 shadow-sm glass-card glow-hover hover:shadow-md transition-shadow duration-300">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold">API Reference</CardTitle>
           </CardHeader>

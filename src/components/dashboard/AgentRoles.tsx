@@ -348,31 +348,31 @@ export function AgentRoles() {
   return (
     <div className="h-full flex flex-col p-4 md:p-6 gap-4">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center h-9 w-9 rounded-lg bg-emerald-600/10">
-            <Bot className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-          </div>
+      <div className="section-header-gradient rounded-xl px-4 py-3 -mx-4 -mt-2 md:-mx-6 md:-mt-4 mb-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h2 className="text-lg font-semibold">Agent Roles</h2>
-            <p className="text-xs text-muted-foreground">Policy coverage and activity stats per agent</p>
+            <h2 className="text-lg font-bold tracking-tight flex items-center gap-2 bg-gradient-to-r from-emerald-700 to-teal-600 dark:from-emerald-400 dark:to-teal-400 bg-clip-text text-transparent">
+              <Bot className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              Agent Roles
+            </h2>
+            <p className="text-sm text-muted-foreground">Policy coverage and activity stats per agent</p>
           </div>
-        </div>
 
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-8 gap-1.5 text-xs"
-          onClick={() => setCompareOpen(true)}
-        >
-          <ArrowLeftRight className="h-3.5 w-3.5" />
-          Compare Agents
-        </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 gap-1.5 text-xs"
+            onClick={() => setCompareOpen(true)}
+          >
+            <ArrowLeftRight className="h-3.5 w-3.5" />
+            Compare Agents
+          </Button>
+        </div>
       </div>
 
       {/* Risk Distribution */}
       {agents.length > 0 && (
-        <Card className="border-0 shadow-sm">
+        <Card className="border-0 shadow-sm glass-card glow-hover">
           <CardHeader className="pb-2 pt-4 px-4">
             <div className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
@@ -404,7 +404,7 @@ export function AgentRoles() {
             layout
             className="md:col-span-1"
           >
-            <Card className="border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleCardClick(agent)}>
+            <Card className="border-0 shadow-sm glass-card glow-hover hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleCardClick(agent)}>
               <CardContent className="p-4 space-y-3">
                 {/* Header */}
                 <div className="flex items-start justify-between">

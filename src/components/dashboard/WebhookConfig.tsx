@@ -220,24 +220,26 @@ export function WebhookConfigComponent() {
 
   return (
     <div className="p-4 md:p-6 space-y-4">
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <div>
-          <h2 className="text-lg font-semibold tracking-tight flex items-center gap-2">
-            <WebhookIcon className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-            Webhook Configuration
-          </h2>
-          <p className="text-sm text-muted-foreground">Manage notification webhooks for policy events</p>
+      <div className="section-header-gradient rounded-xl px-4 py-3 -mx-4 -mt-2 md:-mx-6 md:-mt-4 mb-2">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div>
+            <h2 className="text-lg font-bold tracking-tight flex items-center gap-2 bg-gradient-to-r from-emerald-700 to-teal-600 dark:from-emerald-400 dark:to-teal-400 bg-clip-text text-transparent">
+              <WebhookIcon className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              Webhook Configuration
+            </h2>
+            <p className="text-sm text-muted-foreground">Manage notification webhooks for policy events</p>
+          </div>
+          <Button
+            className="h-8 text-sm bg-emerald-600 hover:bg-emerald-700 text-white active:scale-[0.98] transition-transform"
+            onClick={() => {
+              setEditWebhook(null)
+              resetForm()
+              setFormOpen(true)
+            }}
+          >
+            <Plus className="h-3 w-3 mr-1" /> New Webhook
+          </Button>
         </div>
-        <Button
-          className="h-8 text-sm bg-emerald-600 hover:bg-emerald-700 text-white active:scale-[0.98] transition-transform"
-          onClick={() => {
-            setEditWebhook(null)
-            resetForm()
-            setFormOpen(true)
-          }}
-        >
-          <Plus className="h-3 w-3 mr-1" /> New Webhook
-        </Button>
       </div>
 
       {isLoading ? (
@@ -253,7 +255,7 @@ export function WebhookConfigComponent() {
           ))}
         </div>
       ) : webhooks.length === 0 ? (
-        <Card className="border-0 shadow-sm">
+        <Card className="border-0 shadow-sm glass-card glow-hover">
           <CardContent className="py-12 flex flex-col items-center text-muted-foreground">
             <WebhookIcon className="h-12 w-12 mb-3 opacity-40" />
             <p className="text-sm font-medium">No webhooks configured</p>
@@ -267,7 +269,7 @@ export function WebhookConfigComponent() {
             const isShowingDelivery = showDelivery === wh.id
 
             return (
-              <Card key={wh.id} className={cn('group hover:shadow-md hover:border-emerald-500/30 transition-all duration-300 border-0 shadow-sm border-l-2', chConfig.border)}>
+              <Card key={wh.id} className={cn('group glass-card glow-hover hover:shadow-md hover:border-emerald-500/30 transition-all duration-300 border-0 shadow-sm border-l-2', chConfig.border)}>
                 <CardContent className="p-4 space-y-3">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2 min-w-0">

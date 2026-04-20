@@ -343,15 +343,16 @@ export function ReasoningGraph() {
 
   return (
     <div className="p-4 md:p-6 space-y-4">
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <div>
-          <h2 className="text-lg font-semibold tracking-tight flex items-center gap-2">
-            <GitBranch className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-            Visual Reasoning Graph
-          </h2>
-          <p className="text-sm text-muted-foreground">Agent reasoning flow and policy decisions</p>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
+      <div className="section-header-gradient rounded-xl px-4 py-3 -mx-4 -mt-2 md:-mx-6 md:-mt-4 mb-2">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div>
+            <h2 className="text-lg font-bold tracking-tight flex items-center gap-2 bg-gradient-to-r from-emerald-700 to-teal-600 dark:from-emerald-400 dark:to-teal-400 bg-clip-text text-transparent">
+              <GitBranch className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              Visual Reasoning Graph
+            </h2>
+            <p className="text-sm text-muted-foreground">Agent reasoning flow and policy decisions</p>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
           <Select value={selectedSession} onValueChange={setSelectedSession}>
             <SelectTrigger className="h-8 text-sm w-full sm:w-48">
               <SelectValue placeholder="Select Session" />
@@ -375,6 +376,7 @@ export function ReasoningGraph() {
               <Maximize2 className="h-3 w-3" />
             </Button>
           </div>
+        </div>
         </div>
       </div>
 
@@ -414,7 +416,7 @@ export function ReasoningGraph() {
         )}
       </div>
 
-      <Card className="border-0 shadow-sm">
+      <Card className="border-0 shadow-sm glass-card glow-hover">
         <CardContent className="p-0 overflow-hidden">
           {isLoading ? (
             <div className="flex items-center justify-center h-96 text-muted-foreground text-sm">
@@ -509,7 +511,7 @@ export function ReasoningGraph() {
             exit={{ opacity: 0, y: 8 }}
             transition={{ duration: 0.2 }}
           >
-            <Card className="border-0 shadow-sm hover:border-emerald-500/30 transition-colors duration-200">
+            <Card className="border-0 shadow-sm glass-card glow-hover hover:border-emerald-500/30 transition-colors duration-200">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3 flex-wrap">
                   <Badge variant="outline" className="text-xs capitalize">{selectedNode.type}</Badge>

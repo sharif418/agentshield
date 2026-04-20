@@ -15,6 +15,7 @@ import { AgentRoles } from './AgentRoles'
 import { PolicySimulator } from './PolicySimulator'
 import { ThemeToggle } from './ThemeToggle'
 import { NotificationCenter } from './NotificationCenter'
+import { GlobalTimeRange } from './GlobalTimeRange'
 import { useWebSocket } from '@/lib/use-websocket'
 import { Shield, WifiOff, Menu, Search, LayoutDashboard, Activity, CheckSquare, GitBranch, FileText, Webhook, Code2, Clock, Database, ChevronRight, Radio, Bot, FlaskConical } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -62,7 +63,7 @@ const sectionIcons: Record<SectionId, React.ReactNode> = {
   sdk: <Code2 className="h-4 w-4" />,
 }
 
-const sectionKeys: SectionId[] = ['dashboard', 'policies', 'approvals', 'traces', 'reasoning', 'livestream', 'agents', 'simulator', 'audit', 'webhooks']
+const sectionKeys: SectionId[] = ['dashboard', 'policies', 'approvals', 'traces', 'reasoning', 'livestream', 'agents', 'simulator', 'audit', 'webhooks', 'sdk']
 
 export function DashboardLayout() {
   const { activeSection, wsConnected, commandOpen, setCommandOpen, setActiveSection, lastRefresh, setLastRefresh, dbRecordCount, setDbRecordCount } = useAppStore()
@@ -212,6 +213,8 @@ export function DashboardLayout() {
                   ⌘K
                 </kbd>
               </Button>
+
+              <GlobalTimeRange />
 
               {/* Connection status with tooltip */}
               <TooltipProvider>

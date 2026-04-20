@@ -35,7 +35,8 @@ const navItems: { id: SectionId; label: string; icon: React.ReactNode; shortcut:
   { id: 'agents', label: 'Agents', icon: <Bot className="h-5 w-5" />, shortcut: '7' },
   { id: 'simulator', label: 'Simulator', icon: <FlaskConical className="h-5 w-5" />, shortcut: '8' },
   { id: 'audit', label: 'Audit Logs', icon: <FileText className="h-5 w-5" />, shortcut: '9' },
-  { id: 'webhooks', label: 'Webhooks', icon: <Webhook className="h-5 w-5" />, shortcut: '0' },
+  { id: 'webhooks', label: 'Webhooks', icon: <Webhook className="h-5 w-5" />, shortcut: 'Q' },
+  { id: 'sdk', label: 'SDK & Docs', icon: <Code2 className="h-5 w-5" />, shortcut: 'W' },
 ]
 
 export function Sidebar() {

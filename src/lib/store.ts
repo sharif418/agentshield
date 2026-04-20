@@ -28,6 +28,8 @@ interface AppState {
   setDbRecordCount: (count: number) => void
   unreadNotificationCount: number
   setUnreadNotificationCount: (count: number) => void
+  timeRange: '24h' | '7d' | '30d' | '90d'
+  setTimeRange: (range: '24h' | '7d' | '30d' | '90d') => void
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -45,6 +47,8 @@ export const useAppStore = create<AppState>((set) => ({
   setDbRecordCount: (count) => set({ dbRecordCount: count }),
   unreadNotificationCount: 0,
   setUnreadNotificationCount: (count) => set({ unreadNotificationCount: count }),
+  timeRange: '24h',
+  setTimeRange: (range) => set({ timeRange: range }),
 }))
 
 export const sectionLabels: Record<SectionId, string> = {

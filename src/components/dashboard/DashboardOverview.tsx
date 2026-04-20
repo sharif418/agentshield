@@ -2,6 +2,8 @@
 
 import { StatCard } from './StatCard'
 import { EvaluatePanel } from './EvaluatePanel'
+import { SystemHealthPanel } from './SystemHealthPanel'
+import { PolicyConflictDetector } from './PolicyConflictDetector'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -317,6 +319,12 @@ export function DashboardOverview() {
             )}
           </CardContent>
         </Card>
+      </div>
+
+      {/* System Health Panel + Policy Conflict Detector */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+        <SystemHealthPanel />
+        <PolicyConflictDetector />
       </div>
 
       {/* Recent Activity + Evaluate Panel + Policy Coverage - stack on mobile */}

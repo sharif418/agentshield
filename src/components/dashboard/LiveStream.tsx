@@ -248,19 +248,18 @@ export function LiveStream() {
   return (
     <div className="h-full flex flex-col p-4 md:p-6 gap-4">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center h-9 w-9 rounded-lg bg-emerald-600/10">
-            <Radio className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-          </div>
+      <div className="section-header-gradient rounded-xl px-4 py-3 -mx-4 -mt-2 md:-mx-6 md:-mt-4 mb-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h2 className="text-lg font-semibold">Live Stream</h2>
-            <p className="text-xs text-muted-foreground">Real-time policy evaluation feed</p>
+            <h2 className="text-lg font-bold tracking-tight flex items-center gap-2 bg-gradient-to-r from-emerald-700 to-teal-600 dark:from-emerald-400 dark:to-teal-400 bg-clip-text text-transparent">
+              <Radio className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              Live Stream
+            </h2>
+            <p className="text-sm text-muted-foreground">Real-time policy evaluation feed</p>
           </div>
-        </div>
 
-        {/* Stats Row */}
-        <div className="flex items-center gap-3 flex-wrap">
+          {/* Stats Row */}
+          <div className="flex items-center gap-3 flex-wrap">
           {/* Connected indicator */}
           <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-muted/50 text-xs">
             <span className={`h-2 w-2 rounded-full ${wsConnected ? 'bg-emerald-500 animate-pulse' : 'bg-red-400'}`} />
@@ -280,6 +279,7 @@ export function LiveStream() {
             <BarChart3 className="h-3 w-3 text-muted-foreground" />
             <span>{currentRate}/min</span>
           </div>
+        </div>
         </div>
       </div>
 
