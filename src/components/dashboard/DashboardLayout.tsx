@@ -13,11 +13,13 @@ import { SDKIntegration } from './SDKIntegration'
 import { LiveStream } from './LiveStream'
 import { AgentRoles } from './AgentRoles'
 import { PolicySimulator } from './PolicySimulator'
+import { RateAnalytics } from './RateAnalytics'
+import { PolicyDiffViewer } from './PolicyDiffViewer'
 import { ThemeToggle } from './ThemeToggle'
 import { NotificationCenter } from './NotificationCenter'
 import { GlobalTimeRange } from './GlobalTimeRange'
 import { useWebSocket } from '@/lib/use-websocket'
-import { Shield, WifiOff, Menu, Search, LayoutDashboard, Activity, CheckSquare, GitBranch, FileText, Webhook, Code2, Clock, Database, ChevronRight, Radio, Bot, FlaskConical } from 'lucide-react'
+import { Shield, WifiOff, Menu, Search, LayoutDashboard, Activity, CheckSquare, GitBranch, FileText, Webhook, Code2, Clock, Database, ChevronRight, Radio, Bot, FlaskConical, Gauge, GitCompare } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet'
@@ -44,6 +46,8 @@ const sectionComponents: Record<string, React.ComponentType> = {
   livestream: LiveStream,
   agents: AgentRoles,
   simulator: PolicySimulator,
+  rateanalytics: RateAnalytics,
+  policydiff: PolicyDiffViewer,
   audit: AuditLogs,
   webhooks: WebhookConfig,
   sdk: SDKIntegration,
@@ -58,12 +62,14 @@ const sectionIcons: Record<SectionId, React.ReactNode> = {
   livestream: <Radio className="h-4 w-4" />,
   agents: <Bot className="h-4 w-4" />,
   simulator: <FlaskConical className="h-4 w-4" />,
+  rateanalytics: <Gauge className="h-4 w-4" />,
+  policydiff: <GitCompare className="h-4 w-4" />,
   audit: <FileText className="h-4 w-4" />,
   webhooks: <Webhook className="h-4 w-4" />,
   sdk: <Code2 className="h-4 w-4" />,
 }
 
-const sectionKeys: SectionId[] = ['dashboard', 'policies', 'approvals', 'traces', 'reasoning', 'livestream', 'agents', 'simulator', 'audit', 'webhooks', 'sdk']
+const sectionKeys: SectionId[] = ['dashboard', 'policies', 'approvals', 'traces', 'reasoning', 'livestream', 'agents', 'simulator', 'rateanalytics', 'policydiff', 'audit', 'webhooks', 'sdk']
 
 export function DashboardLayout() {
   const { activeSection, wsConnected, wsReconnecting, wsReconnectAttempt, commandOpen, setCommandOpen, setActiveSection, lastRefresh, setLastRefresh, dbRecordCount, setDbRecordCount, timeRange } = useAppStore()
@@ -167,7 +173,9 @@ export function DashboardLayout() {
         {/* Main Content */}
         <div className="flex-1 flex flex-col min-w-0">
           {/* Top Bar */}
-          <header className="h-14 border-b border-border bg-card/60 backdrop-blur-md flex items-center justify-between px-4 shrink-0 z-10">
+          <header className="h-14 border-b border-border bg-card/60 backdrop-blur-md flex items-center justify-between px-4 shrink-0 z-10 relative overflow-hidden">
+            {/* Subtle noise texture for header */}
+            <div className="absolute inset-0 dot-grid opacity-20 pointer-events-none" />
             <div className="flex items-center gap-3">
               {/* Mobile menu */}
               <Sheet>
@@ -278,7 +286,9 @@ export function DashboardLayout() {
       </div>
 
       {/* Enhanced Footer */}
-      <footer className="border-t border-border bg-card/60 backdrop-blur-md py-2 px-4 flex items-center justify-between text-xs text-muted-foreground shrink-0 z-10">
+      <footer className="border-t border-border bg-card/60 backdrop-blur-md py-2 px-4 flex items-center justify-between text-xs text-muted-foreground shrink-0 z-10 relative overflow-hidden">
+        {/* Subtle gradient accent line at top */}
+        <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent" />
         <div className="flex items-center gap-3">
           <button className="hover:text-foreground transition-colors duration-200 cursor-default" type="button">
             AgentShield Policy Engine v1.0.0

@@ -150,14 +150,17 @@ export function DashboardOverview() {
   }
 
   return (
-    <div className="p-4 md:p-6 space-y-4 md:space-y-6">
-      <div className="section-header-gradient rounded-xl px-4 py-3 -mx-4 -mt-2 md:-mx-6 md:-mt-4 mb-2">
-        <h2 className="text-lg font-bold tracking-tight bg-gradient-to-r from-emerald-700 to-teal-600 dark:from-emerald-400 dark:to-teal-400 bg-clip-text text-transparent">Dashboard Overview</h2>
+    <div className="p-4 md:p-6 space-y-4 md:space-y-6 relative">
+      {/* Dot grid background for section */}
+      <div className="absolute inset-0 dot-grid opacity-30 pointer-events-none rounded-xl" />
+
+      <div className="section-header-gradient section-header-accent rounded-xl px-4 py-3 -mx-4 -mt-2 md:-mx-6 md:-mt-4 mb-2 relative overflow-hidden">
+        <h2 className="text-lg font-bold tracking-tight gradient-text-shimmer">Dashboard Overview</h2>
         <p className="text-sm text-muted-foreground">Monitor your AI agent governance in real-time</p>
       </div>
 
       {/* Stat Cards - responsive grid: 1 col mobile, 2 sm, 3 md, 6 lg */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4 content-slide-in">
         <StatCard
           title="Total Policies"
           value={stats?.totalPolicies ?? 0}
@@ -221,7 +224,7 @@ export function DashboardOverview() {
       </div>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 content-slide-in content-slide-in-delay-1">
         {/* Policy Distribution Pie */}
         <Card className="border-0 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 hover:border-emerald-500/20 glow-hover glass-card">
           <CardHeader className="pb-2">
@@ -343,13 +346,13 @@ export function DashboardOverview() {
       </div>
 
       {/* System Health Panel + Policy Conflict Detector */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 content-slide-in content-slide-in-delay-2">
         <SystemHealthPanel />
         <PolicyConflictDetector />
       </div>
 
       {/* Recent Activity + Evaluate Panel + Policy Coverage - stack on mobile */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 content-slide-in content-slide-in-delay-3">
         {/* Recent Activity Feed */}
         <Card className="md:col-span-2 border-0 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 hover:border-emerald-500/20 glow-hover glass-card">
           <CardHeader className="pb-2">

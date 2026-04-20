@@ -131,9 +131,11 @@ export function StatCard({ title, value, icon: Icon, trend, trendUp, suffix = ''
   }
 
   return (
-    <Card className="relative overflow-hidden group hover:shadow-md transition-all duration-300 border-0 shadow-sm gradient-border-hover shimmer-hover card-shine">
+    <Card className="relative overflow-hidden group hover:shadow-md transition-all duration-300 border-0 shadow-sm gradient-border-hover shimmer-hover card-shine hover-lift animated-border">
       {/* Inner shadow at top for depth */}
       <div className="absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-black/[0.03] to-transparent dark:from-white/[0.02] dark:to-transparent pointer-events-none" />
+      {/* Dot grid pattern for subtle texture */}
+      <div className="absolute inset-0 dot-grid opacity-40 pointer-events-none" />
 
       {/* Gradient background */}
       <div className={cn(
@@ -154,6 +156,7 @@ export function StatCard({ title, value, icon: Icon, trend, trendUp, suffix = ''
               {title}
             </p>
             <AnimatedNumber value={value} suffix={suffix} isPercentage={isPercentage} />
+            <span className="sr-only number-display">{value}{isPercentage ? '%' : ''}{suffix}</span>
           </div>
           <div className="flex flex-col items-end gap-1">
             <div

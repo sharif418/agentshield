@@ -14,6 +14,8 @@ import {
   Radio,
   Bot,
   FlaskConical,
+  Gauge,
+  GitCompare,
   ChevronLeft,
   ChevronRight,
   ShieldCheck,
@@ -37,6 +39,8 @@ const navItems: { id: SectionId; label: string; icon: React.ReactNode; shortcut:
   { id: 'livestream', label: 'Live Stream', icon: <Radio className="h-5 w-5" />, shortcut: '6' },
   { id: 'agents', label: 'Agents', icon: <Bot className="h-5 w-5" />, shortcut: '7' },
   { id: 'simulator', label: 'Simulator', icon: <FlaskConical className="h-5 w-5" />, shortcut: '8' },
+  { id: 'rateanalytics', label: 'Rate Analytics', icon: <Gauge className="h-5 w-5" />, shortcut: 'E' },
+  { id: 'policydiff', label: 'Policy Diff', icon: <GitCompare className="h-5 w-5" />, shortcut: 'D' },
   { id: 'audit', label: 'Audit Logs', icon: <FileText className="h-5 w-5" />, shortcut: '9' },
   { id: 'webhooks', label: 'Webhooks', icon: <Webhook className="h-5 w-5" />, shortcut: 'Q' },
   { id: 'sdk', label: 'SDK & Docs', icon: <Code2 className="h-5 w-5" />, shortcut: 'W' },
@@ -70,10 +74,12 @@ export function Sidebar() {
     <TooltipProvider delayDuration={0}>
       <aside
         className={cn(
-          'flex flex-col border-r border-border bg-card transition-all duration-300 ease-in-out h-full',
+          'flex flex-col border-r border-border bg-card transition-all duration-300 ease-in-out h-full relative overflow-hidden',
           sidebarCollapsed ? 'w-16' : 'w-56'
         )}
       >
+        {/* Subtle gradient accent at bottom of sidebar */}
+        <div className="absolute bottom-0 inset-x-0 h-24 bg-gradient-to-t from-emerald-500/[0.03] to-transparent pointer-events-none" />
         {/* App header */}
         <div className="flex items-center gap-2 px-3 h-14 border-b border-border shrink-0">
           <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 shadow-sm shrink-0">

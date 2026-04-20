@@ -511,3 +511,169 @@
 .subtle-pulse {
   animation: subtlePulse 2.5s ease-in-out infinite;
 }
+
+/* ===== Round 6 Enhanced Visual Effects ===== */
+
+/* Animated gradient border - continuous flowing gradient border */
+@keyframes borderFlow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.animated-border {
+  position: relative;
+  border: none;
+}
+
+.animated-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: linear-gradient(90deg, rgba(16, 185, 129, 0.4), rgba(20, 184, 166, 0.1), rgba(6, 182, 212, 0.3), rgba(16, 185, 129, 0.1));
+  background-size: 300% 100%;
+  animation: borderFlow 4s ease infinite;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.animated-border:hover::before {
+  opacity: 1;
+}
+
+/* Content entrance animation with stagger */
+@keyframes contentSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.content-slide-in {
+  animation: contentSlideIn 0.35s ease-out forwards;
+  opacity: 0;
+}
+
+.content-slide-in-delay-1 { animation-delay: 0.05s; }
+.content-slide-in-delay-2 { animation-delay: 0.1s; }
+.content-slide-in-delay-3 { animation-delay: 0.15s; }
+.content-slide-in-delay-4 { animation-delay: 0.2s; }
+.content-slide-in-delay-5 { animation-delay: 0.25s; }
+.content-slide-in-delay-6 { animation-delay: 0.3s; }
+
+/* Hover lift effect - subtle elevation on hover */
+.hover-lift {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.08), 0 4px 10px -4px rgba(0, 0, 0, 0.04);
+}
+
+.dark .hover-lift:hover {
+  box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.3), 0 4px 10px -4px rgba(0, 0, 0, 0.2);
+}
+
+/* Gradient text with animated shimmer */
+.gradient-text-shimmer {
+  background: linear-gradient(90deg, #10b981, #14b8a6, #06b6d4, #10b981);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradientTextShimmer 3s linear infinite;
+}
+
+@keyframes gradientTextShimmer {
+  0% { background-position: 0% center; }
+  100% { background-position: 200% center; }
+}
+
+/* Dot grid pattern for section backgrounds */
+.dot-grid {
+  background-image: radial-gradient(circle, oklch(0.7 0 0 / 0.08) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.dark .dot-grid {
+  background-image: radial-gradient(circle, oklch(0.5 0 0 / 0.06) 1px, transparent 1px);
+}
+
+/* Glow ring for focused/selected items */
+.glow-ring {
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2), 0 0 12px rgba(16, 185, 129, 0.1);
+}
+
+.dark .glow-ring {
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25), 0 0 16px rgba(16, 185, 129, 0.12);
+}
+
+/* Smooth count-up number styling */
+.number-display {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+  letter-spacing: -0.02em;
+}
+
+/* Enhanced section header with bottom accent line */
+.section-header-accent {
+  position: relative;
+}
+
+.section-header-accent::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 60px;
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #10b981, #14b8a6);
+}
+
+/* Status indicator dot with pulse */
+.status-dot-active {
+  position: relative;
+}
+
+.status-dot-active::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  opacity: 0;
+  animation: statusDotPulse 2s ease-out infinite;
+}
+
+@keyframes statusDotPulse {
+  0% { opacity: 0.6; transform: scale(0.8); }
+  100% { opacity: 0; transform: scale(1.4); }
+}
+
+/* Subtle noise texture for card backgrounds */
+.noise-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0.015;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+}
+
+.dark .noise-bg::before {
+  opacity: 0.03;
+}

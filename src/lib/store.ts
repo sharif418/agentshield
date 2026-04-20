@@ -9,6 +9,8 @@ export type SectionId =
   | 'livestream'
   | 'agents'
   | 'simulator'
+  | 'rateanalytics'
+  | 'policydiff'
   | 'audit'
   | 'webhooks'
   | 'sdk'
@@ -68,6 +70,8 @@ export const sectionLabels: Record<SectionId, string> = {
   livestream: 'Live Stream',
   agents: 'Agents',
   simulator: 'Simulator',
+  rateanalytics: 'Rate Analytics',
+  policydiff: 'Policy Diff',
   audit: 'Audit Logs',
   webhooks: 'Webhooks',
   sdk: 'SDK & Docs',
