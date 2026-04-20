@@ -12,6 +12,7 @@ export async function GET() {
       recentTraces,
       avgLatencyResult,
       auditLogCount,
+      policiesByRoleData,
     ] = await Promise.all([
       db.policy.count(),
 
@@ -47,6 +48,11 @@ export async function GET() {
       }),
 
       db.auditLog.count(),
+
+      db.policy.groupBy({
+        by: ['agentRole'],
+        _count: { agentRole: true },
+      }),
     ]);
 
     const policyBreakdown: Record<string, number> = {};
@@ -57,6 +63,11 @@ export async function GET() {
     const traceBreakdown: Record<string, number> = {};
     for (const item of tracesByResult) {
       traceBreakdown[item.evaluationResult] = item._count.evaluationResult;
+    }
+
+    const policiesByRole: Record<string, number> = {};
+    for (const item of policiesByRoleData) {
+      policiesByRole[item.agentRole] = item._count.agentRole;
     }
 
     return NextResponse.json({
@@ -71,6 +82,7 @@ export async function GET() {
         ? parseFloat(avgLatencyResult._avg.latency.toFixed(3))
         : 0,
       auditLogCount,
+      policiesByRole,
     });
   } catch (error) {
     console.error('Error fetching stats:', error);

@@ -47,6 +47,7 @@ interface DashboardStats {
   }>
   averageLatency: number
   auditLogCount: number
+  policiesByRole: Record<string, number>
 }
 
 export function DashboardOverview() {
@@ -116,15 +117,16 @@ export function DashboardOverview() {
     return (stats.traceBreakdown.ALLOW ?? 0) / total * 100
   })()
 
-  // Calculate Policy Coverage
+  // Calculate Policy Coverage - per role from actual data
   const policyCoverage = (() => {
-    if (!stats?.policyBreakdown) return { covered: 0, total: 4, pct: 0 }
-    const totalRoles = 4
-    if (stats.totalPolicies >= 12) return { covered: totalRoles, total: totalRoles, pct: 100 }
-    if (stats.totalPolicies >= 8) return { covered: 3, total: totalRoles, pct: 75 }
-    if (stats.totalPolicies >= 4) return { covered: 2, total: totalRoles, pct: 50 }
-    if (stats.totalPolicies >= 1) return { covered: 1, total: totalRoles, pct: 25 }
-    return { covered: 0, total: totalRoles, pct: 0 }
+    const allRoles = ['DataAgent', 'CodeAgent', 'FinanceAgent', 'SupportAgent']
+    const roleCoverage = allRoles.map(role => ({
+      role,
+      covered: (stats?.policiesByRole?.[role] ?? 0) > 0,
+      count: stats?.policiesByRole?.[role] ?? 0,
+    }))
+    const coveredCount = roleCoverage.filter(r => r.covered).length
+    return { covered: coveredCount, total: allRoles.length, pct: Math.round((coveredCount / allRoles.length) * 100), roles: roleCoverage }
   })()
 
   const decisionColor: Record<string, string> = {
@@ -141,8 +143,8 @@ export function DashboardOverview() {
 
   return (
     <div className="p-4 md:p-6 space-y-4 md:space-y-6">
-      <div>
-        <h2 className="text-lg font-semibold tracking-tight">Dashboard Overview</h2>
+      <div className="section-header-gradient rounded-xl px-4 py-3 -mx-4 -mt-2 md:-mx-6 md:-mt-4 mb-2">
+        <h2 className="text-lg font-bold tracking-tight bg-gradient-to-r from-emerald-700 to-teal-600 dark:from-emerald-400 dark:to-teal-400 bg-clip-text text-transparent">Dashboard Overview</h2>
         <p className="text-sm text-muted-foreground">Monitor your AI agent governance in real-time</p>
       </div>
 
@@ -213,7 +215,7 @@ export function DashboardOverview() {
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
         {/* Policy Distribution Pie */}
-        <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-300 hover:border-emerald-500/30">
+        <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-300 glow-hover glass-card">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold">Policy Distribution</CardTitle>
           </CardHeader>
@@ -262,7 +264,7 @@ export function DashboardOverview() {
         </Card>
 
         {/* Trace Activity Area Chart */}
-        <Card className="lg:col-span-2 border-0 shadow-sm hover:shadow-md transition-shadow duration-300 hover:border-emerald-500/30">
+        <Card className="lg:col-span-2 border-0 shadow-sm hover:shadow-md transition-shadow duration-300 glow-hover glass-card">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
@@ -320,7 +322,7 @@ export function DashboardOverview() {
       {/* Recent Activity + Evaluate Panel + Policy Coverage - stack on mobile */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         {/* Recent Activity Feed */}
-        <Card className="md:col-span-2 border-0 shadow-sm hover:shadow-md transition-shadow duration-300">
+        <Card className="md:col-span-2 border-0 shadow-sm hover:shadow-md transition-shadow duration-300 glow-hover glass-card">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
               <Activity className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
@@ -372,7 +374,7 @@ export function DashboardOverview() {
         </Card>
 
         {/* Policy Coverage Card */}
-        <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-300">
+        <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-300 glow-hover glass-card">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
               <Target className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
@@ -386,17 +388,14 @@ export function DashboardOverview() {
             </div>
             <Progress value={policyCoverage.pct} className="h-2" />
             <div className="space-y-2">
-              {['DataAgent', 'CodeAgent', 'FinanceAgent', 'SupportAgent'].map((role) => {
-                const covered = stats?.totalPolicies ? stats.totalPolicies >= 4 : false
-                return (
-                  <div key={role} className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground">{role}</span>
-                    <span className={covered ? 'text-emerald-600 dark:text-emerald-400 font-medium' : 'text-red-500'}>
-                      {covered ? '● Covered' : '○ No policies'}
-                    </span>
-                  </div>
-                )
-              })}
+              {policyCoverage.roles.map((rc) => (
+                <div key={rc.role} className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground">{rc.role}</span>
+                  <span className={rc.covered ? 'text-emerald-600 dark:text-emerald-400 font-medium' : 'text-red-500'}>
+                    {rc.covered ? `● ${rc.count} policies` : '○ No policies'}
+                  </span>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>

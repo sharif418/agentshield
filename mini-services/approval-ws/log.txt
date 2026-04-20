@@ -1,0 +1,5 @@
+$ bun --hot index.ts
+[START] Approval WebSocket service running on port 3003
+[START] Health check: http://localhost:3003/health
+[START] Notify new: POST http://localhost:3003/notify/new
+[START] Notify update: POST http://localhost:3003/notify/update

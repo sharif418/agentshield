@@ -75,10 +75,10 @@ export function StatCard({ title, value, icon: Icon, trend, trendUp, suffix = ''
   }
 
   return (
-    <Card className="relative overflow-hidden group hover:shadow-md transition-all duration-300 border-0 shadow-sm gradient-border-hover">
+    <Card className="relative overflow-hidden group hover:shadow-md transition-all duration-300 border-0 shadow-sm gradient-border-hover shimmer-hover">
       {/* Gradient background */}
       <div className={cn(
-        'absolute inset-0 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity duration-300',
+        'absolute inset-0 opacity-[0.04] group-hover:opacity-[0.08] transition-opacity duration-300',
         gradient ?? 'bg-gradient-to-br from-emerald-500 to-teal-600'
       )} />
       <CardContent className="p-4 md:p-6 relative">

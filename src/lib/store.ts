@@ -6,11 +6,12 @@ export type SectionId =
   | 'approvals'
   | 'traces'
   | 'reasoning'
+  | 'livestream'
+  | 'agents'
+  | 'simulator'
   | 'audit'
   | 'webhooks'
   | 'sdk'
-  | 'livestream'
-  | 'agents'
 
 interface AppState {
   activeSection: SectionId
@@ -25,6 +26,8 @@ interface AppState {
   setLastRefresh: (date: Date) => void
   dbRecordCount: number
   setDbRecordCount: (count: number) => void
+  unreadNotificationCount: number
+  setUnreadNotificationCount: (count: number) => void
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -40,6 +43,8 @@ export const useAppStore = create<AppState>((set) => ({
   setLastRefresh: (date) => set({ lastRefresh: date }),
   dbRecordCount: 0,
   setDbRecordCount: (count) => set({ dbRecordCount: count }),
+  unreadNotificationCount: 0,
+  setUnreadNotificationCount: (count) => set({ unreadNotificationCount: count }),
 }))
 
 export const sectionLabels: Record<SectionId, string> = {
@@ -48,9 +53,10 @@ export const sectionLabels: Record<SectionId, string> = {
   approvals: 'Approvals',
   traces: 'Traces',
   reasoning: 'Reasoning',
+  livestream: 'Live Stream',
+  agents: 'Agents',
+  simulator: 'Simulator',
   audit: 'Audit Logs',
   webhooks: 'Webhooks',
   sdk: 'SDK & Docs',
-  livestream: 'Live Stream',
-  agents: 'Agents',
 }

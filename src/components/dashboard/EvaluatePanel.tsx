@@ -175,7 +175,7 @@ export function EvaluatePanel() {
   const config = result ? decisionConfig[result.decision] : null
 
   return (
-    <Card className="border-0 shadow-sm hover:shadow-md hover:border-emerald-500/30 transition-all duration-300">
+    <Card className="border-0 shadow-sm hover:shadow-md transition-all duration-300 glow-hover glass-card">
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-semibold flex items-center gap-2">
           <Zap className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />

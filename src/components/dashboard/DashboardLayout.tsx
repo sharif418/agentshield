@@ -12,9 +12,11 @@ import { WebhookConfig } from './WebhookConfig'
 import { SDKIntegration } from './SDKIntegration'
 import { LiveStream } from './LiveStream'
 import { AgentRoles } from './AgentRoles'
+import { PolicySimulator } from './PolicySimulator'
 import { ThemeToggle } from './ThemeToggle'
+import { NotificationCenter } from './NotificationCenter'
 import { useWebSocket } from '@/lib/use-websocket'
-import { Shield, WifiOff, Menu, Search, LayoutDashboard, Activity, CheckSquare, GitBranch, FileText, Webhook, Code2, Clock, Database, ChevronRight, Radio, Bot } from 'lucide-react'
+import { Shield, WifiOff, Menu, Search, LayoutDashboard, Activity, CheckSquare, GitBranch, FileText, Webhook, Code2, Clock, Database, ChevronRight, Radio, Bot, FlaskConical } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet'
@@ -40,6 +42,7 @@ const sectionComponents: Record<string, React.ComponentType> = {
   reasoning: ReasoningGraph,
   livestream: LiveStream,
   agents: AgentRoles,
+  simulator: PolicySimulator,
   audit: AuditLogs,
   webhooks: WebhookConfig,
   sdk: SDKIntegration,
@@ -53,12 +56,13 @@ const sectionIcons: Record<SectionId, React.ReactNode> = {
   reasoning: <GitBranch className="h-4 w-4" />,
   livestream: <Radio className="h-4 w-4" />,
   agents: <Bot className="h-4 w-4" />,
+  simulator: <FlaskConical className="h-4 w-4" />,
   audit: <FileText className="h-4 w-4" />,
   webhooks: <Webhook className="h-4 w-4" />,
   sdk: <Code2 className="h-4 w-4" />,
 }
 
-const sectionKeys: SectionId[] = ['dashboard', 'policies', 'approvals', 'traces', 'reasoning', 'livestream', 'agents', 'audit', 'webhooks', 'sdk']
+const sectionKeys: SectionId[] = ['dashboard', 'policies', 'approvals', 'traces', 'reasoning', 'livestream', 'agents', 'simulator', 'audit', 'webhooks']
 
 export function DashboardLayout() {
   const { activeSection, wsConnected, commandOpen, setCommandOpen, setActiveSection, lastRefresh, setLastRefresh, dbRecordCount, setDbRecordCount } = useAppStore()
@@ -152,7 +156,7 @@ export function DashboardLayout() {
   }, [lastRefresh])
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col bg-background mesh-bg">
       <div className="flex flex-1 overflow-hidden">
         {/* Desktop Sidebar */}
         <div className="hidden md:flex">
@@ -162,7 +166,7 @@ export function DashboardLayout() {
         {/* Main Content */}
         <div className="flex-1 flex flex-col min-w-0">
           {/* Top Bar */}
-          <header className="h-14 border-b border-border bg-card/80 backdrop-blur-sm flex items-center justify-between px-4 shrink-0">
+          <header className="h-14 border-b border-border bg-card/60 backdrop-blur-md flex items-center justify-between px-4 shrink-0 z-10">
             <div className="flex items-center gap-3">
               {/* Mobile menu */}
               <Sheet>
@@ -177,9 +181,11 @@ export function DashboardLayout() {
                 </SheetContent>
               </Sheet>
 
-              <div className="flex items-center gap-2">
-                <Shield className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                <h1 className="font-semibold text-sm md:text-base tracking-tight">AgentShield</h1>
+              <div className="flex items-center gap-2.5">
+                <div className="flex items-center justify-center h-7 w-7 rounded-md bg-gradient-to-br from-emerald-500 to-teal-600 shadow-sm">
+                  <Shield className="h-4 w-4 text-white" />
+                </div>
+                <h1 className="font-bold text-sm md:text-base tracking-tight bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-400 dark:to-teal-400 bg-clip-text text-transparent">AgentShield</h1>
               </div>
 
               {/* Breadcrumb / Section indicator */}
@@ -235,12 +241,13 @@ export function DashboardLayout() {
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
+              <NotificationCenter />
               <ThemeToggle />
             </div>
           </header>
 
           {/* Section Content */}
-          <main className="flex-1 overflow-y-auto custom-scrollbar scroll-smooth">
+          <main className="flex-1 overflow-y-auto custom-scrollbar scroll-smooth relative">
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeSection}
@@ -258,7 +265,7 @@ export function DashboardLayout() {
       </div>
 
       {/* Enhanced Footer */}
-      <footer className="border-t border-border bg-card/80 backdrop-blur-sm py-2 px-4 flex items-center justify-between text-xs text-muted-foreground shrink-0">
+      <footer className="border-t border-border bg-card/60 backdrop-blur-md py-2 px-4 flex items-center justify-between text-xs text-muted-foreground shrink-0 z-10">
         <div className="flex items-center gap-3">
           <span>AgentShield Policy Engine v1.0.0</span>
           <span className="hidden sm:inline text-border">|</span>

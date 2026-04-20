@@ -13,6 +13,7 @@ import {
   Code2,
   Radio,
   Bot,
+  FlaskConical,
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react'
@@ -32,9 +33,9 @@ const navItems: { id: SectionId; label: string; icon: React.ReactNode; shortcut:
   { id: 'reasoning', label: 'Reasoning', icon: <GitBranch className="h-5 w-5" />, shortcut: '5' },
   { id: 'livestream', label: 'Live Stream', icon: <Radio className="h-5 w-5" />, shortcut: '6' },
   { id: 'agents', label: 'Agents', icon: <Bot className="h-5 w-5" />, shortcut: '7' },
-  { id: 'audit', label: 'Audit Logs', icon: <FileText className="h-5 w-5" />, shortcut: '8' },
-  { id: 'webhooks', label: 'Webhooks', icon: <Webhook className="h-5 w-5" />, shortcut: '9' },
-  { id: 'sdk', label: 'SDK & Docs', icon: <Code2 className="h-5 w-5" />, shortcut: '0' },
+  { id: 'simulator', label: 'Simulator', icon: <FlaskConical className="h-5 w-5" />, shortcut: '8' },
+  { id: 'audit', label: 'Audit Logs', icon: <FileText className="h-5 w-5" />, shortcut: '9' },
+  { id: 'webhooks', label: 'Webhooks', icon: <Webhook className="h-5 w-5" />, shortcut: '0' },
 ]
 
 export function Sidebar() {
@@ -51,11 +52,11 @@ export function Sidebar() {
       >
         {/* App header */}
         <div className="flex items-center gap-2 px-3 h-14 border-b border-border shrink-0">
-          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-600 text-white shrink-0">
-            <Shield className="h-4 w-4" />
+          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 shadow-sm shrink-0">
+            <Shield className="h-4 w-4 text-white" />
           </div>
           {!sidebarCollapsed && (
-            <span className="font-semibold text-sm tracking-tight whitespace-nowrap">
+            <span className="font-bold text-sm tracking-tight bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-400 dark:to-teal-400 bg-clip-text text-transparent whitespace-nowrap">
               AgentShield
             </span>
           )}

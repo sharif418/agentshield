@@ -161,11 +161,12 @@ export function PolicyManager() {
 
   return (
     <div className="p-4 md:p-6 space-y-4">
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <div className="flex items-center gap-2">
-          <h2 className="text-lg font-semibold tracking-tight">Policy Management</h2>
-          <Badge variant="secondary" className="text-xs font-mono tabular-nums">{policies.length}</Badge>
-        </div>
+      <div className="section-header-gradient rounded-xl px-4 py-3 -mx-4 -mt-2 md:-mx-6 md:-mt-4 mb-2">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-bold tracking-tight bg-gradient-to-r from-emerald-700 to-teal-600 dark:from-emerald-400 dark:to-teal-400 bg-clip-text text-transparent">Policy Management</h2>
+            <Badge variant="secondary" className="text-xs font-mono tabular-nums">{policies.length}</Badge>
+          </div>
         <div className="flex items-center gap-2 flex-wrap">
           <Button variant="outline" className="h-8 text-xs active:scale-[0.98] transition-transform" onClick={handleExport}>
             <Download className="h-3 w-3 mr-1" /> Export
@@ -183,8 +184,9 @@ export function PolicyManager() {
             <Plus className="h-3 w-3 mr-1" /> New Policy
           </Button>
         </div>
+        </div>
+        <p className="text-sm text-muted-foreground mt-1">Create and manage AI agent governance policies</p>
       </div>
-      <p className="text-sm text-muted-foreground -mt-2">Create and manage AI agent governance policies</p>
 
       {/* Filter Bar - wraps on mobile */}
       <div className="flex flex-col sm:flex-row gap-2">

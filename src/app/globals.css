@@ -247,3 +247,138 @@
     opacity: 0;
   }
 }
+
+/* ===== Enhanced Visual Effects ===== */
+
+/* Glass card effect */
+.glass-card {
+  background: oklch(1 0 0 / 0.7);
+  backdrop-filter: blur(12px) saturate(1.5);
+  border: 1px solid oklch(1 0 0 / 0.2);
+}
+
+.dark .glass-card {
+  background: oklch(0.2 0 0 / 0.6);
+  border: 1px solid oklch(1 0 0 / 0.08);
+}
+
+/* Animated gradient background for section headers */
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.section-header-gradient {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(20, 184, 166, 0.04), rgba(6, 182, 212, 0.06));
+  background-size: 200% 200%;
+  animation: gradientShift 8s ease infinite;
+}
+
+.dark .section-header-gradient {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(20, 184, 166, 0.06), rgba(6, 182, 212, 0.08));
+  background-size: 200% 200%;
+}
+
+/* Glow effect on hover for interactive cards */
+.glow-hover {
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.glow-hover:hover {
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.08), 0 4px 12px rgba(0, 0, 0, 0.04);
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+.dark .glow-hover:hover {
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.1), 0 4px 12px rgba(0, 0, 0, 0.2);
+  border-color: rgba(16, 185, 129, 0.15);
+}
+
+/* Subtle mesh gradient background for main content */
+.mesh-bg {
+  background-image:
+    radial-gradient(at 20% 80%, rgba(16, 185, 129, 0.03) 0px, transparent 50%),
+    radial-gradient(at 80% 20%, rgba(20, 184, 166, 0.03) 0px, transparent 50%),
+    radial-gradient(at 50% 50%, rgba(6, 182, 212, 0.02) 0px, transparent 50%);
+}
+
+.dark .mesh-bg {
+  background-image:
+    radial-gradient(at 20% 80%, rgba(16, 185, 129, 0.05) 0px, transparent 50%),
+    radial-gradient(at 80% 20%, rgba(20, 184, 166, 0.05) 0px, transparent 50%),
+    radial-gradient(at 50% 50%, rgba(6, 182, 212, 0.03) 0px, transparent 50%);
+}
+
+/* Enhanced stat card with shimmer effect */
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.shimmer-hover {
+  position: relative;
+  overflow: hidden;
+}
+
+.shimmer-hover::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, oklch(1 0 0 / 0.08), transparent);
+  transform: translateX(-100%);
+  transition: none;
+  pointer-events: none;
+}
+
+.shimmer-hover:hover::after {
+  animation: shimmer 0.8s ease forwards;
+}
+
+/* Smooth ring pulse for active indicators */
+@keyframes ringPulse {
+  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+  70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+.ring-pulse {
+  animation: ringPulse 2s infinite;
+}
+
+/* Floating animation for decorative elements */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.float-animation {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Dark mode scrollbar override */
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: oklch(0.5 0 0 / 0.3);
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.5 0 0 / 0.5);
+}
+
+/* Section transition fade-in */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.3s ease-out;
+}
