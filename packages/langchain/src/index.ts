@@ -79,4 +79,4 @@ export type {
   ConditionRule,
   PermissionLevel,
   Trace,
-} from '../../core/src/types.js';
+} from '@agentshield/core';

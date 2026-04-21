@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: false,
   },
   reactStrictMode: true,
+  transpilePackages: ["@agentshield/core", "agentshield", "@agentshield/langchain"],
 };
 
 export default nextConfig;

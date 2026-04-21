@@ -58,8 +58,8 @@
  * @packageDocumentation
  */
 
-import { AgentShield } from '../../sdk/src/agentshield.js';
-import type { EvaluateResult } from '../../core/src/types.js';
+import { AgentShield } from 'agentshield';
+import type { EvaluateResult } from '@agentshield/core';
 import type { AgentShieldLangChainConfig, AgentShieldEvent } from './types.js';
 
 // ---------------------------------------------------------------------------

@@ -12,8 +12,8 @@ import type {
   EvaluateInput,
   EvaluateResult,
   MatchedPolicy,
-} from '../../core/src/types.js';
-import { evaluatePolicies } from '../../core/src/engine.js';
+} from '@agentshield/core';
+import { evaluatePolicies } from '@agentshield/core';
 import type { PolicyCreateParams, PolicyListParams, Trace } from './types.js';
 
 /**

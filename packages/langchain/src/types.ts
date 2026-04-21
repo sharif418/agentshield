@@ -2,7 +2,7 @@
  * AgentShield LangChain Integration Types
  */
 
-import type { EvaluateResult, Decision, Policy, PolicyDefinition, EvaluateInput, MatchedPolicy, ConditionRule, Trace } from '../../core/src/types.js';
+import type { EvaluateResult, Decision, Policy, PolicyDefinition, EvaluateInput, MatchedPolicy, ConditionRule, Trace } from '@agentshield/core';
 
 /**
  * Configuration for the AgentShield SDK client.

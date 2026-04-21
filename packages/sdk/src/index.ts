@@ -91,4 +91,4 @@ export {
   inferAction,
   enrichArgsFromQuery,
   getMatchingActions,
-} from '../../core/src/engine.js';
+} from '@agentshield/core';

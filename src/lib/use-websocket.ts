@@ -15,7 +15,8 @@ export function useWebSocket() {
   const connect = useCallback(() => {
     if (socketRef.current?.connected) return
 
-    const socket = io('/?XTransformPort=3003', {
+    const wsPort = process.env.NEXT_PUBLIC_WS_PORT ?? '3003'
+    const socket = io(`/?XTransformPort=${wsPort}`, {
       transports: ['websocket', 'polling'],
       reconnection: true,
       reconnectionAttempts: Infinity, // unlimited retries

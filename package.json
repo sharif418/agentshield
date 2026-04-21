@@ -1,7 +1,35 @@
 {
-  "name": "nextjs_tailwind_shadcn_ts",
+  "name": "agentshield-dashboard",
   "version": "0.2.0",
   "private": true,
+  "description": "AgentShield — Deterministic Runtime Policy & Governance Engine for AI Agents",
+  "keywords": [
+    "ai",
+    "agent",
+    "policy",
+    "governance",
+    "shield",
+    "runtime",
+    "safety",
+    "agentshield",
+    "zero-trust",
+    "guardrails",
+    "dashboard"
+  ],
+  "homepage": "https://github.com/agentshield/agentshield-dashboard#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/agentshield/agentshield-dashboard.git"
+  },
+  "author": "AgentShield Contributors",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18",
+    "bun": ">=1.0"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "dev": "next dev -p 3000 2>&1 | tee dev.log",
     "build": "next build && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/",
@@ -80,11 +108,12 @@
     "uuid": "^11.1.0",
     "vaul": "^1.1.2",
     "z-ai-web-dev-sdk": "^0.0.17",
-    "zod": "^4.0.2",
+    "zod": "^3.23.0",
     "zustand": "^5.0.6"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/node": "^25.6.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "bun-types": "^1.3.4",

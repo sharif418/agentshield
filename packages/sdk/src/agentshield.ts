@@ -57,7 +57,7 @@
  */
 
 import type { AgentShieldConfig, PolicyCreateParams, PolicyListParams, TraceListParams, Trace } from './types.js';
-import type { PolicyDefinition, EvaluateInput, EvaluateResult } from '../../core/src/types.js';
+import type { PolicyDefinition, EvaluateInput, EvaluateResult } from '@agentshield/core';
 import { HostedClient } from './hosted-client.js';
 import { EmbeddedEngine } from './embedded-engine.js';
 
@@ -85,10 +85,7 @@ export class AgentShield {
       this.hostedClient = new HostedClient(config.serverUrl, config.apiKey, config.fetch);
     } else {
       if (!config.policies?.length) {
-        console.warn(
-          'AgentShield: No policies provided for embedded mode. ' +
-            'All evaluations will return BLOCK (zero-trust default).'
-        );
+        // No policies in embedded mode — zero-trust will default-deny all evaluations
       }
       this.embeddedEngine = new EmbeddedEngine(config.policies ?? [], config.zeroTrust);
     }

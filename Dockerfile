@@ -7,11 +7,20 @@ WORKDIR /app
 RUN npm install -g bun
 
 # Copy package files
-COPY package.json bun.lockb ./
+COPY package.json bun.lock ./
+COPY packages/core/package.json packages/core/tsconfig.json ./packages/core/
+COPY packages/core/src ./packages/core/src/
+COPY packages/sdk/package.json packages/sdk/tsconfig.json ./packages/sdk/
+COPY packages/sdk/src ./packages/sdk/src/
+COPY packages/langchain/package.json packages/langchain/tsconfig.json ./packages/langchain/
+COPY packages/langchain/src ./packages/langchain/src/
 COPY prisma ./prisma/
 
 # Install dependencies
 RUN bun install --frozen-lockfile
+
+# Build the core package to JS (needed by the app and other packages)
+RUN cd packages/core && bun run build
 
 # Generate Prisma client
 RUN bun run db:generate

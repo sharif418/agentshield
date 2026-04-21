@@ -6,7 +6,7 @@
  * Supports custom fetch functions for edge runtime compatibility.
  */
 
-import type { EvaluateInput, EvaluateResult, PolicyDefinition } from '../../core/src/types.js';
+import type { EvaluateInput, EvaluateResult, PolicyDefinition } from '@agentshield/core';
 import type { PolicyCreateParams, PolicyListParams, TraceListParams, Trace } from './types.js';
 
 export class HostedClient {

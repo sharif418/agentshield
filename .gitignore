@@ -1,7 +1,7 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-node_modules
+node_modules/
 /.pnp
 .pnp.*
 .yarn/*
@@ -54,9 +54,18 @@ test
 prompt
 
 server.log
+
 # Internal directories
 /skills/
 /agent-ctx/
 /.zscripts/
 /download/
 *.png
+
+# Build artifacts (monorepo packages)
+packages/core/dist/
+packages/sdk/dist/
+packages/langchain/dist/
+
+# Database files
+db/*.db

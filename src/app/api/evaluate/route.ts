@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { validateApiKey } from '@/lib/auth';
-import { evaluateConditions, inferAction, enrichArgsFromQuery, getMatchingActions } from '@/lib/policy-engine';
+import { evaluatePolicies } from '@/lib/policy-engine';
+import type { Policy } from '@/lib/policy-engine';
 import { z } from 'zod'
 
 const EvaluateSchema = z.object({
@@ -30,166 +31,47 @@ export async function POST(request: NextRequest) {
     const body = parseResult.data;
     const { agentRole, toolName } = body;
     const rawArgs = body.arguments ?? {};
-
     const sessionId = body.sessionId ?? `SES-${Date.now().toString(36)}`;
-    // Infer action from request body, or smart-infer from original arguments/toolName
-    const action = body.action ?? inferAction((rawArgs as Record<string, unknown>) ?? {}, toolName);
-    // Enrich args with inferred operation from SQL queries for condition matching
-    const args = enrichArgsFromQuery((rawArgs as Record<string, unknown>) ?? {});
 
-    // 1. Find all enabled policies matching agentRole and resource/toolName
-    // If action is specified, also filter by action for more precise matching
-    const whereCondition: Record<string, unknown> = {
-      enabled: true,
-      agentRole,
-      resource: toolName,
-    };
-
-    if (action) {
-      // Match policies where the action field matches the requested action,
-      // or where the action is a broader category (e.g., "WRITE" covers "INSERT", "UPDATE", "DELETE")
-      whereCondition.action = {
-        in: getMatchingActions(action),
-      };
-    }
-
+    // Fetch matching policies from the database
     const policies = await db.policy.findMany({
-      where: whereCondition,
+      where: {
+        enabled: true,
+        agentRole,
+        resource: toolName,
+      },
       orderBy: { priority: 'desc' },
     });
 
-    let decision: 'ALLOW' | 'BLOCK' | 'REQUIRE_APPROVAL' = 'ALLOW';
-    let matchedPolicy: Record<string, unknown> | null = null;
-    let reason: string | null = null;
+    // Use the shared evaluation engine from @agentshield/core
+    // Convert DB policies to the core Policy format
+    const corePolicies: Policy[] = policies.map((p) => ({
+      policyId: p.policyId,
+      name: p.name,
+      description: p.description ?? undefined,
+      agentRole: p.agentRole,
+      resource: p.resource,
+      action: p.action,
+      permissionLevel: p.permissionLevel as Policy['permissionLevel'],
+      conditionRules: p.conditionRules,
+      priority: p.priority,
+      enabled: p.enabled,
+    }));
 
-    // 2. Sort by priority (already done by orderBy)
+    const result = evaluatePolicies(corePolicies, {
+      agentRole,
+      toolName,
+      arguments: rawArgs as Record<string, unknown>,
+      action: body.action,
+    });
 
-    // 3. Evaluate policies
-    // When action is null (could not be inferred), use most-restrictive logic:
-    // BLOCK > REQUIRE_APPROVAL > ALLOW across ALL matching policies (zero-trust).
-    // When action is specified, use standard priority-based evaluation.
-    if (action) {
-      // Standard priority-based evaluation (action was successfully inferred or provided)
-      for (const policy of policies) {
-        // Check condition rules if present
-        let conditionMatches = true;
-        if (policy.conditionRules) {
-          try {
-            const rules = JSON.parse(policy.conditionRules);
-            conditionMatches = evaluateConditions(rules, args ?? {});
-          } catch {
-            conditionMatches = true;
-          }
-        }
-
-        if (!conditionMatches) continue;
-
-        // BLOCK takes highest precedence
-        if (policy.permissionLevel === 'BLOCK') {
-          decision = 'BLOCK';
-          matchedPolicy = {
-            policyId: policy.policyId,
-            name: policy.name,
-            permissionLevel: policy.permissionLevel,
-            priority: policy.priority,
-            action: policy.action,
-          };
-          reason = `Blocked by policy: ${policy.name}`;
-          break;
-        }
-
-        // REQUIRE_APPROVAL - note but continue checking for BLOCK
-        if (policy.permissionLevel === 'REQUIRE_APPROVAL' && decision === 'ALLOW') {
-          decision = 'REQUIRE_APPROVAL';
-          matchedPolicy = {
-            policyId: policy.policyId,
-            name: policy.name,
-            permissionLevel: policy.permissionLevel,
-            priority: policy.priority,
-            action: policy.action,
-          };
-          reason = `Requires approval per policy: ${policy.name}`;
-        }
-
-        // ALLOW - note but lower priority policies could override
-        if (policy.permissionLevel === 'ALLOW' && decision === 'ALLOW') {
-          matchedPolicy = {
-            policyId: policy.policyId,
-            name: policy.name,
-            permissionLevel: policy.permissionLevel,
-            priority: policy.priority,
-            action: policy.action,
-          };
-          reason = `Allowed by policy: ${policy.name}`;
-        }
-      }
-    } else {
-      // Zero-trust mode: action could not be inferred.
-      // Collect all matching policies and return the most restrictive decision.
-      const blockPolicies: typeof policies = [];
-      const approvalPolicies: typeof policies = [];
-      const allowPolicies: typeof policies = [];
-
-      for (const policy of policies) {
-        let conditionMatches = true;
-        if (policy.conditionRules) {
-          try {
-            const rules = JSON.parse(policy.conditionRules);
-            conditionMatches = evaluateConditions(rules, args ?? {});
-          } catch {
-            conditionMatches = true;
-          }
-        }
-        if (!conditionMatches) continue;
-
-        if (policy.permissionLevel === 'BLOCK') blockPolicies.push(policy);
-        else if (policy.permissionLevel === 'REQUIRE_APPROVAL') approvalPolicies.push(policy);
-        else if (policy.permissionLevel === 'ALLOW') allowPolicies.push(policy);
-      }
-
-      // Most restrictive decision wins (zero-trust)
-      if (blockPolicies.length > 0) {
-        // Pick the highest-priority BLOCK policy
-        decision = 'BLOCK';
-        matchedPolicy = {
-          policyId: blockPolicies[0].policyId,
-          name: blockPolicies[0].name,
-          permissionLevel: blockPolicies[0].permissionLevel,
-          priority: blockPolicies[0].priority,
-          action: blockPolicies[0].action,
-        };
-        reason = `Blocked by policy: ${blockPolicies[0].name} (zero-trust: action unknown)`;
-      } else if (approvalPolicies.length > 0) {
-        decision = 'REQUIRE_APPROVAL';
-        matchedPolicy = {
-          policyId: approvalPolicies[0].policyId,
-          name: approvalPolicies[0].name,
-          permissionLevel: approvalPolicies[0].permissionLevel,
-          priority: approvalPolicies[0].priority,
-          action: approvalPolicies[0].action,
-        };
-        reason = `Requires approval per policy: ${approvalPolicies[0].name} (zero-trust: action unknown)`;
-      } else if (allowPolicies.length > 0) {
-        decision = 'ALLOW';
-        matchedPolicy = {
-          policyId: allowPolicies[0].policyId,
-          name: allowPolicies[0].name,
-          permissionLevel: allowPolicies[0].permissionLevel,
-          priority: allowPolicies[0].priority,
-          action: allowPolicies[0].action,
-        };
-        reason = `Allowed by policy: ${allowPolicies[0].name}`;
-      } else {
-        // No matching policies at all - default deny
-        decision = 'BLOCK';
-        matchedPolicy = null;
-        reason = 'No matching policy found (default deny: action unknown)';
-      }
-    }
+    const decision = result.decision;
+    const matchedPolicy = result.matchedPolicy;
+    const reason = result.reason;
 
     const latency = performance.now() - startTime;
 
-    // 6. Create ExecutionTrace record
+    // Create ExecutionTrace record
     const traceId = `TRC-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 8)}`;
     const trace = await db.executionTrace.create({
       data: {
@@ -199,12 +81,12 @@ export async function POST(request: NextRequest) {
         toolName,
         intentPayload: JSON.stringify(rawArgs ?? {}),
         evaluationResult: decision,
-        matchedPolicyId: matchedPolicy ? (matchedPolicy.policyId as string) : null,
+        matchedPolicyId: matchedPolicy ? matchedPolicy.policyId : null,
         latency: parseFloat(latency.toFixed(3)),
       },
     });
 
-    // 4. If REQUIRE_APPROVAL, auto-create ApprovalRequest
+    // If REQUIRE_APPROVAL, auto-create ApprovalRequest
     let approvalRequest = null;
     if (decision === 'REQUIRE_APPROVAL') {
       const requestId = `APR-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 8)}`;
@@ -212,14 +94,14 @@ export async function POST(request: NextRequest) {
         data: {
           requestId,
           traceId: trace.traceId,
-          agentContext: JSON.stringify({ agentRole, toolName, arguments: args }),
-          requestedAction: JSON.stringify({ toolName, arguments: args, policyMatch: matchedPolicy }),
+          agentContext: JSON.stringify({ agentRole, toolName, arguments: rawArgs }),
+          requestedAction: JSON.stringify({ toolName, arguments: rawArgs, policyMatch: matchedPolicy }),
           status: 'PENDING',
         },
       });
     }
 
-    // 7. Create AuditLog entry
+    // Create AuditLog entry
     await db.auditLog.create({
       data: {
         eventType: 'TRACE_EVALUATED',
@@ -236,25 +118,24 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    const result: Record<string, unknown> = {
+    const response: Record<string, unknown> = {
       decision,
       traceId: trace.traceId,
       latency: trace.latency,
     };
 
     if (matchedPolicy) {
-      result.matchedPolicy = matchedPolicy;
+      response.matchedPolicy = matchedPolicy;
     }
     if (reason) {
-      result.reason = reason;
+      response.reason = reason;
     }
     if (approvalRequest) {
-      result.approvalRequestId = approvalRequest.requestId;
+      response.approvalRequestId = approvalRequest.requestId;
     }
 
-    return NextResponse.json(result, { status: 200 });
+    return NextResponse.json(response, { status: 200 });
   } catch (error) {
-    console.error('Error evaluating policy:', error);
     return NextResponse.json(
       { error: 'Failed to evaluate policy' },
       { status: 500 }
