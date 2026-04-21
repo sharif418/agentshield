@@ -2688,3 +2688,55 @@ Since the policy evaluation functions (`evaluateConditions`, `inferAction`, `enr
 - `bun test` - 77 tests pass, 0 fail, 97 expect() calls across 2 files (59ms)
 - `bun run lint` - 0 errors
 - Dev server continues to function correctly
+
+---
+Task ID: 6-7
+Agent: docs-writer
+Task: Create README.md and .env.example
+
+Work Log:
+- Step 1: Read existing worklog.md to understand project context and history
+- Step 2: Read all API route files (stats, policies, evaluate, approvals, traces, audit, webhooks, export, seed) to document endpoints accurately
+- Step 3: Read policy-engine.ts, auth.ts, and approval-ws/index.ts for architecture understanding
+- Step 4: Read store.ts to get full list of 22 dashboard sections
+- Step 5: Read package.json for tech stack versions
+- Step 6: Read prisma/schema.prisma for database model documentation
+- Step 7: Rewrote README.md with comprehensive documentation including: project title/description, full tech stack table, detailed architecture diagram, data flow explanation, step-by-step setup instructions, complete API documentation with request/response examples, all 22 dashboard sections listed, full project structure tree, environment variables table, and MIT license
+- Step 8: Rewrote .env.example with all 4 required environment variables (DATABASE_URL, AGENTSHEILD_API_KEY, WS_PORT, NODE_ENV) including descriptive comments
+
+Stage Summary:
+- README.md: Complete rewrite from 211 lines to ~440 lines with all required sections (project title/description, tech stack, features, setup instructions, API documentation, architecture overview, project structure, environment variables, license)
+- .env.example: Enhanced from 3 variables to 4 variables (added NODE_ENV) with detailed section comments
+- All API endpoints documented with methods, descriptions, query parameters, and request/response examples
+- Architecture diagram includes Frontend (Next.js App Router), Backend (API Routes), Database (Prisma/SQLite), and WebSocket (Socket.IO mini-service)
+- 22 dashboard sections fully listed with keyboard shortcuts
+
+---
+Task ID: 5
+Agent: test-writer
+Task: Add unit tests for core policy engine and auth middleware
+
+Work Log:
+- Step 1: Installed vitest@4.1.4 as a dev dependency (`bun add -d vitest`)
+- Step 2: Created `vitest.config.ts` with path alias resolution (`@/` → `./src/`) and node environment
+- Step 3: Added `"test": "vitest run"` and `"test:watch": "vitest"` scripts to package.json
+- Step 4: Created `src/lib/__tests__/policy-engine.test.ts` with 77 tests covering all 4 exported functions:
+  - evaluateConditions: simple equality, $contains, $equals, $in, $gt, $lt, $and, $or, nested $and/$or, empty rules, multiple field conditions
+  - inferAction: from operation/action/method fields (priority order), SQL query inference (SELECT/INSERT/UPDATE/DELETE/DROP/TRUNCATE/ALTER/CREATE/GRANT), httpMethod, toolName heuristics (EmailAPI/SlackAPI), returns null for unknown
+  - getMatchingActions: known actions (SELECT, DROP, WRITE) return expanded lists with deduplication, unknown actions return [action]
+  - enrichArgsFromQuery: DROP TABLE, DROP DATABASE, DROP, TRUNCATE, ALTER, CREATE, GRANT, INSERT, UPDATE, DELETE, SELECT, lowercase queries, skip when operation already set, skip when no query, skip when query is not a string, preserve other args, unrecognized queries
+- Step 5: Created `src/lib/__tests__/auth.test.ts` with 14 tests covering 3 exported functions:
+  - getApiKey: returns env var when set, returns empty string when not set
+  - isAuthEnabled: true for production, false for development/test
+  - validateApiKey: dev mode returns null (no auth), production with valid header/query returns null, production with invalid key returns 401, production with no key returns 401, header priority over query param, production without API key configured returns null with console.warn
+  - Mocked next/server NextResponse.json and created helper for mock NextRequest
+- Step 6: Ran `bun run test` - all 91 tests pass (77 policy-engine + 14 auth) in 204ms
+
+Stage Summary:
+- Key results: 91 unit tests passing across 2 test files, covering all exported functions from policy-engine.ts and auth.ts
+- Important decisions: Used vitest over jest (faster, better ESM/TypeScript support), mocked next/server for auth tests, used custom mock request helper instead of full NextRequest to avoid complex constructor requirements
+- Produced artifacts:
+  - `vitest.config.ts` - Vitest configuration with @/ alias
+  - `src/lib/__tests__/policy-engine.test.ts` - 77 tests for policy engine pure functions
+  - `src/lib/__tests__/auth.test.ts` - 14 tests for auth middleware with mocked dependencies
+  - Updated `package.json` with test scripts
