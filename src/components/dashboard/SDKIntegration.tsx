@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Code2, Copy, Check, Play, Zap, Terminal, Box, ArrowRight } from 'lucide-react'
+import { Code2, Copy, Check, Play, Zap, Terminal, Box, ArrowRight, Container } from 'lucide-react'
 import { Light as SyntaxHighlighter } from 'react-syntax-highlighter'
 import tsx from 'react-syntax-highlighter/dist/esm/languages/hljs/typescript'
 import python from 'react-syntax-highlighter/dist/esm/languages/hljs/python'
@@ -27,40 +27,40 @@ type Framework = (typeof FRAMEWORKS)[number]
 
 const codeSnippets: Record<Language, Record<Framework, string>> = {
   TypeScript: {
-    LangChain: `import { AgentShieldGuard } from '@agentshield/sdk';
+    LangChain: `import { AgentShieldCallbackHandler } from '@agentshield/langchain';
 
-// Initialize the guard with your policy engine URL
-const guard = new AgentShieldGuard({
-  endpoint: 'http://localhost:3000',
+// Create a callback handler with embedded policies
+const handler = new AgentShieldCallbackHandler({
+  mode: 'embedded',
+  policies: [
+    {
+      policyId: 'POL-001',
+      name: 'Block SQL DROP',
+      agentRole: 'DataAgent',
+      resource: 'PostgreSQL',
+      action: 'DROP',
+      permissionLevel: 'BLOCK',
+      priority: 20,
+      enabled: true,
+    },
+  ],
+  toolNameMap: { 'sql_db_query': 'PostgreSQL' },
+});
+
+// Use with LangChain agent
+const executor = AgentExecutor.fromAgentAndTools({
+  agent,
+  tools,
+  callbacks: [handler],
+});`,
+
+    CrewAI: `import { AgentShield } from 'agentshield';
+
+// Create a shield in hosted mode (connects to dashboard)
+const shield = new AgentShield({
+  mode: 'hosted',
+  serverUrl: 'http://localhost:3000',
   apiKey: process.env.AGENTSHIELD_API_KEY,
-});
-
-// Wrap your LangChain tool calls
-const result = await guard.evaluate({
-  agentRole: 'DataAgent',
-  toolName: 'PostgreSQL',
-  arguments: { operation: 'SELECT', query: 'SELECT * FROM users' },
-});
-
-if (result.decision === 'BLOCK') {
-  throw new Error(\`Action blocked: \${result.reason}\`);
-}
-
-if (result.decision === 'REQUIRE_APPROVAL') {
-  // Wait for human approval
-  const approval = await guard.waitForApproval(result.traceId);
-  if (approval.status !== 'APPROVED') {
-    throw new Error('Action not approved');
-  }
-}
-
-// Proceed with the tool call
-const toolResult = await tool.call(args);`,
-
-    CrewAI: `import { AgentShieldGuard } from '@agentshield/sdk';
-
-const guard = new AgentShieldGuard({
-  endpoint: 'http://localhost:3000',
 });
 
 // Add to your CrewAI agent callback
@@ -68,7 +68,7 @@ const agent = new Agent({
   name: 'DataAgent',
   role: 'Data Analysis Expert',
   async beforeToolCall(toolName, args) {
-    const result = await guard.evaluate({
+    const result = await shield.evaluate({
       agentRole: 'DataAgent',
       toolName,
       arguments: args,
@@ -79,57 +79,71 @@ const agent = new Agent({
     }
 
     if (result.decision === 'REQUIRE_APPROVAL') {
-      const approval = await guard.waitForApproval(result.traceId);
-      return { approved: approval.status === 'APPROVED' };
+      return { requireApproval: true, traceId: result.traceId };
     }
 
     return { allowed: true };
   },
 });`,
 
-    AutoGen: `import { AgentShieldGuard } from '@agentshield/sdk';
+    AutoGen: `import { AgentShield } from 'agentshield';
 
-const guard = new AgentShieldGuard({
-  endpoint: 'http://localhost:3000',
+// Create a shield with embedded policies (no server needed)
+const shield = new AgentShield({
+  mode: 'embedded',
+  policies: [
+    {
+      policyId: 'POL-001',
+      name: 'Block SQL DROP',
+      agentRole: 'DataAgent',
+      resource: 'PostgreSQL',
+      action: 'DROP',
+      permissionLevel: 'BLOCK',
+      priority: 20,
+      enabled: true,
+    },
+  ],
 });
 
 // Register as a hook in AutoGen
-const assistant = new AssistantAgent(
-  'DataAgent',
-  {
-    llmConfig,
-    async functionCallHook(funcName, args) {
-      const result = await guard.evaluate({
-        agentRole: 'DataAgent',
-        toolName: funcName,
-        arguments: args,
-      });
+const assistant = new AssistantAgent('DataAgent', {
+  llmConfig,
+  async functionCallHook(funcName, args) {
+    const result = await shield.evaluate({
+      agentRole: 'DataAgent',
+      toolName: funcName,
+      arguments: args,
+    });
 
-      if (result.decision === 'BLOCK') {
-        console.log(\`Blocked: \${result.reason}\`);
-        return false;
-      }
+    if (result.decision === 'BLOCK') {
+      console.log(\`Blocked: \${result.reason}\`);
+      return false;
+    }
 
-      if (result.decision === 'REQUIRE_APPROVAL') {
-        const approval = await guard.waitForApproval(
-          result.traceId
-        );
-        return approval.status === 'APPROVED';
-      }
+    return true;
+  },
+});`,
 
-      return true;
-    },
-  }
-);`,
-
-    'OpenAI SDK': `import { AgentShieldGuard } from '@agentshield/sdk';
+    'OpenAI SDK': `import { AgentShield } from 'agentshield';
 import OpenAI from 'openai';
 
-const guard = new AgentShieldGuard({
-  endpoint: 'http://localhost:3000',
+// Hosted mode — connects to the AgentShield dashboard
+const shield = new AgentShield({
+  mode: 'hosted',
+  serverUrl: 'http://localhost:3000',
+  apiKey: process.env.AGENTSHIELD_API_KEY,
 });
 
-const openai = new OpenAI();
+// Policy management via SDK
+await shield.createPolicy({
+  name: 'Block SQL DROP',
+  agentRole: 'DataAgent',
+  resource: 'PostgreSQL',
+  action: 'DROP',
+  permissionLevel: 'BLOCK',
+  priority: 20,
+  enabled: true,
+});
 
 // Intercept function calls
 async function callWithGuard(
@@ -137,7 +151,7 @@ async function callWithGuard(
   functionName: string,
   args: Record<string, unknown>
 ) {
-  const result = await guard.evaluate({
+  const result = await shield.evaluate({
     agentRole,
     toolName: functionName,
     arguments: args,
@@ -147,51 +161,46 @@ async function callWithGuard(
     return { error: \`Blocked: \${result.reason}\` };
   }
 
-  if (result.decision === 'REQUIRE_APPROVAL') {
-    const approval = await guard.waitForApproval(result.traceId);
-    if (approval.status !== 'APPROVED') {
-      return { error: 'Not approved' };
-    }
-  }
-
-  // Execute the function call
   return await executeFunction(functionName, args);
 }`,
   },
 
   Python: {
-    LangChain: `from agentshield import AgentShieldGuard
+    LangChain: `from agentshield.langchain import AgentShieldCallbackHandler
 
-# Initialize the guard
-guard = AgentShieldGuard(
-    endpoint="http://localhost:3000",
-    api_key=os.environ["AGENTSHIELD_API_KEY"],
+# Create a callback handler with embedded policies
+handler = AgentShieldCallbackHandler(
+    mode="embedded",
+    policies=[
+        {
+            "policyId": "POL-001",
+            "name": "Block SQL DROP",
+            "agentRole": "DataAgent",
+            "resource": "PostgreSQL",
+            "action": "DROP",
+            "permissionLevel": "BLOCK",
+            "priority": 20,
+            "enabled": True,
+        },
+    ],
+    tool_name_map={"sql_db_query": "PostgreSQL"},
 )
 
-# Evaluate before tool execution
-@tool
-def query_database(query: str) -> str:
-    """Query the PostgreSQL database."""
-    result = guard.evaluate(
-        agent_role="DataAgent",
-        tool_name="PostgreSQL",
-        arguments={"operation": "SELECT", "query": query},
-    )
+# Use with LangChain agent
+agent_executor = AgentExecutor.from_agent_and_tools(
+    agent=agent,
+    tools=tools,
+    callbacks=[handler],
+)`,
 
-    if result.decision == "BLOCK":
-        raise ValueError(f"Action blocked: {result.reason}")
+    CrewAI: `from agentshield import AgentShield
 
-    if result.decision == "REQUIRE_APPROVAL":
-        approval = guard.wait_for_approval(result.trace_id)
-        if approval.status != "APPROVED":
-            raise ValueError("Action not approved")
-
-    # Execute the query
-    return execute_query(query)`,
-
-    CrewAI: `from agentshield import AgentShieldGuard
-
-guard = AgentShieldGuard(endpoint="http://localhost:3000")
+# Create a shield in hosted mode
+shield = AgentShield(
+    mode="hosted",
+    server_url="http://localhost:3000",
+    api_key=os.environ["AGENTSHIELD_API_KEY"],
+)
 
 # Add guard to CrewAI agent
 @agent
@@ -199,7 +208,7 @@ class DataAgent:
     role = "Data Analysis Expert"
 
     def before_tool_call(self, tool_name: str, args: dict):
-        result = guard.evaluate(
+        result = shield.evaluate(
             agent_role="DataAgent",
             tool_name=tool_name,
             arguments=args,
@@ -209,14 +218,28 @@ class DataAgent:
             return {"blocked": True, "reason": result.reason}
 
         if result.decision == "REQUIRE_APPROVAL":
-            approval = guard.wait_for_approval(result.trace_id)
-            return {"approved": approval.status == "APPROVED"}
+            return {"require_approval": True, "trace_id": result.trace_id}
 
         return {"allowed": True}`,
 
-    AutoGen: `from agentshield import AgentShieldGuard
+    AutoGen: `from agentshield import AgentShield
 
-guard = AgentShieldGuard(endpoint="http://localhost:3000")
+# Create a shield with embedded policies
+shield = AgentShield(
+    mode="embedded",
+    policies=[
+        {
+            "policyId": "POL-001",
+            "name": "Block SQL DROP",
+            "agentRole": "DataAgent",
+            "resource": "PostgreSQL",
+            "action": "DROP",
+            "permissionLevel": "BLOCK",
+            "priority": 20,
+            "enabled": True,
+        },
+    ],
+)
 
 # Register as a hook in AutoGen
 def guard_hook(sender, message, recipient):
@@ -224,7 +247,7 @@ def guard_hook(sender, message, recipient):
         func_name = message["function_call"]["name"]
         args = json.loads(message["function_call"]["arguments"])
 
-        result = guard.evaluate(
+        result = shield.evaluate(
             agent_role="DataAgent",
             tool_name=func_name,
             arguments=args,
@@ -233,24 +256,36 @@ def guard_hook(sender, message, recipient):
         if result.decision == "BLOCK":
             return False  # Block the function call
 
-        if result.decision == "REQUIRE_APPROVAL":
-            approval = guard.wait_for_approval(result.trace_id)
-            return approval.status == "APPROVED"
-
     return True
 
 # Register the hook
 assistant.register_hook("process_message", guard_hook)`,
 
-    'OpenAI SDK': `from agentshield import AgentShieldGuard
+    'OpenAI SDK': `from agentshield import AgentShield
 import openai
 
-guard = AgentShieldGuard(endpoint="http://localhost:3000")
-client = openai.OpenAI()
+# Hosted mode — connects to the AgentShield dashboard
+shield = AgentShield(
+    mode="hosted",
+    server_url="http://localhost:3000",
+    api_key=os.environ["AGENTSHIELD_API_KEY"],
+)
 
+# Policy management via SDK
+shield.create_policy(
+    name="Block SQL DROP",
+    agent_role="DataAgent",
+    resource="PostgreSQL",
+    action="DROP",
+    permission_level="BLOCK",
+    priority=20,
+    enabled=True,
+)
+
+# Intercept function calls
 def call_with_guard(agent_role, function_name, args):
     """Execute function call with policy guard."""
-    result = guard.evaluate(
+    result = shield.evaluate(
         agent_role=agent_role,
         tool_name=function_name,
         arguments=args,
@@ -259,19 +294,20 @@ def call_with_guard(agent_role, function_name, args):
     if result.decision == "BLOCK":
         return {"error": f"Blocked: {result.reason}"}
 
-    if result.decision == "REQUIRE_APPROVAL":
-        approval = guard.wait_for_approval(result.trace_id)
-        if approval.status != "APPROVED":
-            return {"error": "Not approved"}
-
     # Execute the function call
     return execute_function(function_name, args)`,
   },
 }
 
-const installCommands = {
-  TypeScript: 'npm install @agentshield/sdk',
-  Python: 'pip install agentshield',
+const getInstallCommand = (language: Language, framework: Framework): string => {
+  if (language === 'TypeScript') {
+    return framework === 'LangChain'
+      ? 'npm install @agentshield/langchain agentshield'
+      : 'npm install agentshield'
+  }
+  return framework === 'LangChain'
+    ? 'pip install "agentshield[langchain]"'
+    : 'pip install agentshield'
 }
 
 function CopyButton({ text }: { text: string }) {
@@ -392,7 +428,7 @@ export function SDKIntegration() {
   const [copiedInstall, setCopiedInstall] = useState(false)
 
   const code = codeSnippets[language][framework]
-  const installCmd = installCommands[language]
+  const installCmd = getInstallCommand(language, framework)
 
   const copyInstall = () => {
     navigator.clipboard.writeText(installCmd)
@@ -425,7 +461,7 @@ export function SDKIntegration() {
             {[
               { label: 'AI Agent', color: 'bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20' },
               { label: '→', color: '' },
-              { label: 'AgentShield SDK', color: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' },
+              { label: 'agentshield', color: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' },
               { label: '→', color: '' },
               { label: 'Policy Engine', color: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20' },
               { label: '→', color: '' },
@@ -444,6 +480,47 @@ export function SDKIntegration() {
             <span className="text-emerald-600 dark:text-emerald-400">ALLOW → Proceed</span>
             <span className="text-red-600 dark:text-red-400">BLOCK → Reject</span>
             <span className="text-amber-600 dark:text-amber-400">REQUIRE_APPROVAL → Human Review → Webhook</span>
+          </div>
+          <div className="flex items-center justify-center gap-3 mt-3 flex-wrap">
+            <Badge variant="outline" className="text-[10px] bg-emerald-500/5 text-emerald-600 dark:text-emerald-400 border-emerald-500/20">
+              mode: &apos;embedded&apos; — No server needed
+            </Badge>
+            <Badge variant="outline" className="text-[10px] bg-amber-500/5 text-amber-600 dark:text-amber-400 border-amber-500/20">
+              mode: &apos;hosted&apos; — Dashboard connection
+            </Badge>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Docker Deployment */}
+      <Card className="border-0 shadow-sm glass-card glow-hover hover:shadow-md transition-shadow duration-300">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-semibold flex items-center gap-2">
+            <Container className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+            Docker Deployment
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            <div className="relative group bg-muted/50 dark:bg-muted/30 rounded-lg p-3 font-mono text-sm">
+              <span className="text-xs">docker compose up</span>
+              <CopyButton text="docker compose up" />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              The dashboard will be available at <code className="font-mono text-[10px]">http://localhost:3000</code>.
+              Includes a Dockerfile for custom deployments.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Badge variant="outline" className="text-[10px] bg-emerald-500/5 text-emerald-600 dark:text-emerald-400 border-emerald-500/20">
+                Next.js App
+              </Badge>
+              <Badge variant="outline" className="text-[10px] bg-amber-500/5 text-amber-600 dark:text-amber-400 border-amber-500/20">
+                WebSocket Service
+              </Badge>
+              <Badge variant="outline" className="text-[10px] bg-cyan-500/5 text-cyan-600 dark:text-cyan-400 border-cyan-500/20">
+                SQLite Volume
+              </Badge>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -476,6 +553,11 @@ export function SDKIntegration() {
               {copiedInstall ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3" />}
             </Button>
           </div>
+          {framework === 'LangChain' && (
+            <p className="text-[10px] text-muted-foreground mt-2">
+              The <code className="font-mono">agentshield</code> core package is included as a dependency of <code className="font-mono">@agentshield/langchain</code>.
+            </p>
+          )}
         </CardContent>
       </Card>
 
@@ -528,9 +610,33 @@ export function SDKIntegration() {
         {/* API Reference */}
         <Card className="border-0 shadow-sm glass-card glow-hover hover:shadow-md transition-shadow duration-300">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">API Reference</CardTitle>
+            <CardTitle className="text-sm font-semibold">SDK & API Reference</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
+            <div className="space-y-2">
+              <h4 className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                AgentShield SDK Methods
+              </h4>
+              <div className="space-y-1.5">
+                <pre className="text-[10px] font-mono bg-muted/50 dark:bg-muted/30 rounded p-2 overflow-x-auto">
+{`// Initialize
+new AgentShield({ mode, serverUrl, apiKey, policies })
+
+// Evaluate a tool call
+await shield.evaluate({
+  agentRole, toolName, arguments
+})
+
+// Policy management
+await shield.createPolicy({ ... })
+await shield.listPolicies()
+
+// Trace inspection
+await shield.getTrace(traceId)`}
+                </pre>
+              </div>
+            </div>
+
             <div className="space-y-2">
               <h4 className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
                 POST /api/evaluate
@@ -542,22 +648,7 @@ export function SDKIntegration() {
 {`{
   "agentRole": "DataAgent",
   "toolName": "PostgreSQL",
-  "arguments": { "operation": "SELECT" }
-}`}
-              </pre>
-            </div>
-
-            <div className="space-y-2">
-              <h4 className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-                PUT /api/approvals/:id
-              </h4>
-              <p className="text-xs text-muted-foreground">
-                Approve, reject, or modify a pending approval request.
-              </p>
-              <pre className="text-[10px] font-mono bg-muted/50 dark:bg-muted/30 rounded p-2 overflow-x-auto">
-{`{
-  "status": "APPROVED" | "REJECTED" | "MODIFIED",
-  "humanReviewerId": "reviewer-id"
+  "arguments": { "query": "DROP TABLE users" }
 }`}
               </pre>
             </div>

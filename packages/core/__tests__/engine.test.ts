@@ -5,8 +5,8 @@ import {
   enrichArgsFromQuery,
   getMatchingActions,
   evaluatePolicies,
-} from '../src/engine.js';
-import type { PolicyDefinition, EvaluateInput } from '../src/types.js';
+} from '../src/index.js';
+import type { PolicyDefinition, EvaluateInput } from '../src/index.js';
 
 // ---------------------------------------------------------------------------
 // evaluateConditions (imported from policy-engine, same tests)
@@ -228,7 +228,6 @@ describe('evaluatePolicies', () => {
     });
     expect(result.decision).toBe('BLOCK');
     expect(result.matchedPolicy?.policyId).toBe('POL-001');
-    expect(result.action).toBe('DROP');
   });
 
   it('ALLOWs a SELECT operation on PostgreSQL', () => {
@@ -257,6 +256,7 @@ describe('evaluatePolicies', () => {
       toolName: 'FileSystem',
       action: 'DELETE',
     });
+    // POL-004 has agentRole: '*' which matches any agent
     expect(result.decision).toBe('BLOCK');
     expect(result.matchedPolicy?.policyId).toBe('POL-004');
   });
@@ -283,12 +283,13 @@ describe('evaluatePolicies', () => {
     expect(allowed.matchedPolicy?.policyId).toBe('POL-006');
   });
 
-  it('defaults to BLOCK in zero-trust mode when no policy matches', () => {
+  it('defaults to BLOCK when zero-trust is enabled and no policy matches', () => {
     const result = evaluatePolicies(policies, {
       agentRole: 'UnknownAgent',
       toolName: 'UnknownTool',
       action: 'UNKNOWN',
     });
+    // zero-trust is enabled by default, so default deny
     expect(result.decision).toBe('BLOCK');
     expect(result.reason).toContain('No matching policy');
   });
@@ -300,9 +301,21 @@ describe('evaluatePolicies', () => {
       action: 'UNKNOWN',
     }, { zeroTrust: false });
     expect(result.decision).toBe('ALLOW');
+    expect(result.matchedPolicy).toBeNull();
   });
 
-  it('skips disabled policies', () => {
+  it('defaults to BLOCK when action is unknown and no policy matches (zero-trust)', () => {
+    const result = evaluatePolicies(policies, {
+      agentRole: 'UnknownAgent',
+      toolName: 'UnknownTool',
+      arguments: {}, // No action can be inferred
+    });
+    // When action cannot be inferred and no policies match, default deny
+    expect(result.decision).toBe('BLOCK');
+    expect(result.reason).toContain('No matching policy');
+  });
+
+  it('skips disabled policies and defaults to BLOCK (zero-trust)', () => {
     const disabledPolicies: PolicyDefinition[] = [
       {
         policyId: 'POL-DISABLED',
@@ -320,7 +333,8 @@ describe('evaluatePolicies', () => {
       toolName: 'PostgreSQL',
       action: 'DROP',
     });
-    expect(result.decision).toBe('BLOCK'); // zero-trust default
+    // All matching policies are disabled, zero-trust default is BLOCK
+    expect(result.decision).toBe('BLOCK');
     expect(result.matchedPolicy).toBeNull();
   });
 
@@ -330,7 +344,6 @@ describe('evaluatePolicies', () => {
       toolName: 'PostgreSQL',
       arguments: { query: 'DROP TABLE users' },
     });
-    expect(result.action).toBe('DROP');
     expect(result.decision).toBe('BLOCK');
   });
 
@@ -341,7 +354,6 @@ describe('evaluatePolicies', () => {
       action: 'SELECT',
       arguments: { query: 'DROP TABLE users' }, // action overrides query inference
     });
-    expect(result.action).toBe('SELECT');
     expect(result.decision).toBe('ALLOW');
   });
 

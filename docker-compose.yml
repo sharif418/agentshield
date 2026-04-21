@@ -1,4 +1,4 @@
-version: "3.8"
+version: '3.8'
 
 services:
   agentshield:
@@ -9,21 +9,20 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - DATABASE_URL=file:./db/agentshield.db
-      - AGENTSHIELD_API_KEY=agentshield-demo-key
+      - DATABASE_URL=file:./../db/custom.db
+      - AGENTSHEILD_API_KEY=${AGENTSHEILD_API_KEY:-}
       - NODE_ENV=production
     volumes:
-      - agentshield-data:/app/db
+      - agentshield-db:/app/db
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/api/stats", "-H", "x-api-key: agentshield-demo-key"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/stats"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 15s
+      start_period: 30s
 
-  # WebSocket service for real-time notifications
-  agentshield-ws:
+  websocket:
     build:
       context: ./mini-services/approval-ws
       dockerfile: Dockerfile
@@ -31,9 +30,12 @@ services:
     ports:
       - "3003:3003"
     environment:
-      - PORT=3003
+      - WS_PORT=3003
     restart: unless-stopped
+    depends_on:
+      agentshield:
+        condition: service_healthy
 
 volumes:
-  agentshield-data:
+  agentshield-db:
     driver: local

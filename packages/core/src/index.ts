@@ -7,22 +7,20 @@
  * @packageDocumentation
  */
 
-// Types
+// Core evaluation functions
+export { evaluateConditions } from './conditions';
+export { inferAction, enrichArgsFromQuery, getMatchingActions } from './inference';
+export { evaluatePolicies } from './evaluate';
+
+// Core types
+export type { Decision, Policy, EvaluateRequest, EvaluateResult, Trace } from './types';
+
+// Backward-compatible type exports (for SDK and existing consumers)
 export type {
   PermissionLevel,
   ConditionRule,
   PolicyDefinition,
   EvaluateInput,
-  EvaluateResult,
   MatchedPolicy,
   AgentShieldConfig,
-} from './types.js';
-
-// Pure evaluation functions
-export {
-  getMatchingActions,
-  evaluateConditions,
-  inferAction,
-  enrichArgsFromQuery,
-  evaluatePolicies,
-} from './engine.js';
+} from './types';

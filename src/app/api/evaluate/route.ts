@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { validateApiKey } from '@/lib/auth';
 import { evaluateConditions, inferAction, enrichArgsFromQuery, getMatchingActions } from '@/lib/policy-engine';
-import { z } from 'zod';
+import { z } from 'zod'
 
 const EvaluateSchema = z.object({
   agentRole: z.string().min(1).max(100),
@@ -261,5 +261,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
-

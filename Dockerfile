@@ -1,8 +1,9 @@
 # ---- Stage 1: Dependencies ----
-FROM node:20-slim AS deps
+FROM node:20-alpine AS deps
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# Install Bun
+# Install bun
 RUN npm install -g bun
 
 # Copy package files
@@ -16,7 +17,7 @@ RUN bun install --frozen-lockfile
 RUN bun run db:generate
 
 # ---- Stage 2: Build ----
-FROM node:20-slim AS builder
+FROM node:20-alpine AS builder
 WORKDIR /app
 
 RUN npm install -g bun
@@ -24,39 +25,45 @@ RUN npm install -g bun
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Set the database URL for build
-ENV DATABASE_URL=file:./db/agentshield.db
+# Build the Next.js standalone output
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Generate Prisma client
+# Generate Prisma client again for the builder context
 RUN bun run db:generate
 
 # Build the application
 RUN bun run build
 
 # ---- Stage 3: Production ----
-FROM node:20-slim AS runner
+FROM node:20-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV DATABASE_URL=file:./db/agentshield.db
 
-# Create non-root user
-RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 nextjs
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
 
-# Copy built application
-COPY --from=builder /app/public ./public
+# Copy the standalone output
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
 
-# Copy Prisma files for runtime
+# Copy Prisma schema and database directory
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/db ./db
+
+# Copy Prisma runtime dependencies from builder
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
-COPY --from=builder /app/prisma ./prisma
 
-# Create data directory
+# Copy packages directory for SDK
+COPY --from=builder /app/packages ./packages
+
+# Copy mini-services
+COPY --from=builder /app/mini-services ./mini-services
+
+# Create db directory if it doesn't exist and set ownership
 RUN mkdir -p /app/db && chown nextjs:nodejs /app/db
 
 USER nextjs
@@ -65,9 +72,5 @@ EXPOSE 3000
 
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-  CMD curl -f http://localhost:3000/api/stats -H "x-api-key: agentshield-demo-key" || exit 1
 
 CMD ["node", "server.js"]

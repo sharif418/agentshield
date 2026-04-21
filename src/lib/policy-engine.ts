@@ -2,7 +2,66 @@
  * Policy evaluation engine - pure functions extracted for testability.
  * These functions implement the core logic for condition evaluation,
  * action inference, argument enrichment, and action matching.
+ *
+ * This is the canonical source used by the API routes.
+ * The packages/core/ package mirrors these same functions for SDK use.
  */
+
+// Core types - defined inline to avoid cross-package import issues with Next.js
+export type Decision = 'ALLOW' | 'BLOCK' | 'REQUIRE_APPROVAL';
+
+export interface Policy {
+  policyId: string;
+  name: string;
+  description?: string;
+  agentRole: string;
+  resource: string;
+  action: string;
+  permissionLevel: Decision;
+  conditionRules?: string | Record<string, unknown> | null;
+  priority: number;
+  enabled: boolean;
+}
+
+export interface EvaluateRequest {
+  agentRole: string;
+  toolName: string;
+  arguments?: Record<string, unknown>;
+  action?: string;
+  sessionId?: string;
+}
+
+export interface EvaluateResult {
+  decision: Decision;
+  traceId?: string;
+  matchedPolicy: {
+    policyId: string;
+    name: string;
+    permissionLevel: Decision;
+    priority: number;
+    action: string;
+  } | null;
+  reason: string | null;
+  latency?: number;
+  approvalRequestId?: string | null;
+}
+
+export interface Trace {
+  traceId: string;
+  sessionId: string;
+  agentRole: string;
+  toolName: string;
+  intentPayload: string;
+  evaluationResult: Decision;
+  matchedPolicyId: string | null;
+  latency: number;
+  timestamp: Date;
+}
+
+// Backward-compatible aliases
+export type PermissionLevel = Decision;
+export type PolicyDefinition = Policy;
+export type EvaluateInput = EvaluateRequest;
 
 /**
  * Given a specific action, return all policy action values that should match it.
@@ -155,4 +214,186 @@ export function enrichArgsFromQuery(args: Record<string, unknown>): Record<strin
   }
 
   return args;
+}
+
+/**
+ * Parse condition rules from various formats into an object suitable for evaluateConditions.
+ */
+function parseConditionRules(
+  conditionRules: string | Record<string, unknown> | null | undefined
+): Record<string, unknown> | null {
+  if (!conditionRules) return null;
+  if (typeof conditionRules === 'string') {
+    try {
+      return JSON.parse(conditionRules);
+    } catch {
+      return null;
+    }
+  }
+  return conditionRules;
+}
+
+/**
+ * Core policy evaluation function. Pure function - no DB, no side effects.
+ * Shared between the API route and the SDK (embedded mode).
+ *
+ * @param policies - Array of policies to evaluate against
+ * @param request - The evaluation request input
+ * @param options - Optional evaluation options
+ */
+export function evaluatePolicies(
+  policies: Policy[],
+  request: EvaluateRequest,
+  options: {
+    /** When true and no policy matches, default to BLOCK instead of ALLOW. Default: true */
+    zeroTrust?: boolean;
+  } = {}
+): Omit<EvaluateResult, 'traceId' | 'latency' | 'approvalRequestId'> & { action: string | null } {
+  const { zeroTrust = true } = options;
+  const { agentRole, toolName } = request;
+  const rawArgs = request.arguments ?? {};
+
+  const action = request.action ?? inferAction(rawArgs, toolName);
+  const args = enrichArgsFromQuery(rawArgs);
+
+  // Filter policies matching agentRole and resource
+  const matchingPolicies = policies.filter(p => {
+    if (!p.enabled) return false;
+    if (p.agentRole !== '*' && p.agentRole !== agentRole) return false;
+    if (p.resource !== toolName) return false;
+    // If action specified, check action matches
+    if (action) {
+      const matchingActions = getMatchingActions(action);
+      if (!matchingActions.includes(p.action)) return false;
+    }
+    return true;
+  });
+
+  // Sort by priority desc
+  matchingPolicies.sort((a, b) => b.priority - a.priority);
+
+  type Decision = 'ALLOW' | 'BLOCK' | 'REQUIRE_APPROVAL';
+  let decision: Decision = 'ALLOW';
+  let matchedPolicy: {
+    policyId: string;
+    name: string;
+    permissionLevel: Decision;
+    priority: number;
+    action: string;
+  } | null = null;
+  let reason: string | null = null;
+
+  if (action) {
+    // Standard priority-based evaluation
+    for (const policy of matchingPolicies) {
+      let conditionMatches = true;
+      if (policy.conditionRules) {
+        const rules = parseConditionRules(policy.conditionRules as string | Record<string, unknown> | null);
+        if (rules) {
+          conditionMatches = evaluateConditions(rules, args);
+        }
+      }
+      if (!conditionMatches) continue;
+
+      if (policy.permissionLevel === 'BLOCK') {
+        decision = 'BLOCK';
+        matchedPolicy = {
+          policyId: policy.policyId,
+          name: policy.name,
+          permissionLevel: policy.permissionLevel,
+          priority: policy.priority,
+          action: policy.action,
+        };
+        reason = `Blocked by policy: ${policy.name}`;
+        break;
+      }
+
+      if (policy.permissionLevel === 'REQUIRE_APPROVAL' && decision === 'ALLOW') {
+        decision = 'REQUIRE_APPROVAL';
+        matchedPolicy = {
+          policyId: policy.policyId,
+          name: policy.name,
+          permissionLevel: policy.permissionLevel,
+          priority: policy.priority,
+          action: policy.action,
+        };
+        reason = `Requires approval per policy: ${policy.name}`;
+      }
+
+      if (policy.permissionLevel === 'ALLOW' && decision === 'ALLOW') {
+        matchedPolicy = {
+          policyId: policy.policyId,
+          name: policy.name,
+          permissionLevel: policy.permissionLevel,
+          priority: policy.priority,
+          action: policy.action,
+        };
+        reason = `Allowed by policy: ${policy.name}`;
+      }
+    }
+  } else {
+    // Zero-trust mode: action could not be inferred.
+    const blockPolicies: typeof matchingPolicies = [];
+    const approvalPolicies: typeof matchingPolicies = [];
+    const allowPolicies: typeof matchingPolicies = [];
+
+    for (const policy of matchingPolicies) {
+      let conditionMatches = true;
+      if (policy.conditionRules) {
+        const rules = parseConditionRules(policy.conditionRules as string | Record<string, unknown> | null);
+        if (rules) {
+          conditionMatches = evaluateConditions(rules, args);
+        }
+      }
+      if (!conditionMatches) continue;
+
+      if (policy.permissionLevel === 'BLOCK') blockPolicies.push(policy);
+      else if (policy.permissionLevel === 'REQUIRE_APPROVAL') approvalPolicies.push(policy);
+      else if (policy.permissionLevel === 'ALLOW') allowPolicies.push(policy);
+    }
+
+    if (blockPolicies.length > 0) {
+      decision = 'BLOCK';
+      matchedPolicy = {
+        policyId: blockPolicies[0].policyId,
+        name: blockPolicies[0].name,
+        permissionLevel: blockPolicies[0].permissionLevel,
+        priority: blockPolicies[0].priority,
+        action: blockPolicies[0].action,
+      };
+      reason = `Blocked by policy: ${blockPolicies[0].name} (zero-trust: action unknown)`;
+    } else if (approvalPolicies.length > 0) {
+      decision = 'REQUIRE_APPROVAL';
+      matchedPolicy = {
+        policyId: approvalPolicies[0].policyId,
+        name: approvalPolicies[0].name,
+        permissionLevel: approvalPolicies[0].permissionLevel,
+        priority: approvalPolicies[0].priority,
+        action: approvalPolicies[0].action,
+      };
+      reason = `Requires approval per policy: ${approvalPolicies[0].name} (zero-trust: action unknown)`;
+    } else if (allowPolicies.length > 0) {
+      decision = 'ALLOW';
+      matchedPolicy = {
+        policyId: allowPolicies[0].policyId,
+        name: allowPolicies[0].name,
+        permissionLevel: allowPolicies[0].permissionLevel,
+        priority: allowPolicies[0].priority,
+        action: allowPolicies[0].action,
+      };
+      reason = `Allowed by policy: ${allowPolicies[0].name}`;
+    } else {
+      decision = 'BLOCK';
+      matchedPolicy = null;
+      reason = 'No matching policy found (default deny: action unknown)';
+    }
+  }
+
+  // If no policy matched at all and zero-trust is enabled, default deny
+  if (!matchedPolicy && decision === 'ALLOW' && zeroTrust && matchingPolicies.length === 0) {
+    decision = 'BLOCK';
+    reason = 'No matching policy found (default deny)';
+  }
+
+  return { decision, matchedPolicy, reason, action };
 }

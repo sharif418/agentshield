@@ -10,6 +10,7 @@
  * import { AgentShield } from 'agentshield'
  *
  * const shield = new AgentShield({
+ *   mode: 'hosted',
  *   serverUrl: 'https://agentshield.example.com',
  *   apiKey: 'sk-...'
  * })
@@ -54,25 +55,40 @@
  * ```
  */
 
-// Re-export all types from core
+// Main SDK class and factory function
+export { AgentShield, createAgentShield } from './agentshield.js';
+
+// Sub-modules for advanced usage
+export { HostedClient } from './hosted-client.js';
+export { EmbeddedEngine } from './embedded-engine.js';
+
+// SDK-specific types
 export type {
-  PermissionLevel,
-  ConditionRule,
-  PolicyDefinition,
-  EvaluateInput,
+  AgentShieldConfig,
+  PolicyCreateParams,
+  PolicyListParams,
+  TraceListParams,
+  Trace,
+} from './types.js';
+
+// Re-export core types under both aliased and original names
+export type {
+  Decision,
+  Policy,
+  EvaluateRequest,
   EvaluateResult,
   MatchedPolicy,
-  AgentShieldConfig,
-} from '../../core/src/types.js';
+  ConditionRule,
+  PermissionLevel,
+  PolicyDefinition,
+  EvaluateInput,
+} from './types.js';
 
-// Re-export evaluation functions from core for advanced usage
+// Re-export core evaluation functions for advanced usage
 export {
-  getMatchingActions,
+  evaluatePolicies,
   evaluateConditions,
   inferAction,
   enrichArgsFromQuery,
-  evaluatePolicies,
+  getMatchingActions,
 } from '../../core/src/engine.js';
-
-// Export SDK client
-export { AgentShield, createAgentShield } from './client.js';

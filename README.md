@@ -8,6 +8,7 @@ AgentShield intercepts every tool invocation from AI agents and makes real-time 
 
 ## Table of Contents
 
+- [Quick Start](#quick-start)
 - [Features](#features)
 - [Tech Stack](#tech-stack)
 - [Architecture Overview](#architecture-overview)
@@ -17,6 +18,107 @@ AgentShield intercepts every tool invocation from AI agents and makes real-time 
 - [Project Structure](#project-structure)
 - [Environment Variables](#environment-variables)
 - [License](#license)
+
+---
+
+## Quick Start
+
+### Option 1: Docker (Recommended)
+
+```bash
+docker compose up
+```
+
+The dashboard will be available at `http://localhost:3000`.
+
+### Option 2: Install the SDK
+
+```bash
+npm install agentshield
+```
+
+```typescript
+import { AgentShield } from 'agentshield';
+
+// Create a shield with embedded policies (no server needed)
+const shield = new AgentShield({
+  mode: 'embedded',
+  policies: [
+    {
+      policyId: 'POL-001',
+      name: 'Block SQL DROP',
+      agentRole: 'DataAgent',
+      resource: 'PostgreSQL',
+      action: 'DROP',
+      permissionLevel: 'BLOCK',
+      priority: 20,
+      enabled: true,
+    },
+  ],
+});
+
+// Evaluate a tool call
+const result = await shield.evaluate({
+  agentRole: 'DataAgent',
+  toolName: 'PostgreSQL',
+  arguments: { query: 'DROP TABLE users' },
+});
+
+console.log(result.decision); // 'BLOCK'
+console.log(result.reason);   // 'Blocked by policy: Block SQL DROP'
+```
+
+### Option 3: LangChain Integration
+
+```bash
+npm install @agentshield/langchain
+```
+
+```typescript
+import { AgentShieldCallbackHandler } from '@agentshield/langchain';
+
+const handler = new AgentShieldCallbackHandler({
+  mode: 'embedded',
+  policies: [...],
+  toolNameMap: { 'sql_db_query': 'PostgreSQL' },
+});
+
+// Add to your LangChain agent
+const executor = AgentExecutor.fromAgentAndTools({
+  agent,
+  tools,
+  callbacks: [handler],
+});
+```
+
+### Option 4: Self-Hosted Dashboard
+
+```bash
+git clone <repository-url>
+cd my-project
+bun install
+bun run db:push
+curl -X POST http://localhost:3000/api/seed  # Seed demo data
+bun run dev
+```
+
+Then connect via the hosted SDK:
+
+```typescript
+import { AgentShield } from 'agentshield';
+
+const shield = new AgentShield({
+  mode: 'hosted',
+  serverUrl: 'http://localhost:3000',
+  apiKey: 'your-api-key',
+});
+
+const result = await shield.evaluate({
+  agentRole: 'DataAgent',
+  toolName: 'PostgreSQL',
+  arguments: { query: 'DROP TABLE users' },
+});
+```
 
 ---
 
