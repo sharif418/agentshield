@@ -1,18 +1,48 @@
 {
   "name": "@agentshield/core",
   "version": "1.0.0",
-  "description": "AgentShield core policy evaluation engine",
-  "main": "src/index.ts",
-  "types": "src/index.ts",
+  "description": "AgentShield core policy evaluation engine — deterministic runtime governance for AI agents",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
   "license": "MIT",
   "private": true,
   "scripts": {
     "build": "tsc",
+    "prepublishOnly": "npm run build",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "tsc --noEmit"
   },
-  "keywords": ["agentshield", "policy", "engine", "ai", "agent", "governance", "zero-trust"],
+  "keywords": [
+    "agentshield",
+    "policy",
+    "engine",
+    "ai",
+    "agent",
+    "governance",
+    "zero-trust",
+    "guardrails",
+    "deterministic",
+    "runtime"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/agentshield/agentshield",
+    "directory": "packages/core"
+  },
+  "homepage": "https://github.com/agentshield/agentshield#readme",
+  "sideEffects": false,
   "devDependencies": {
     "typescript": "^5",
     "vitest": "^4.1.4"

@@ -5,7 +5,7 @@
  * for hosted and embedded modes.
  */
 
-// Re-export all core types
+// Re-export all core types from the package name
 export type {
   Decision,
   Policy,
@@ -14,14 +14,17 @@ export type {
   Trace,
   ConditionRule,
   MatchedPolicy,
-} from '../../core/src/types';
+} from '@agentshield/core';
 
 // Backward-compatible aliases
 export type {
   Decision as PermissionLevel,
   Policy as PolicyDefinition,
   EvaluateRequest as EvaluateInput,
-} from '../../core/src/types';
+} from '@agentshield/core';
+
+// Import core types for use in SDK-specific interfaces
+import type { Policy, Decision } from '@agentshield/core';
 
 /**
  * Configuration for the AgentShield SDK client.
@@ -35,7 +38,7 @@ export interface AgentShieldConfig {
   /** Mode: 'hosted' uses HTTP to server, 'embedded' uses in-memory store */
   mode: 'hosted' | 'embedded';
   /** Initial policies for embedded mode */
-  policies?: import('../../core/src/types').Policy[];
+  policies?: Policy[];
   /** Default agent role for evaluate calls */
   defaultAgentRole?: string;
   /** Default session ID */
@@ -63,7 +66,7 @@ export interface PolicyCreateParams {
   /** Which action this policy applies to */
   action: string;
   /** Permission level for this policy */
-  permissionLevel: import('../../core/src/types').Decision;
+  permissionLevel: Decision;
   /** Optional condition rules for fine-grained matching */
   conditionRules?: string | Record<string, unknown>;
   /** Priority (higher = evaluated first) */
@@ -81,7 +84,7 @@ export interface PolicyListParams {
   /** Filter by resource */
   resource?: string;
   /** Filter by permission level */
-  permissionLevel?: import('../../core/src/types').Decision;
+  permissionLevel?: Decision;
   /** Filter by enabled status */
   enabled?: boolean;
 }
@@ -95,7 +98,7 @@ export interface TraceListParams {
   /** Filter by agent role */
   agentRole?: string;
   /** Filter by evaluation result */
-  evaluationResult?: import('../../core/src/types').Decision;
+  evaluationResult?: Decision;
   /** Filter by tool name */
   toolName?: string;
   /** Maximum number of traces to return */
