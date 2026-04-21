@@ -1956,3 +1956,191 @@ Full dashboard section with simulated threat feed and real-time threat detection
 4. Optimize dependency graph performance with WebGL/Canvas for large policy sets
 5. Add customizable dashboard layout (drag-and-drop widget arrangement)
 6. Implement data retention policies and automatic cleanup for old traces
+
+---
+
+## Task 9-a: Create SecurityScanner Component
+**Date:** 2026-04-22
+**Status:** ✅ Complete
+
+### What was done:
+
+Created a SecurityScanner component at `src/components/dashboard/SecurityScanner.tsx` that performs simulated security scans of the policy configuration and reports vulnerabilities, misconfigurations, and security recommendations.
+
+### Features implemented:
+
+1. **Section Header** — Uses `section-header-gradient section-header-accent` CSS classes with animated gradient background, "Security Scanner" title with `gradient-text-shimmer` class, and ScanSearch icon from lucide-react
+
+2. **Scan Control Panel** — Top area with:
+   - "Run Full Scan" button (large, emerald gradient `bg-gradient-to-r from-emerald-600 to-teal-600`) that triggers a simulated 2.5s scan
+   - "Quick Scan" button (outline variant) for faster 0.75s partial scan (fewer vulns found)
+   - Scan progress bar with animated stripe (`progress-animated` CSS class)
+   - Last scan timestamp (relative, e.g., "2m ago")
+   - Scan duration display (e.g., "3s")
+   - Scan status indicator (Idle / Scanning / Complete) with color-coded dot
+
+3. **Security Score Card** — Large SVG gauge:
+   - Score 0-100 with color-coded arc (red <40, amber 40-70, green >70)
+   - Large score number in center (28px font)
+   - "Security Grade" label (A/B/C/D/F based on score)
+   - Comparison with previous scan (up/down arrow with delta, color-coded)
+   - `gauge-glow` CSS class for glow effect
+   - Tick marks at 25/50/75/100 positions
+
+4. **Vulnerability Summary Cards** — 4 cards in a row:
+   - Critical Issues (red, ShieldX icon) with trend arrow
+   - Warnings (amber, AlertTriangle icon) with trend arrow
+   - Info Items (cyan, Info icon) with trend arrow
+   - Passed Checks (emerald, ShieldCheck icon) with trend arrow
+   - Each with count (`font-mono tabular-nums`) and trend indicator
+
+5. **Vulnerability List** — Scrollable list of found issues:
+   - Severity badge (Critical/Warning/Info) with color coding and icons
+   - Category badge (Authentication, Authorization, Data Protection, Network, Configuration, Compliance)
+   - Title and truncated description
+   - Affected policies count
+   - "Fix" button that shows a Dialog with numbered remediation steps
+   - Status badge: Open (red), Acknowledged (amber), Fixed (emerald)
+   - Filter by severity (Select dropdown) and category (Select dropdown)
+   - `table-row-hover` CSS class on rows
+   - Framer Motion staggered entrance animation
+
+6. **Security Recommendations** — Card with prioritized list:
+   - Each recommendation has priority badge (High/Medium/Low) with color coding
+   - Description and impact text
+   - "Apply" button (shows confirmation Dialog with risk reduction and complexity info)
+   - Estimated risk reduction percentage with TrendingUp icon
+   - Implementation complexity (Easy/Medium/Hard) with dot indicators
+   - Scrollable list (max-h-80)
+
+7. **Policy Security Matrix** — Grid showing each agent role vs security domain:
+   - 4 agent roles × 5 security domains
+   - Cells color-coded: Green (secured ✓), Yellow (partial ◐), Red (vulnerable ✗)
+   - Click cell to see details in a Dialog (role, domain, status, details, policy count)
+   - Legend at bottom with color swatches
+
+8. **Scan History** — Last 5 scans in a timeline:
+   - Score trend mini chart (SVG sparkline at top)
+   - Timeline entries with: colored dot, date/time, score (color-coded), issues count, duration
+   - Mini sparkline per entry showing previous → current score
+   - Click to see that scan's results (highlights selected, shows ChevronRight)
+   - Framer Motion slide-in animation
+
+### Simulated Scan Data:
+- 15 realistic vulnerability templates across 6 categories (Authentication, Authorization, Data Protection, Network, Configuration, Compliance)
+- 8 recommendation templates with priority, impact, risk reduction, and complexity
+- Scan generates 8-15 vulnerabilities per full scan, 4-7 for quick scan
+- Security score calculated from found issues: 100 - (critical × 12) - (warnings × 5) - (info × 2)
+- Previous scan score randomized for comparison delta
+- Simulated progress with setInterval (10 steps for full, 5 for quick)
+
+### Technical:
+- `'use client'` directive
+- Imports from `@/components/ui/` (Button, Card, Badge, Dialog, Progress, ScrollArea, Separator, Select)
+- Uses framer-motion for animations (AnimatePresence, motion.div)
+- Uses lucide-react for icons (ScanSearch, ShieldX, AlertTriangle, Info, ShieldCheck, Play, Clock, TrendingUp, TrendingDown, CheckCircle, XCircle, ChevronRight, Loader2, Wrench, Zap, Lock, Unlock, Shield, RefreshCw)
+- Responsive design (grid-cols-2 on mobile, grid-cols-4+ on desktop)
+- `font-mono tabular-nums` for numbers
+- `active:scale-[0.98]` for tactile feedback on buttons
+- `glass-card glow-hover` for cards
+- `dialog-fullscreen-mobile` for dialogs on mobile
+- Sub-components: `SecurityScoreGauge`, `Sparkline`
+
+### Files created:
+- `src/components/dashboard/SecurityScanner.tsx` (~820 lines)
+
+### Verification:
+- `bun run lint` passes with 0 errors
+- Dev server running and compiling successfully (200 status)
+- Component is self-contained and ready for integration into the dashboard layout
+
+---
+
+## Task 9-b: Create DashboardWidgets Component
+**Date:** 2026-04-21
+**Status:** ✅ Complete
+
+### What was done:
+
+Created a `DashboardWidgets.tsx` component at `src/components/dashboard/DashboardWidgets.tsx` that provides a customizable widget-based overview with drag-and-drop arrangement and 8 widget types for monitoring the policy engine.
+
+### Features implemented:
+
+1. **Section Header** — Uses `section-header-gradient section-header-accent` CSS classes with animated gradient background, "Dashboard Widgets" title with `gradient-text-shimmer` class, and `LayoutGrid` icon from lucide-react
+
+2. **Widget Toolbar** — Top bar with:
+   - "Add Widget" dropdown button showing all 8 available widget types (with "Added" badges for already-added widgets)
+   - "Browse All" button to open the full Add Widget dialog
+   - "Reset Layout" button to restore the default 6-widget arrangement
+   - Layout toggle: Grid / Compact mode
+   - Widget count badge
+
+3. **Widget Grid** — Responsive grid (`grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4`) of widget cards:
+   - Each widget is a `glass-card glow-hover card-shine corner-accent` card
+   - Has a title bar with GripVertical drag handle, icon, title, and close (×) button
+   - Framer Motion `layout` animation when widgets rearrange
+   - `AnimatePresence` with `mode="popLayout"` for smooth add/remove transitions
+   - Minimum height of 200px for each widget
+
+4. **8 Widget Types:**
+
+   a. **Policy Status** — SVG donut chart showing ALLOW/BLOCK/REQUIRE_APPROVAL breakdown with center count and color legend
+
+   b. **Approval Pipeline** — Horizontal pipeline visualization with animated progress bar showing Pending → Under Review → Approved/Rejected with counts and colored segments, plus stage indicators with arrows
+
+   c. **Risk Heatmap** — 4×4 SVG grid showing agent roles (Data/Code/Finance/Support) × risk categories (SQL Injection, Data Exfil, Privilege Escal, Compliance), color intensity based on risk level (green→yellow→red) with legend
+
+   d. **Latency Monitor** — SVG mini line/area chart showing latency over last 10 evaluations with gradient fill, data points, and avg/max/min labels in `font-mono tabular-nums`
+
+   e. **Agent Activity** — Horizontal bar chart showing trace count per agent role, color-coded by role (DataAgent=cyan, CodeAgent=violet, FinanceAgent=amber, SupportAgent=rose), animated width transitions
+
+   f. **Compliance Score** — SVG circular progress ring with animated stroke-dashoffset, percentage display, color-coded (green ≥80%, amber ≥50%, red <50%), and trend arrow indicator
+
+   g. **Recent Blocks** — List of last 5 BLOCK traces with agent→tool format, red accent styling, and relative timestamps
+
+   h. **Quick Stats** — 4 mini stat boxes in 2×2 grid: Total Policies, Traces Today, Pending Approvals, Avg Latency with role-specific icons and colors
+
+5. **Add Widget Dialog** — When clicking "Browse All":
+   - Shows all 8 widget types as selectable cards in a 2-column grid
+   - Each card has widget icon, name, and brief description
+   - Already-added widgets shown as disabled with "Added" badge
+   - Click to add the widget to the grid
+   - `dialog-fullscreen-mobile` class for mobile
+   - `ScrollArea` with max-h-[60vh] for scrollable content
+
+6. **Widget Data** — Fetches from `/api/stats?timeRange=...` and `/api/traces?limit=50&timeRange=...`:
+   - Uses `useQuery` from `@tanstack/react-query`
+   - Auto-refresh every 30 seconds
+   - Loading skeleton for each widget while data loads
+   - Respects the global `timeRange` from Zustand store
+
+7. **Layout Persistence** — Widget arrangement stored in component state:
+   - Default layout includes 6 widgets (Policy Status, Approval Pipeline, Risk Heatmap, Latency Monitor, Agent Activity, Quick Stats)
+   - User can add/remove widgets via toolbar dropdown or dialog
+   - Reset button restores default layout
+   - Empty state with "Restore Default Layout" button
+
+### Technical:
+- `'use client'` directive
+- Imports from `@/components/ui/` (Button, Card/CardContent, Badge, Dialog/DialogContent/DialogHeader/DialogTitle/DialogDescription, ScrollArea, Separator, DropdownMenu/DropdownMenuContent/DropdownMenuItem/DropdownMenuTrigger/DropdownMenuSeparator/DropdownMenuLabel)
+- Uses `framer-motion` for animations (AnimatePresence, motion.div, layout)
+- Uses `lucide-react` for icons (LayoutGrid, GripVertical, Plus, RotateCcw, X, BarChart3, Shield, Activity, Clock, CheckSquare, Target, TrendingUp, Zap, Database, PieChart, LayoutList, ArrowUpRight, ArrowDownRight)
+- Uses `@tanstack/react-query` `useQuery` for data fetching
+- Responsive design with mobile-first approach
+- `font-mono tabular-nums` for numbers
+- `active:scale-[0.98]` for tactile button feedback
+- `gauge-glow` CSS class for SVG gauge animations
+
+### Files created:
+- `src/components/dashboard/DashboardWidgets.tsx` (~580 lines)
+
+### Files modified:
+- `src/lib/store.ts` — Added `widgets` SectionId and `widgets: 'Widgets'` label
+- `src/components/dashboard/Sidebar.tsx` — Added LayoutGrid icon import, Widgets nav item (shortcut: 'B')
+- `src/components/dashboard/DashboardLayout.tsx` — Added DashboardWidgets import, widgets section component, LayoutGrid icon, and updated sectionKeys
+
+### Verification:
+- ESLint passes with 0 errors for all modified files and the new component
+- Dev server compiles successfully (200 status)
+- Stats API returns valid data (`totalPolicies=17`)
+- Component is self-contained and integrated into the dashboard navigation

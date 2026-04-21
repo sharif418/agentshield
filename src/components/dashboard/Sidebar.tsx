@@ -14,12 +14,14 @@ import {
   Radio,
   Bot,
   FlaskConical,
+  LayoutGrid,
   Gauge,
   GitCompare,
   Network,
   FileCheck,
   BookOpen,
   ShieldAlert,
+  ScanSearch,
   ChevronLeft,
   ChevronRight,
   ShieldCheck,
@@ -43,6 +45,8 @@ const navItems: { id: SectionId; label: string; icon: React.ReactNode; shortcut:
   { id: 'livestream', label: 'Live Stream', icon: <Radio className="h-5 w-5" />, shortcut: '6' },
   { id: 'agents', label: 'Agents', icon: <Bot className="h-5 w-5" />, shortcut: '7' },
   { id: 'simulator', label: 'Simulator', icon: <FlaskConical className="h-5 w-5" />, shortcut: '8' },
+  { id: 'widgets', label: 'Widgets', icon: <LayoutGrid className="h-5 w-5" />, shortcut: 'B' },
+  { id: 'securityscanner', label: 'Security', icon: <ScanSearch className="h-5 w-5" />, shortcut: 'S' },
   { id: 'rateanalytics', label: 'Rate Analytics', icon: <Gauge className="h-5 w-5" />, shortcut: 'E' },
   { id: 'policydiff', label: 'Policy Diff', icon: <GitCompare className="h-5 w-5" />, shortcut: 'D' },
   { id: 'dependencygraph', label: 'Dep. Graph', icon: <Network className="h-5 w-5" />, shortcut: 'G' },
@@ -162,7 +166,7 @@ export function Sidebar() {
           <div className="mb-1">
             {!sidebarCollapsed && <span className="px-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60 mb-1 block">Monitoring</span>}
             <div className="space-y-0.5">
-              {navItems.slice(5, 8).map((item) => {
+              {navItems.slice(5, 9).map((item) => {
                 const isActive = activeSection === item.id
                 const button = (
                   <Button
@@ -218,7 +222,7 @@ export function Sidebar() {
           <div className="mb-1">
             {!sidebarCollapsed && <span className="px-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60 mb-1 block">Analysis</span>}
             <div className="space-y-0.5">
-              {navItems.slice(8, 14).map((item) => {
+              {navItems.slice(9, 16).map((item) => {
                 const isActive = activeSection === item.id
                 const button = (
                   <Button
@@ -274,7 +278,7 @@ export function Sidebar() {
           <div className="mb-1">
             {!sidebarCollapsed && <span className="px-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60 mb-1 block">System</span>}
             <div className="space-y-0.5">
-              {navItems.slice(14).map((item) => {
+              {navItems.slice(16).map((item) => {
                 const isActive = activeSection === item.id
                 const button = (
                   <Button
