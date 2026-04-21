@@ -1136,3 +1136,159 @@
 .border-l-3 {
   border-left-width: 3px;
 }
+
+/* ===== Round 10 Enhanced Visual Effects ===== */
+
+/* Neon border glow - striking neon glow for important cards */
+@keyframes neonGlow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(16, 185, 129, 0.1), inset 0 0 5px rgba(16, 185, 129, 0.02);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.15), inset 0 0 10px rgba(16, 185, 129, 0.03);
+  }
+}
+
+.neon-glow {
+  animation: neonGlow 4s ease-in-out infinite;
+}
+
+.dark .neon-glow {
+  animation: neonGlowDark 4s ease-in-out infinite;
+}
+
+@keyframes neonGlowDark {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.15), inset 0 0 8px rgba(16, 185, 129, 0.03);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(16, 185, 129, 0.25), inset 0 0 15px rgba(16, 185, 129, 0.05);
+  }
+}
+
+/* Gradient border - full gradient border effect on important elements */
+.gradient-border {
+  position: relative;
+  background-clip: padding-box;
+}
+
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: linear-gradient(135deg, #10b981, #14b8a6, #06b6d4);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* Animated countdown timer styling */
+@keyframes countdownPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.countdown-pulse {
+  animation: countdownPulse 1s ease-in-out infinite;
+}
+
+/* Drag-and-drop zone styling */
+.drop-zone {
+  border: 2px dashed oklch(0.8 0 0);
+  transition: all 0.3s ease;
+}
+
+.drop-zone:hover,
+.drop-zone.drag-over {
+  border-color: rgba(16, 185, 129, 0.5);
+  background: rgba(16, 185, 129, 0.04);
+}
+
+.dark .drop-zone {
+  border-color: oklch(0.4 0 0);
+}
+
+.dark .drop-zone:hover,
+.dark .drop-zone.drag-over {
+  border-color: rgba(16, 185, 129, 0.5);
+  background: rgba(16, 185, 129, 0.06);
+}
+
+/* Interactive card with scale + glow on hover */
+.card-interactive {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.card-interactive:hover {
+  transform: translateY(-2px) scale(1.01);
+  box-shadow: 0 12px 30px -8px rgba(16, 185, 129, 0.12), 0 4px 12px -4px rgba(0, 0, 0, 0.06);
+  border-color: rgba(16, 185, 129, 0.25);
+}
+
+.dark .card-interactive:hover {
+  box-shadow: 0 12px 30px -8px rgba(16, 185, 129, 0.18), 0 4px 12px -4px rgba(0, 0, 0, 0.3);
+}
+
+/* Table header with gradient */
+.table-header-gradient th {
+  background: linear-gradient(180deg, rgba(16, 185, 129, 0.04), transparent);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+}
+
+.dark .table-header-gradient th {
+  background: linear-gradient(180deg, rgba(16, 185, 129, 0.06), transparent);
+}
+
+/* Timeline connector line */
+.timeline-line {
+  position: relative;
+}
+
+.timeline-line::before {
+  content: '';
+  position: absolute;
+  left: 11px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(180deg, rgba(16, 185, 129, 0.3), rgba(16, 185, 129, 0.05));
+}
+
+/* Micro-badge - tiny status indicator */
+.micro-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  font-size: 10px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+/* Section divider with gradient */
+.section-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.2), transparent);
+  margin: 16px 0;
+}
+
+/* Highlight flash - brief flash animation for newly updated items */
+@keyframes highlightFlash {
+  0% { background-color: rgba(16, 185, 129, 0.15); }
+  100% { background-color: transparent; }
+}
+
+.highlight-flash {
+  animation: highlightFlash 1.5s ease-out;
+}

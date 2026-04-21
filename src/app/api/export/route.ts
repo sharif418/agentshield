@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { validateApiKey } from '@/lib/auth'
 
 function escapeCsvField(value: string): string {
   if (value.includes(',') || value.includes('"') || value.includes('\n') || value.includes('\r')) {
@@ -40,6 +41,9 @@ function auditLogsToCsv(logs: Awaited<ReturnType<typeof db.auditLog.findMany>>):
 }
 
 export async function GET(request: NextRequest) {
+  const authError = validateApiKey(request)
+  if (authError) return authError
+
   try {
     const { searchParams } = new URL(request.url)
     const type = searchParams.get('type') ?? 'traces'
@@ -61,9 +65,16 @@ export async function GET(request: NextRequest) {
 
     const dateStr = new Date().toISOString().split('T')[0]
 
+    const MAX_EXPORT_LIMIT = 10000
+    const exportLimit = Math.min(
+      parseInt(searchParams.get('limit') ?? '10000'),
+      MAX_EXPORT_LIMIT
+    )
+
     if (type === 'traces') {
       const traces = await db.executionTrace.findMany({
         orderBy: { timestamp: 'desc' },
+        take: exportLimit,
       })
 
       if (format === 'json') {
@@ -87,6 +98,7 @@ export async function GET(request: NextRequest) {
     // type === 'audit'
     const logs = await db.auditLog.findMany({
       orderBy: { timestamp: 'desc' },
+      take: exportLimit,
     })
 
     if (format === 'json') {

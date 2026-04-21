@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { validateApiKey } from '@/lib/auth';
 
 function getTimeRangeCutoff(timeRange: string | null): Date {
   const range = timeRange ?? '24h';
@@ -14,6 +15,9 @@ function getTimeRangeCutoff(timeRange: string | null): Date {
 }
 
 export async function GET(request: NextRequest) {
+  const authError = validateApiKey(request)
+  if (authError) return authError
+
   try {
     const { searchParams } = new URL(request.url);
     const timeRange = searchParams.get('timeRange');

@@ -18,6 +18,8 @@ export type SectionId =
   | 'compliance'
   | 'templates'
   | 'threatintel'
+  | 'scheduler'
+  | 'datamanager'
   | 'audit'
   | 'webhooks'
   | 'sdk'
@@ -86,6 +88,8 @@ export const sectionLabels: Record<SectionId, string> = {
   compliance: 'Compliance',
   templates: 'Templates',
   threatintel: 'Threat Intel',
+  scheduler: 'Scheduler',
+  datamanager: 'Data Mgr',
   audit: 'Audit Logs',
   webhooks: 'Webhooks',
   sdk: 'SDK & Docs',

@@ -22,6 +22,8 @@ import {
   BookOpen,
   ShieldAlert,
   ScanSearch,
+  CalendarClock,
+  Database as DatabaseIcon,
   ChevronLeft,
   ChevronRight,
   ShieldCheck,
@@ -55,6 +57,8 @@ const navItems: { id: SectionId; label: string; icon: React.ReactNode; shortcut:
   { id: 'compliance', label: 'Compliance', icon: <FileCheck className="h-5 w-5" />, shortcut: 'C' },
   { id: 'templates', label: 'Templates', icon: <BookOpen className="h-5 w-5" />, shortcut: 'T' },
   { id: 'threatintel', label: 'Threat Intel', icon: <ShieldAlert className="h-5 w-5" />, shortcut: 'X' },
+  { id: 'scheduler', label: 'Scheduler', icon: <CalendarClock className="h-5 w-5" />, shortcut: 'Z' },
+  { id: 'datamanager', label: 'Data Mgr', icon: <DatabaseIcon className="h-5 w-5" />, shortcut: 'M' },
   { id: 'audit', label: 'Audit Logs', icon: <FileText className="h-5 w-5" />, shortcut: '9' },
   { id: 'webhooks', label: 'Webhooks', icon: <Webhook className="h-5 w-5" />, shortcut: 'Q' },
   { id: 'sdk', label: 'SDK & Docs', icon: <Code2 className="h-5 w-5" />, shortcut: 'W' },
@@ -333,14 +337,23 @@ export function Sidebar() {
 
         {/* Quick Stats section */}
         {!sidebarCollapsed && (
-          <div className="px-3 pb-2 space-y-1">
-            <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-              <ShieldCheck className="h-3 w-3" />
+          <div className="px-3 pb-2 space-y-1.5">
+            <div className="section-divider !my-2" />
+            <div className="flex items-center gap-2 text-[11px] text-muted-foreground hover:text-foreground transition-colors">
+              <ShieldCheck className="h-3 w-3 text-emerald-500" />
               <span>{stats?.totalPolicies ?? 0} policies</span>
+              <span className="ml-auto micro-badge bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                {stats?.totalPolicies ?? 0}
+              </span>
             </div>
-            <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-              <CheckCircle className="h-3 w-3" />
+            <div className="flex items-center gap-2 text-[11px] text-muted-foreground hover:text-foreground transition-colors">
+              <CheckCircle className="h-3 w-3 text-amber-500" />
               <span>{stats?.pendingApprovals ?? 0} approvals</span>
+              {(stats?.pendingApprovals ?? 0) > 0 && (
+                <span className="ml-auto micro-badge bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                  {stats.pendingApprovals}
+                </span>
+              )}
             </div>
           </div>
         )}

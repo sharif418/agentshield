@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { validateApiKey } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
+  const authError = validateApiKey(request)
+  if (authError) return authError
+
   try {
     const { searchParams } = new URL(request.url);
     const eventType = searchParams.get('eventType');

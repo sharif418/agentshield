@@ -1,7 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { validateApiKey } from '@/lib/auth';
+import { z } from 'zod'
+
+const CreateApprovalSchema = z.object({
+  traceId: z.string().min(1).max(100),
+  agentContext: z.union([z.string(), z.record(z.unknown())]),
+  requestedAction: z.union([z.string(), z.record(z.unknown())]),
+  status: z.enum(['PENDING', 'APPROVED', 'REJECTED', 'MODIFIED']).optional(),
+})
 
 export async function GET(request: NextRequest) {
+  const authError = validateApiKey(request)
+  if (authError) return authError
+
   try {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
@@ -28,16 +40,19 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const { traceId, agentContext, requestedAction, status } = body;
+  const authError = validateApiKey(request)
+  if (authError) return authError
 
-    if (!traceId || !agentContext || !requestedAction) {
+  try {
+    const rawBody = await request.json();
+    const parseResult = CreateApprovalSchema.safeParse(rawBody);
+    if (!parseResult.success) {
       return NextResponse.json(
-        { error: 'Missing required fields: traceId, agentContext, requestedAction' },
+        { error: 'Invalid input', details: parseResult.error.flatten().fieldErrors },
         { status: 400 }
       );
     }
+    const { traceId, agentContext, requestedAction, status } = parseResult.data;
 
     // Verify the trace exists
     const trace = await db.executionTrace.findUnique({

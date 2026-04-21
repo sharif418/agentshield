@@ -1,10 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { validateApiKey } from '@/lib/auth';
+import { z } from 'zod'
+
+const UpdatePolicySchema = z.object({
+  name: z.string().min(1).max(200).optional(),
+  description: z.string().max(1000).optional(),
+  agentRole: z.string().max(100).optional(),
+  resource: z.string().max(100).optional(),
+  action: z.string().max(100).optional(),
+  permissionLevel: z.enum(['ALLOW', 'BLOCK', 'REQUIRE_APPROVAL']).optional(),
+  conditionRules: z.record(z.unknown()).optional(),
+  priority: z.number().int().min(0).max(1000).optional(),
+  enabled: z.boolean().optional(),
+  actor: z.string().max(100).optional(),
+})
 
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ policyId: string }> }
 ) {
+  const authError = validateApiKey(_request)
+  if (authError) return authError
+
   try {
     const { policyId } = await params;
     const policy = await db.policy.findUnique({
@@ -32,9 +50,20 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ policyId: string }> }
 ) {
+  const authError = validateApiKey(request)
+  if (authError) return authError
+
   try {
     const { policyId } = await params;
-    const body = await request.json();
+    const rawBody = await request.json();
+    const parseResult = UpdatePolicySchema.safeParse(rawBody);
+    if (!parseResult.success) {
+      return NextResponse.json(
+        { error: 'Invalid input', details: parseResult.error.flatten().fieldErrors },
+        { status: 400 }
+      );
+    }
+    const body = parseResult.data;
 
     const existing = await db.policy.findUnique({
       where: { policyId },
@@ -89,6 +118,9 @@ export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ policyId: string }> }
 ) {
+  const authError = validateApiKey(_request)
+  if (authError) return authError
+
   try {
     const { policyId } = await params;
 

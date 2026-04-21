@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { validateApiKey } from '@/lib/auth';
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ policyId: string }> }
 ) {
+  const authError = validateApiKey(request)
+  if (authError) return authError
+
   try {
     const { policyId } = await params;
 
@@ -130,10 +134,10 @@ export async function GET(
       history: allEntries,
     });
   } catch (error) {
-    console.error('Error fetching policy history:', error);
+    console.error('Error fetching policy history:', error)
     return NextResponse.json(
       { error: 'Failed to fetch policy history' },
       { status: 500 }
-    );
+    )
   }
 }

@@ -33,7 +33,7 @@ const pendingApprovals = new Map<string, { request: ApprovalRequest; createdAt: 
 
 let reminderInterval: ReturnType<typeof setInterval> | null = null
 
-const PORT = 3003
+const PORT = parseInt(process.env.WS_PORT ?? '3003')
 
 // ─── Helper: parse JSON body from HTTP request ──────────────────────────────
 
@@ -313,6 +313,9 @@ httpServer.listen(PORT, () => {
   console.log(`[START] Notify new: POST http://localhost:${PORT}/notify/new`)
   console.log(`[START] Notify update: POST http://localhost:${PORT}/notify/update`)
 })
+
+// Log configuration
+console.log(`[CONFIG] WS_PORT=${PORT} (from ${process.env.WS_PORT ? 'env' : 'default'})`)
 
 // ─── Graceful Shutdown ──────────────────────────────────────────────────────
 

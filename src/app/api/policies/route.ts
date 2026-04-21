@@ -1,7 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { validateApiKey } from '@/lib/auth';
+import { z } from 'zod'
+
+const CreatePolicySchema = z.object({
+  name: z.string().min(1).max(200),
+  description: z.string().max(1000).optional(),
+  agentRole: z.string().min(1).max(100),
+  resource: z.string().min(1).max(100),
+  action: z.string().min(1).max(100),
+  permissionLevel: z.enum(['ALLOW', 'BLOCK', 'REQUIRE_APPROVAL']),
+  conditionRules: z.record(z.unknown()).optional(),
+  priority: z.number().int().min(0).max(1000).optional(),
+  enabled: z.boolean().optional(),
+})
 
 export async function GET(request: NextRequest) {
+  const authError = validateApiKey(request)
+  if (authError) return authError
+
   try {
     const { searchParams } = new URL(request.url);
     const agentRole = searchParams.get('agentRole');
@@ -31,26 +48,19 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const {
-      name,
-      description,
-      agentRole,
-      resource,
-      action,
-      permissionLevel,
-      conditionRules,
-      priority,
-      enabled,
-    } = body;
+  const authError = validateApiKey(request)
+  if (authError) return authError
 
-    if (!name || !agentRole || !resource || !action || !permissionLevel) {
+  try {
+    const rawBody = await request.json();
+    const parseResult = CreatePolicySchema.safeParse(rawBody);
+    if (!parseResult.success) {
       return NextResponse.json(
-        { error: 'Missing required fields: name, agentRole, resource, action, permissionLevel' },
+        { error: 'Invalid input', details: parseResult.error.flatten().fieldErrors },
         { status: 400 }
       );
     }
+    const { name, description, agentRole, resource, action, permissionLevel, conditionRules, priority, enabled } = parseResult.data;
 
     const policyId = `POL-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 8)}`;
 

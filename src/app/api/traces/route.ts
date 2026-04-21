@@ -1,5 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { validateApiKey } from '@/lib/auth';
+import { z } from 'zod'
+
+const CreateTraceSchema = z.object({
+  sessionId: z.string().min(1).max(100),
+  agentRole: z.string().min(1).max(100),
+  toolName: z.string().min(1).max(100),
+  evaluationResult: z.enum(['ALLOW', 'BLOCK', 'REQUIRE_APPROVAL']),
+  intentPayload: z.union([z.string(), z.record(z.unknown())]).optional(),
+  matchedPolicyId: z.string().max(100).optional(),
+  latency: z.number().min(0).optional(),
+})
 
 function getTimeRangeCutoff(timeRange: string | null): Date | null {
   const range = timeRange ?? '24h';
@@ -14,6 +26,9 @@ function getTimeRangeCutoff(timeRange: string | null): Date | null {
 }
 
 export async function GET(request: NextRequest) {
+  const authError = validateApiKey(request)
+  if (authError) return authError
+
   try {
     const { searchParams } = new URL(request.url);
     const sessionId = searchParams.get('sessionId');
@@ -55,24 +70,19 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const {
-      sessionId,
-      agentRole,
-      toolName,
-      intentPayload,
-      evaluationResult,
-      matchedPolicyId,
-      latency,
-    } = body;
+  const authError = validateApiKey(request)
+  if (authError) return authError
 
-    if (!sessionId || !agentRole || !toolName || !evaluationResult) {
+  try {
+    const rawBody = await request.json();
+    const parseResult = CreateTraceSchema.safeParse(rawBody);
+    if (!parseResult.success) {
       return NextResponse.json(
-        { error: 'Missing required fields: sessionId, agentRole, toolName, evaluationResult' },
+        { error: 'Invalid input', details: parseResult.error.flatten().fieldErrors },
         { status: 400 }
       );
     }
+    const { sessionId, agentRole, toolName, evaluationResult, intentPayload, matchedPolicyId, latency } = parseResult.data;
 
     const traceId = `TRC-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 8)}`;
 

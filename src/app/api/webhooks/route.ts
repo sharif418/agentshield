@@ -1,7 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { validateApiKey } from '@/lib/auth';
+import { z } from 'zod'
 
-export async function GET() {
+const CreateWebhookSchema = z.object({
+  name: z.string().min(1).max(200),
+  url: z.string().min(1).max(500).url(),
+  channel: z.enum(['slack', 'teams', 'telegram']),
+  events: z.union([z.string(), z.array(z.string())]),
+  secret: z.string().max(200).optional(),
+  enabled: z.boolean().optional(),
+})
+
+export async function GET(request: NextRequest) {
+  const authError = validateApiKey(request)
+  if (authError) return authError
+
   try {
     const webhooks = await db.webhookConfig.findMany({
       orderBy: { createdAt: 'desc' },
@@ -17,16 +31,19 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const { name, url, channel, events, secret, enabled } = body;
+  const authError = validateApiKey(request)
+  if (authError) return authError
 
-    if (!name || !url || !channel || !events) {
+  try {
+    const rawBody = await request.json();
+    const parseResult = CreateWebhookSchema.safeParse(rawBody);
+    if (!parseResult.success) {
       return NextResponse.json(
-        { error: 'Missing required fields: name, url, channel, events' },
+        { error: 'Invalid input', details: parseResult.error.flatten().fieldErrors },
         { status: 400 }
       );
     }
+    const { name, url, channel, events, secret, enabled } = parseResult.data;
 
     const webhook = await db.webhookConfig.create({
       data: {
@@ -50,6 +67,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
+  const authError = validateApiKey(request)
+  if (authError) return authError
+
   try {
     const body = await request.json();
     const { id, name, url, channel, events, secret, enabled } = body;
@@ -96,6 +116,9 @@ export async function PUT(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+  const authError = validateApiKey(request)
+  if (authError) return authError
+
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');

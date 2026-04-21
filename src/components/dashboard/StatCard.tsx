@@ -131,7 +131,7 @@ export function StatCard({ title, value, icon: Icon, trend, trendUp, suffix = ''
   }
 
   return (
-    <Card className="relative overflow-hidden group hover:shadow-md transition-all duration-300 border-0 shadow-sm gradient-border-hover shimmer-hover card-shine hover-lift animated-border">
+    <Card className="relative overflow-hidden group hover:shadow-md transition-all duration-300 border-0 shadow-sm gradient-border-hover shimmer-hover card-shine hover-lift animated-border neon-glow stat-accent-top">
       {/* Inner shadow at top for depth */}
       <div className="absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-black/[0.03] to-transparent dark:from-white/[0.02] dark:to-transparent pointer-events-none" />
       {/* Dot grid pattern for subtle texture */}

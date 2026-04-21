@@ -482,7 +482,7 @@ export function DashboardOverview() {
           variant="outline"
           size="sm"
           className="h-8 text-xs gap-1.5 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 dark:hover:bg-emerald-950/50 dark:hover:text-emerald-400 dark:hover:border-emerald-800 active:scale-[0.98] transition-all"
-          onClick={() => setActiveSection('security')}
+          onClick={() => setActiveSection('securityscanner')}
         >
           <Scan className="h-3.5 w-3.5" /> Run Scan
         </Button>
@@ -498,7 +498,7 @@ export function DashboardOverview() {
           variant="outline"
           size="sm"
           className="h-8 text-xs gap-1.5 hover:bg-cyan-50 hover:text-cyan-700 hover:border-cyan-300 dark:hover:bg-cyan-950/50 dark:hover:text-cyan-400 dark:hover:border-cyan-800 active:scale-[0.98] transition-all"
-          onClick={() => setActiveSection('audit')}
+          onClick={() => setActiveSection('datamanager')}
         >
           <Download className="h-3.5 w-3.5" /> Export Traces
         </Button>
@@ -514,7 +514,7 @@ export function DashboardOverview() {
           variant="outline"
           size="sm"
           className="h-8 text-xs gap-1.5 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 dark:hover:bg-emerald-950/50 dark:hover:text-emerald-400 dark:hover:border-emerald-800 active:scale-[0.98] transition-all"
-          onClick={() => setActiveSection('overview')}
+          onClick={() => setActiveSection('compliance')}
         >
           <BarChart3 className="h-3.5 w-3.5" /> View Compliance
         </Button>

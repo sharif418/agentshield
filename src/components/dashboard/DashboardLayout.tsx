@@ -22,11 +22,13 @@ import { PolicyTemplates } from './PolicyTemplates'
 import { ThreatIntelFeed } from './ThreatIntelFeed'
 import { SecurityScanner } from './SecurityScanner'
 import { SystemHealthPanel } from './SystemHealthPanel'
+import { PolicyScheduler } from './PolicyScheduler'
+import { DataExportManager } from './DataExportManager'
 import { ThemeToggle } from './ThemeToggle'
 import { NotificationCenter } from './NotificationCenter'
 import { GlobalTimeRange } from './GlobalTimeRange'
 import { useWebSocket } from '@/lib/use-websocket'
-import { Shield, WifiOff, Menu, Search, LayoutDashboard, Activity, CheckSquare, GitBranch, FileText, Webhook, Code2, Clock, Database, ChevronRight, Radio, Bot, FlaskConical, LayoutGrid, Gauge, GitCompare, Network, FileCheck, BookOpen, ShieldAlert, ScanSearch, Heart } from 'lucide-react'
+import { Shield, WifiOff, Menu, Search, LayoutDashboard, Activity, CheckSquare, GitBranch, FileText, Webhook, Code2, Clock, Database, ChevronRight, Radio, Bot, FlaskConical, LayoutGrid, Gauge, GitCompare, Network, FileCheck, BookOpen, ShieldAlert, ScanSearch, Heart, CalendarClock, Database as DatabaseIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet'
@@ -60,6 +62,8 @@ const sectionComponents: Record<string, React.ComponentType> = {
   compliance: ComplianceReport,
   templates: PolicyTemplates,
   threatintel: ThreatIntelFeed,
+  scheduler: PolicyScheduler,
+  datamanager: DataExportManager,
   securityscanner: SecurityScanner,
   systemhealth: SystemHealthPanel,
   audit: AuditLogs,
@@ -83,6 +87,8 @@ const sectionIcons: Record<SectionId, React.ReactNode> = {
   compliance: <FileCheck className="h-4 w-4" />,
   templates: <BookOpen className="h-4 w-4" />,
   threatintel: <ShieldAlert className="h-4 w-4" />,
+  scheduler: <CalendarClock className="h-4 w-4" />,
+  datamanager: <DatabaseIcon className="h-4 w-4" />,
   securityscanner: <ScanSearch className="h-4 w-4" />,
   systemhealth: <Heart className="h-4 w-4" />,
   audit: <FileText className="h-4 w-4" />,
@@ -90,7 +96,7 @@ const sectionIcons: Record<SectionId, React.ReactNode> = {
   sdk: <Code2 className="h-4 w-4" />,
 }
 
-const sectionKeys: SectionId[] = ['dashboard', 'policies', 'approvals', 'traces', 'reasoning', 'livestream', 'agents', 'simulator', 'widgets', 'securityscanner', 'systemhealth', 'rateanalytics', 'policydiff', 'dependencygraph', 'compliance', 'templates', 'threatintel', 'audit', 'webhooks', 'sdk']
+const sectionKeys: SectionId[] = ['dashboard', 'policies', 'approvals', 'traces', 'reasoning', 'livestream', 'agents', 'simulator', 'widgets', 'securityscanner', 'systemhealth', 'rateanalytics', 'policydiff', 'dependencygraph', 'compliance', 'templates', 'threatintel', 'scheduler', 'datamanager', 'audit', 'webhooks', 'sdk']
 
 export function DashboardLayout() {
   const { activeSection, wsConnected, wsReconnecting, wsReconnectAttempt, commandOpen, setCommandOpen, setActiveSection, lastRefresh, setLastRefresh, dbRecordCount, setDbRecordCount, timeRange } = useAppStore()
@@ -311,7 +317,8 @@ export function DashboardLayout() {
         {/* Subtle gradient accent line at top */}
         <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent" />
         <div className="flex items-center gap-3">
-          <button className="hover:text-foreground transition-colors duration-200 cursor-default" type="button">
+          <button className="hover:text-foreground transition-colors duration-200 cursor-default flex items-center gap-1.5" type="button">
+            <Shield className="h-3 w-3 text-emerald-500" />
             AgentShield Policy Engine v1.0.0
           </button>
           <span className="hidden sm:inline text-border">|</span>
@@ -321,7 +328,12 @@ export function DashboardLayout() {
           </span>
           <span className="hidden md:inline text-border">|</span>
           <span className="hidden md:flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
-            Showing: {timeRange === '24h' ? '24h' : timeRange === '7d' ? '7 days' : timeRange === '30d' ? '30 days' : '90 days'}
+            <Clock className="h-3 w-3" />
+            {timeRange === '24h' ? '24h' : timeRange === '7d' ? '7 days' : timeRange === '30d' ? '30 days' : '90 days'}
+          </span>
+          <span className="hidden lg:inline text-border">|</span>
+          <span className="hidden lg:flex items-center gap-1">
+            <span className="text-[10px] font-mono">{sectionKeys.length} sections</span>
           </span>
         </div>
         <div className="flex items-center gap-3">
@@ -332,10 +344,13 @@ export function DashboardLayout() {
             </span>
           )}
           <span className="hidden md:inline text-border">|</span>
-          <span className="hidden md:inline">Development</span>
-          <span className="hidden sm:inline text-border">|</span>
+          <span className="hidden md:inline flex items-center gap-1">
+            <span className="inline-flex items-center rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+              DEV
+            </span>
+          </span>
           <div className="flex items-center gap-1.5">
-            <span className={`h-1.5 w-1.5 rounded-full ${wsConnected ? 'bg-emerald-500' : wsReconnecting ? 'bg-amber-500' : 'bg-red-400'}`} />
+            <span className={`h-1.5 w-1.5 rounded-full ${wsConnected ? 'bg-emerald-500 ring-pulse' : wsReconnecting ? 'bg-amber-500' : 'bg-red-400'}`} />
             <span>{wsConnected ? 'Connected' : wsReconnecting ? 'Reconnecting' : 'Disconnected'}</span>
           </div>
         </div>

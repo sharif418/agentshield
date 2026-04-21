@@ -1,27 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { validateApiKey } from '@/lib/auth'
+import { z } from 'zod'
+
+const BulkActionSchema = z.object({
+  policyIds: z.array(z.string().min(1)).min(1).max(100),
+  action: z.enum(['enable', 'disable', 'delete']),
+})
 
 export async function PATCH(request: NextRequest) {
+  const authError = validateApiKey(request)
+  if (authError) return authError
+
   try {
-    const body = await request.json()
-    const { policyIds, action } = body as {
-      policyIds: string[]
-      action: 'enable' | 'disable' | 'delete'
-    }
-
-    if (!Array.isArray(policyIds) || policyIds.length === 0) {
+    const rawBody = await request.json()
+    const parseResult = BulkActionSchema.safeParse(rawBody)
+    if (!parseResult.success) {
       return NextResponse.json(
-        { error: 'policyIds must be a non-empty array' },
+        { error: 'Invalid input', details: parseResult.error.flatten().fieldErrors },
         { status: 400 }
       )
     }
-
-    if (!['enable', 'disable', 'delete'].includes(action)) {
-      return NextResponse.json(
-        { error: 'action must be enable, disable, or delete' },
-        { status: 400 }
-      )
-    }
+    const { policyIds, action } = parseResult.data
 
     let updated = 0
 

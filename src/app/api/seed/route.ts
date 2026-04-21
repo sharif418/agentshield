@@ -1,10 +1,22 @@
-import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { NextRequest, NextResponse } from 'next/server';
+import { db, prismaClient } from '@/lib/db';
+import { validateApiKey } from '@/lib/auth';
 
-export async function POST() {
+export async function POST(request: NextRequest) {
+  const authError = validateApiKey(request)
+  if (authError) return authError
+
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json(
+      { error: 'Seed endpoint is disabled in production. This endpoint deletes all data and should only be used in development.' },
+      { status: 403 }
+    )
+  }
+
   try {
     // Clear existing data (in reverse dependency order)
-    await db.auditLog.deleteMany();
+    // Use raw prismaClient for AuditLog since the extended client blocks deleteMany
+    await prismaClient.auditLog.deleteMany();
     await db.approvalRequest.deleteMany();
     await db.executionTrace.deleteMany();
     await db.policy.deleteMany();

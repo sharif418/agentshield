@@ -1,10 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { validateApiKey } from '@/lib/auth';
+import { z } from 'zod'
+
+const UpdateApprovalSchema = z.object({
+  status: z.enum(['APPROVED', 'REJECTED', 'MODIFIED']),
+  humanReviewerId: z.string().max(100).optional(),
+  reviewNotes: z.string().max(2000).optional(),
+  modifiedAction: z.unknown().optional(),
+})
 
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const authError = validateApiKey(_request)
+  if (authError) return authError
+
   try {
     const { id } = await params;
     const approval = await db.approvalRequest.findUnique({
@@ -37,25 +49,20 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const authError = validateApiKey(request)
+  if (authError) return authError
+
   try {
     const { id } = await params;
-    const body = await request.json();
-    const { status, humanReviewerId, reviewNotes, modifiedAction } = body;
-
-    if (!status) {
+    const rawBody = await request.json();
+    const parseResult = UpdateApprovalSchema.safeParse(rawBody);
+    if (!parseResult.success) {
       return NextResponse.json(
-        { error: 'Missing required field: status' },
+        { error: 'Invalid input', details: parseResult.error.flatten().fieldErrors },
         { status: 400 }
       );
     }
-
-    const validStatuses = ['APPROVED', 'REJECTED', 'MODIFIED'];
-    if (!validStatuses.includes(status)) {
-      return NextResponse.json(
-        { error: `Invalid status. Must be one of: ${validStatuses.join(', ')}` },
-        { status: 400 }
-      );
-    }
+    const { status, humanReviewerId, reviewNotes, modifiedAction } = parseResult.data;
 
     const existing = await db.approvalRequest.findUnique({
       where: { requestId: id },

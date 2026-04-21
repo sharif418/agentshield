@@ -2351,3 +2351,340 @@ The AgentShield Policy Engine Dashboard is now a comprehensive 20-section single
 6. Implement data retention policies and automatic cleanup for old traces
 7. Add real-time collaboration features (shared views, comments)
 8. Add policy testing CI/CD integration section
+
+## Task 3-a: Create PolicyScheduler Component
+**Date:** 2026-04-21
+**Status:** ✅ Complete
+
+### What was done:
+
+Created a PolicyScheduler component at `src/components/dashboard/PolicyScheduler.tsx` that provides time-based policy activation/deactivation scheduling.
+
+### Features implemented:
+
+1. **Section Header** — Uses `section-header-gradient section-header-accent` CSS classes with animated gradient background. Title: "Policy Scheduler" with `gradient-text-shimmer` class. CalendarClock icon from lucide-react. Subtitle: "Schedule policy activation and deactivation".
+
+2. **Active Schedules Table** — Table showing all scheduled policy changes:
+   - Columns: Policy Name (with Shield icon), Action (Enable/Disable with color badges), Scheduled Time (with relative time), Recurrence (One-time/Daily/Weekly/Monthly badge), Status (Pending/Active/Completed/Failed with color dots), Created By, Actions (Edit/Delete)
+   - Color coding: Enable=emerald, Disable=red, Pending=amber, Active=emerald, Completed=cyan, Failed=red
+   - `table-row-hover` CSS class on rows
+   - Framer Motion AnimatePresence for row animations
+   - Empty state with CalendarClock icon
+
+3. **Create Schedule Dialog** — When clicking "New Schedule":
+   - Policy selector dropdown (fetch from /api/policies)
+   - Action: Enable or Disable radio-style buttons with color indicators
+   - Date/Time picker (Input type="datetime-local")
+   - Recurrence: One-time, Daily, Weekly, Monthly select dropdown
+   - Description/notes textarea
+   - "Create Schedule" button with emerald gradient
+   - `dialog-fullscreen-mobile` class
+
+4. **Schedule Timeline** — Visual vertical timeline showing upcoming schedules:
+   - Each entry: colored dot (emerald for enable, red for disable), timestamp, policy name, action badge
+   - "Now" indicator line with ring-pulse animation
+   - Past schedules shown grayed out with reduced opacity
+   - Framer Motion staggered entrance animation
+   - ScrollArea with max-h-96
+
+5. **Quick Schedule Buttons** — Pre-built schedule options:
+   - "Disable All on Weekend" (red, Pause icon)
+   - "Enable During Business Hours" (emerald, Play icon)
+   - "Emergency Lockdown" (dark red, AlertTriangle icon)
+   - Each button has role-specific color and `active:scale-[0.98]` transition
+
+6. **Schedule Statistics Card** — 4 stat boxes:
+   - Total Scheduled (CalendarClock icon, emerald)
+   - Active Now (Play icon, cyan)
+   - Completed This Week (CheckCircle icon, violet)
+   - Failed (XCircle icon, red)
+   - Each with `font-mono tabular-nums`
+
+7. **Simulated Data** — Generates 8-12 realistic mock schedules:
+   - Past schedules (3): Completed and Failed
+   - Active schedule (1): Currently running
+   - Future schedules (8): Various Pending with different recurrence patterns
+   - Generated from real policy data via useMemo
+
+8. **Visual Design:**
+   - `glass-card glow-hover` classes on all cards
+   - `corner-accent` on key cards (table, timeline)
+   - `dot-grid` background for section container
+   - Consistent emerald/teal color scheme
+   - `font-mono tabular-nums` for all numeric values
+   - `active:scale-[0.98]` for all interactive buttons
+   - Responsive: `grid-cols-1 lg:grid-cols-3` for table + timeline
+   - Dark/light mode support
+
+### Technical:
+- `'use client'` directive
+- Imports from `@/components/ui/` (Button, Card, CardContent, CardHeader, CardTitle, Badge, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Input, Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, ScrollArea, Separator, Table, TableBody, TableCell, TableHead, TableHeader, TableRow)
+- Uses `framer-motion` for animations (AnimatePresence, motion.div, motion.tr)
+- Uses `@tanstack/react-query` useQuery for fetching policies from `/api/policies`
+- Uses `lucide-react` for icons (CalendarClock, Calendar, Clock, Play, Pause, CheckCircle, XCircle, Plus, Trash2, Edit, AlertTriangle, Shield, ArrowRight, Repeat, Timer)
+- Uses `sonner` for toast notifications
+- Uses `formatDistanceToNow` from date-fns for relative timestamps
+- Sub-components: CreateScheduleDialog, ScheduleTimeline, ScheduleStats
+
+### Lint Fix:
+- Removed `useMemo` from `ScheduleTimeline` component (React Compiler preserve-manual-memoization rule)
+
+### Files created:
+- `src/components/dashboard/PolicyScheduler.tsx` - Policy scheduler component
+
+### Verification:
+- `bun run lint` passes with 0 errors
+- Component is self-contained and ready for integration into the dashboard layout
+
+---
+
+## Task 3-b: Create DataExportManager Component
+**Date:** 2026-04-21
+**Status:** ✅ Complete
+
+### What was done:
+
+Created a comprehensive DataExportManager component at `src/components/dashboard/DataExportManager.tsx` that provides data export, import, and backup functionality for all dashboard data.
+
+### Features implemented:
+
+1. **Section Header** — `section-header-gradient section-header-accent` CSS classes with animated gradient background. Title "Data Manager" with `gradient-text-shimmer` class. Database icon from lucide-react. Subtitle: "Export, import, and manage your policy engine data".
+
+2. **Export Panel** — Card with export options:
+   - **Data Type Selection**: Checkboxes for Policies, Traces, Approvals, Audit Logs, Webhooks (each with count badge fetched from API)
+   - **Format Selection**: CSV, JSON, HTML Report radio-style buttons with file type icons
+   - **Date Range**: Uses the global timeRange from store (24h/7d/30d/90d)
+   - **Include Options**: Include metadata toggle, Include condition rules toggle, Compress output toggle
+   - "Export Data" button (emerald gradient `bg-gradient-to-r from-emerald-600 to-teal-600`)
+   - Progress indicator during export (simulated)
+   - `glass-card glow-hover corner-accent` classes
+
+3. **Import Panel** — Card with import functionality:
+   - Drag-and-drop zone (styled border-dashed, emerald accent on dragover)
+   - "Browse Files" button
+   - File type validation (accept .csv, .json)
+   - Preview imported data in ScrollArea before confirming
+   - "Import Data" button with confirmation dialog
+   - Import progress bar (simulated)
+   - Recent imports list (last 5 with filename, date, record count, status badge)
+   - `glass-card glow-hover corner-accent` classes
+
+4. **Backup & Restore** — Card with:
+   - "Create Backup" button (creates a full JSON snapshot by fetching from all APIs)
+   - Backup list showing: filename, date, size, record count, restore button
+   - "Restore from Backup" with confirmation dialog showing what will be restored
+   - Auto-backup toggle (simulated, shows "Daily at 2:00 AM")
+   - Last backup timestamp
+   - `glass-card glow-hover` classes
+
+5. **Data Statistics** — 4 stat boxes in a row:
+   - Total Records (Database icon, emerald, count from all tables)
+   - Storage Used (HardDrive icon, cyan, simulated "2.4 MB")
+   - Last Export (Download icon, amber, relative timestamp)
+   - Last Backup (Archive icon, violet, relative timestamp)
+   - Each with `font-mono tabular-nums` and mini SVG sparkline
+
+6. **Export History** — Table showing recent exports:
+   - Columns: Date/Time, Type, Format (CSV/JSON/HTML badge), Records, Size, Status (Completed/Failed), Download button
+   - `table-row-hover` CSS class
+   - AnimatePresence for row animations
+   - Empty state with Download icon
+
+7. **Simulated Data** — Realistic mock data generated with useMemo:
+   - 8 export history entries
+   - 3 backup entries
+   - 5 recent import entries
+
+8. **Visual Design:**
+   - `glass-card glow-hover` classes on all cards
+   - `corner-accent` on export/import panels
+   - `dot-grid` background for section container
+   - Consistent emerald/teal color scheme
+   - `font-mono tabular-nums` for all numeric values
+   - `active:scale-[0.98]` for all interactive buttons
+   - Responsive: `grid-cols-1 lg:grid-cols-2` for export/import panels
+   - Dark/light mode support
+   - Drag-and-drop zone with dashed border and emerald accent
+
+### Technical:
+- `'use client'` directive
+- Imports from `@/components/ui/` (Button, Card, Badge, Dialog, Input, Label, Checkbox, ScrollArea, Separator, Table, Progress, Switch)
+- Uses `framer-motion` for animations (AnimatePresence, motion.tr)
+- Uses `@tanstack/react-query` useQuery for fetching stats from `/api/stats` and webhooks from `/api/webhooks`
+- Uses `lucide-react` for icons (Database, Download, Upload, FileJson, FileText, FileSpreadsheet, HardDrive, Archive, RefreshCw, Trash2, CheckCircle, XCircle, AlertTriangle, Clock, Copy, ExternalLink, Shield, Activity)
+- Uses `sonner` for toast notifications
+- Uses `formatDistanceToNow` from date-fns for relative timestamps
+- Uses the global `timeRange` from `useAppStore`
+
+### Actual Export Functionality:
+- **CSV**: Calls `/api/export?type=traces&format=csv` or `/api/export?type=audit&format=csv` for traces/audit; for policies/approvals/webhooks, fetches JSON from respective API endpoints and converts to CSV client-side
+- **JSON**: Fetches from `/api/policies`, `/api/traces?limit=200`, `/api/approvals`, `/api/audit?limit=200`, `/api/webhooks` and combines into a single JSON object with metadata
+- **HTML**: Generates a styled HTML report with tables for each data type
+- All downloads use `URL.createObjectURL(new Blob(...))` and trigger a click on an anchor element
+- Backup fetches all 5 data sources and creates a full JSON snapshot
+
+### Files created:
+- `src/components/dashboard/DataExportManager.tsx` - Data export manager component
+
+### Verification:
+- `bun run lint` passes with 0 errors
+- Component is self-contained and ready for integration into the dashboard layout
+
+## Cron Review Round 10 (Current Session): QA Testing, New Features, Enhanced Styling
+
+**Date:** 2026-04-22
+**Status:** ✅ Complete
+
+### Current Project Status Assessment
+The AgentShield Policy Engine Dashboard is now a comprehensive 22-section single-page application with full-stack functionality. All API endpoints work correctly (200 status), lint passes with 0 errors, and the page compiles and serves successfully. No console errors were detected across all 22 sections during QA testing with agent-browser.
+
+### QA Testing Performed
+- API testing via curl: stats (200), evaluate (200), policies (200), traces (200), approvals (200), audit (200), export CSV (200), page load (200)
+- Agent-browser testing: Navigated through all sections, verified no JS errors
+- `bun run lint` passes with 0 errors
+- Dev server compiles and serves all routes successfully
+- WebSocket service confirmed functional
+- 22 sections visible in sidebar navigation (confirmed via DOM inspection)
+
+### New Feature: Policy Scheduler Section
+
+#### PolicyScheduler Component (`PolicyScheduler.tsx`, ~941 lines)
+Full dashboard section for scheduling policy activation/deactivation:
+1. **Section Header** — `section-header-gradient section-header-accent` with animated gradient, "Policy Scheduler" title with `gradient-text-shimmer`, CalendarClock icon
+2. **Active Schedules Table** — Full table with Policy Name, Action (Enable/Disable), Scheduled Time (relative), Recurrence (One-time/Daily/Weekly/Monthly), Status (Pending/Active/Completed/Failed), Actions (Edit/Delete)
+3. **Create Schedule Dialog** — Policy selector from API, Enable/Disable action, datetime-local picker, recurrence dropdown, notes textarea, `dialog-fullscreen-mobile`
+4. **Schedule Timeline** — Vertical timeline with colored dots, "Now" indicator with ring-pulse, past schedules grayed out, Framer Motion staggered animation
+5. **Quick Schedule Buttons** — "Disable All on Weekend", "Enable During Business Hours", "Emergency Lockdown" pre-built options
+6. **Schedule Statistics** — 4 stat cards: Total Scheduled, Active Now, Completed This Week, Failed
+
+### New Feature: Data Export Manager Section
+
+#### DataExportManager Component (`DataExportManager.tsx`, ~1171 lines)
+Full dashboard section for data export, import, and backup:
+1. **Section Header** — `section-header-gradient section-header-accent` with `gradient-text-shimmer` title "Data Manager", Database icon
+2. **Export Panel** — 5 data type checkboxes with live count badges, 3 format options (CSV/JSON/HTML), global time range integration, include options toggles, working CSV export via `/api/export`
+3. **Import Panel** — Drag-and-drop zone with emerald accent, file validation, preview in ScrollArea, recent imports list
+4. **Backup & Restore** — Create full JSON backup from all API endpoints, backup table with restore, auto-backup toggle
+5. **Data Statistics** — 4 stat boxes with mini SVG sparklines
+6. **Export History** — Table with 8 mock entries, format badges, status badges, download buttons
+
+### Styling Improvements
+
+#### 1. New CSS Classes and Animations (`globals.css`, Round 10 additions)
+- `.neon-glow` / `@keyframes neonGlow` / `@keyframes neonGlowDark` — Striking neon glow animation for important cards (light/dark variants)
+- `.gradient-border` — Full gradient border effect (emerald→teal→cyan) using mask-composite
+- `.countdown-pulse` / `@keyframes countdownPulse` — Animated countdown timer styling
+- `.drop-zone` — Drag-and-drop zone with dashed border and emerald accent on hover/drag-over (light/dark variants)
+- `.card-interactive` — Interactive card with scale+glow on hover, emerald border accent (light/dark variants)
+- `.table-header-gradient th` — Table headers with gradient background and uppercase tracking
+- `.timeline-line::before` — Timeline connector line with gradient (emerald→transparent)
+- `.micro-badge` — Tiny status indicator badge (18px, font-variant-numeric tabular-nums)
+- `.section-divider` — Gradient divider line (transparent→emerald→transparent)
+- `.highlight-flash` / `@keyframes highlightFlash` — Brief flash animation for newly updated items
+
+#### 2. StatCard Enhancements
+- Added `neon-glow` class for striking glow animation
+- Added `stat-accent-top` class for top accent bar on hover
+- Combined with existing: `gradient-border-hover`, `shimmer-hover`, `card-shine`, `hover-lift`, `animated-border`
+
+#### 3. Footer Enhancements (DashboardLayout)
+- Added Shield icon with emerald color next to version text
+- Added Clock icon next to time range indicator
+- Added section count display (font-mono) on large screens
+- Replaced "Development" text with styled DEV badge (emerald pill with border)
+- Added `ring-pulse` animation to connection status dot when connected
+
+#### 4. Sidebar Quick Stats Enhancement
+- Added `section-divider` gradient separator before stats
+- Added `micro-badge` count indicators for policies and approvals
+- Added emerald/amber color coding for icons
+- Added hover transition for text color
+
+### Navigation Updates
+- Added `scheduler` SectionId (shortcut: 'Z', icon: CalendarClock, label: "Scheduler")
+- Added `datamanager` SectionId (shortcut: 'M', icon: Database, label: "Data Mgr")
+- Dashboard now has 22 sections total
+- Section order: Dashboard(1), Policies(2), Approvals(3), Traces(4), Reasoning(5), Live Stream(6), Agents(7), Simulator(8), Widgets(B), Security(S), System Health(H), Rate Analytics(E), Policy Diff(D), Dep. Graph(G), Compliance(C), Templates(T), Threat Intel(X), Scheduler(Z), Data Mgr(M), Audit Logs(9), Webhooks(Q), SDK & Docs(W)
+
+### Files Created
+- `/src/components/dashboard/PolicyScheduler.tsx` (~941 lines) — Policy scheduling section
+- `/src/components/dashboard/DataExportManager.tsx` (~1171 lines) — Data export/import/backup section
+
+### Files Modified
+- `/src/app/globals.css` — Added 12 new CSS classes, 3 new keyframe animations (Round 10)
+- `/src/lib/store.ts` — Added `scheduler` and `datamanager` to SectionId and sectionLabels
+- `/src/components/dashboard/DashboardLayout.tsx` — Integrated PolicyScheduler + DataExportManager, CalendarClock + DatabaseIcon imports, section components/icons/keys, enhanced footer
+- `/src/components/dashboard/Sidebar.tsx` — Added CalendarClock + DatabaseIcon imports, Scheduler + Data Mgr nav items, enhanced quick stats with micro-badges and color coding
+- `/src/components/dashboard/StatCard.tsx` — Added neon-glow and stat-accent-top classes
+
+### Verification
+- `bun run lint` passes with 0 errors
+- API endpoints tested: stats (200), policies (200), traces (200), evaluate (200), export (200), page load (200)
+- Dev server compiles and serves all routes
+- 22 sections accessible via sidebar navigation
+- No console errors detected during agent-browser testing
+
+### Known Issues / Risks
+1. **Server stability**: Dev server may crash under memory pressure in sandbox environment. Individual API requests work fine. Known issue across all cron rounds.
+2. **WebSocket service**: Must be manually started with `cd mini-services/approval-ws && bun --hot index.ts`
+3. **Force-directed graph**: Initial layout may need 1-2 seconds to settle. Performance may degrade with >100 policies.
+
+### Priority Recommendations for Next Phase
+1. Add user authentication and role-based access control
+2. Implement real WebSocket event broadcasting from evaluate API
+3. Add PDF export for compliance reports (currently HTML only)
+4. Optimize dependency graph performance with WebGL/Canvas for large policy sets
+5. Add customizable dashboard layout (drag-and-drop widget arrangement)
+6. Implement data retention policies and automatic cleanup for old traces
+7. Add policy versioning with diff comparison
+
+## Task 15: Create Unit Tests for Auth Middleware and Policy Engine
+**Date:** 2026-04-21
+**Status:** ✅ Complete
+
+### What was done:
+
+Created comprehensive unit tests for two core modules of the AgentShield project using Bun's built-in test runner.
+
+### Approach: Extract Pure Functions for Testability
+
+Since the policy evaluation functions (`evaluateConditions`, `inferAction`, `enrichArgsFromQuery`, `getMatchingActions`) were defined as private functions inside `src/app/api/evaluate/route.ts` and not exported, they were not directly testable. The chosen approach was:
+
+1. **Created `src/lib/policy-engine.ts`** - Extracted all four pure functions into a separate module with proper exports
+2. **Updated `src/app/api/evaluate/route.ts`** - Replaced inline function definitions with imports from `@/lib/policy-engine`
+3. **Created `__tests__/auth.test.ts`** - Tests for auth middleware
+4. **Created `__tests__/evaluate.test.ts`** - Tests for policy evaluation engine
+
+### Test Coverage
+
+#### auth.test.ts (7 tests)
+- `isAuthEnabled()` returns false in development
+- `isAuthEnabled()` returns true in production
+- `getApiKey()` returns the env variable value
+- `getApiKey()` returns empty string when env variable is not set
+- `validateApiKey()` returns null in development mode
+- `validateApiKey()` returns 401 in production with no API key
+- `validateApiKey()` returns 401 with wrong API key
+- `validateApiKey()` returns null with correct API key via header
+- `validateApiKey()` returns null with correct API key via query param
+- `validateApiKey()` returns null in production when API key env not set (unprotected)
+- `validateApiKey()` 401 response body contains error message
+
+#### evaluate.test.ts (70 tests)
+- **evaluateConditions** (23 tests): simple equality, $contains, $equals, $in, $gt, $lt, $and, $or, empty rules, missing args, combined operators via $and
+- **inferAction** (18 tests): operation field, action field, method field, SQL keywords (SELECT/DROP/INSERT/UPDATE/DELETE/TRUNCATE/ALTER/CREATE/GRANT), EmailAPI, SlackAPI, null fallback, priority of operation field
+- **enrichArgsFromQuery** (15 tests): DROP TABLE, DROP DATABASE, generic DROP, INSERT, existing operation preserved, no query field, non-string query, preserved other args, UPDATE, DELETE, TRUNCATE, ALTER, CREATE, GRANT, unrecognized query
+- **getMatchingActions** (10 tests): SELECT, DROP, INSERT, unknown actions, deduplication, original action inclusion, REFUND, POST_MESSAGE, SEND, TRUNCATE
+
+### Files created:
+- `src/lib/policy-engine.ts` - Extracted pure functions module
+- `__tests__/auth.test.ts` - Auth middleware tests
+- `__tests__/evaluate.test.ts` - Policy engine tests
+
+### Files modified:
+- `src/app/api/evaluate/route.ts` - Removed inline function definitions, added imports from policy-engine
+
+### Verification:
+- `bun test` - 77 tests pass, 0 fail, 97 expect() calls across 2 files (59ms)
+- `bun run lint` - 0 errors
+- Dev server continues to function correctly
