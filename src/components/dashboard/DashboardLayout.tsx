@@ -20,11 +20,13 @@ import { PolicyDependencyGraph } from './PolicyDependencyGraph'
 import { ComplianceReport } from './ComplianceReport'
 import { PolicyTemplates } from './PolicyTemplates'
 import { ThreatIntelFeed } from './ThreatIntelFeed'
+import { SecurityScanner } from './SecurityScanner'
+import { SystemHealthPanel } from './SystemHealthPanel'
 import { ThemeToggle } from './ThemeToggle'
 import { NotificationCenter } from './NotificationCenter'
 import { GlobalTimeRange } from './GlobalTimeRange'
 import { useWebSocket } from '@/lib/use-websocket'
-import { Shield, WifiOff, Menu, Search, LayoutDashboard, Activity, CheckSquare, GitBranch, FileText, Webhook, Code2, Clock, Database, ChevronRight, Radio, Bot, FlaskConical, LayoutGrid, Gauge, GitCompare, Network, FileCheck, BookOpen, ShieldAlert } from 'lucide-react'
+import { Shield, WifiOff, Menu, Search, LayoutDashboard, Activity, CheckSquare, GitBranch, FileText, Webhook, Code2, Clock, Database, ChevronRight, Radio, Bot, FlaskConical, LayoutGrid, Gauge, GitCompare, Network, FileCheck, BookOpen, ShieldAlert, ScanSearch, Heart } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet'
@@ -58,6 +60,8 @@ const sectionComponents: Record<string, React.ComponentType> = {
   compliance: ComplianceReport,
   templates: PolicyTemplates,
   threatintel: ThreatIntelFeed,
+  securityscanner: SecurityScanner,
+  systemhealth: SystemHealthPanel,
   audit: AuditLogs,
   webhooks: WebhookConfig,
   sdk: SDKIntegration,
@@ -79,12 +83,14 @@ const sectionIcons: Record<SectionId, React.ReactNode> = {
   compliance: <FileCheck className="h-4 w-4" />,
   templates: <BookOpen className="h-4 w-4" />,
   threatintel: <ShieldAlert className="h-4 w-4" />,
+  securityscanner: <ScanSearch className="h-4 w-4" />,
+  systemhealth: <Heart className="h-4 w-4" />,
   audit: <FileText className="h-4 w-4" />,
   webhooks: <Webhook className="h-4 w-4" />,
   sdk: <Code2 className="h-4 w-4" />,
 }
 
-const sectionKeys: SectionId[] = ['dashboard', 'policies', 'approvals', 'traces', 'reasoning', 'livestream', 'agents', 'simulator', 'widgets', 'rateanalytics', 'policydiff', 'dependencygraph', 'compliance', 'templates', 'threatintel', 'audit', 'webhooks', 'sdk']
+const sectionKeys: SectionId[] = ['dashboard', 'policies', 'approvals', 'traces', 'reasoning', 'livestream', 'agents', 'simulator', 'widgets', 'securityscanner', 'systemhealth', 'rateanalytics', 'policydiff', 'dependencygraph', 'compliance', 'templates', 'threatintel', 'audit', 'webhooks', 'sdk']
 
 export function DashboardLayout() {
   const { activeSection, wsConnected, wsReconnecting, wsReconnectAttempt, commandOpen, setCommandOpen, setActiveSection, lastRefresh, setLastRefresh, dbRecordCount, setDbRecordCount, timeRange } = useAppStore()

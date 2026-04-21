@@ -11,6 +11,7 @@ export type SectionId =
   | 'simulator'
   | 'widgets'
   | 'securityscanner'
+  | 'systemhealth'
   | 'rateanalytics'
   | 'policydiff'
   | 'dependencygraph'
@@ -78,6 +79,7 @@ export const sectionLabels: Record<SectionId, string> = {
   simulator: 'Simulator',
   widgets: 'Widgets',
   securityscanner: 'Security',
+  systemhealth: 'System Health',
   rateanalytics: 'Rate Analytics',
   policydiff: 'Policy Diff',
   dependencygraph: 'Dep. Graph',

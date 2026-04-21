@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { Card, CardContent } from '@/components/ui/card'
+import { useState, useMemo } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -28,11 +28,13 @@ import {
 } from '@/components/ui/alert-dialog'
 import { PolicyForm } from './PolicyForm'
 import { PolicyVersionHistory } from './PolicyVersionHistory'
+import { PolicyConflictDetector } from './PolicyConflictDetector'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Search, Pencil, Trash2, Shield, Download, Upload, Clock, ToggleLeft, ToggleRight, X } from 'lucide-react'
+import { Plus, Search, Pencil, Trash2, Shield, Download, Upload, Clock, ToggleLeft, ToggleRight, X, Target, TrendingUp, ArrowUpRight, ArrowDownRight } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useAppStore } from '@/lib/store'
 
 interface Policy {
   id: string
@@ -66,6 +68,174 @@ const rowBorder: Record<string, string> = {
   ALLOW: 'border-l-2 border-l-emerald-500/40',
   BLOCK: 'border-l-2 border-l-red-500/40',
   REQUIRE_APPROVAL: 'border-l-2 border-l-amber-500/40',
+}
+
+// ─── Policy Impact Score Component ────────────────────────────────────────────
+
+const IMPACT_ROLE_COLORS: Record<string, string> = {
+  DataAgent: '#06b6d4',
+  CodeAgent: '#8b5cf6',
+  FinanceAgent: '#f59e0b',
+  SupportAgent: '#f43f5e',
+}
+
+interface ImpactTrace {
+  traceId: string
+  agentRole: string
+  toolName: string
+  evaluationResult: string
+  timestamp: string
+  latency: number
+}
+
+interface ImpactStats {
+  totalPolicies: number
+  policyBreakdown: Record<string, number>
+  totalTraces: number
+  traceBreakdown: Record<string, number>
+  pendingApprovals: number
+  recentTracesCount: number
+  recentTraces: ImpactTrace[]
+  averageLatency: number
+  auditLogCount: number
+  policiesByRole: Record<string, number>
+}
+
+function PolicyImpactScore() {
+  const timeRange = useAppStore((s) => s.timeRange)
+
+  const { data: stats } = useQuery<ImpactStats>({
+    queryKey: ['stats', timeRange],
+    queryFn: async () => {
+      const res = await fetch(`/api/stats?timeRange=${timeRange}`)
+      if (!res.ok) throw new Error('Failed')
+      return res.json()
+    },
+    refetchInterval: 30000,
+  })
+
+  const { data: tracesData } = useQuery<{ traces: ImpactTrace[] }>({
+    queryKey: ['traces-impact', timeRange],
+    queryFn: async () => {
+      const res = await fetch(`/api/traces?limit=100&timeRange=${timeRange}`)
+      if (!res.ok) throw new Error('Failed')
+      return res.json()
+    },
+    refetchInterval: 30000,
+  })
+
+  const traces = tracesData?.traces ?? []
+
+  const impactData = useMemo(() => {
+    const total = traces.length
+    if (total === 0) {
+      return { overallScore: 0, trendUp: true, roleScores: [] as Array<{ role: string; score: number; traces: number }> }
+    }
+
+    // Impact score = (BLOCK harmful + ALLOW safe) / total traces
+    // BLOCK = correct blocking of harmful actions, ALLOW = correct allowing of safe actions
+    // We treat all ALLOW and BLOCK as "correct" decisions
+    const correctDecisions = traces.filter(t => t.evaluationResult === 'BLOCK' || t.evaluationResult === 'ALLOW').length
+    const overallScore = Math.round((correctDecisions / total) * 100)
+
+    // Per-role scores
+    const roleMap = new Map<string, { correct: number; total: number }>()
+    traces.forEach(t => {
+      const existing = roleMap.get(t.agentRole) ?? { correct: 0, total: 0 }
+      existing.total++
+      if (t.evaluationResult === 'BLOCK' || t.evaluationResult === 'ALLOW') existing.correct++
+      roleMap.set(t.agentRole, existing)
+    })
+
+    const roleScores = Array.from(roleMap.entries()).map(([role, data]) => ({
+      role,
+      score: data.total > 0 ? Math.round((data.correct / data.total) * 100) : 0,
+      traces: data.total,
+    })).sort((a, b) => b.score - a.score)
+
+    return { overallScore, trendUp: overallScore >= 70, roleScores }
+  }, [traces])
+
+  const { overallScore, trendUp, roleScores } = impactData
+  const scoreColor = overallScore >= 80 ? '#10b981' : overallScore >= 50 ? '#f59e0b' : '#ef4444'
+
+  return (
+    <Card className="border-0 shadow-sm glass-card glow-hover corner-accent">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-semibold flex items-center gap-2">
+          <Target className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+          Policy Impact Score
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Large score with trend */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center h-16 w-16 rounded-xl border border-border/50 bg-muted/30">
+              <span className="text-2xl font-bold tabular-nums font-mono" style={{ color: scoreColor }}>
+                {overallScore}
+              </span>
+            </div>
+            <div>
+              <div className="text-sm font-semibold">Overall Effectiveness</div>
+              <div className="flex items-center gap-1 text-xs">
+                {trendUp ? (
+                  <ArrowUpRight className="h-3.5 w-3.5 text-emerald-500" />
+                ) : (
+                  <ArrowDownRight className="h-3.5 w-3.5 text-red-500" />
+                )}
+                <span className={trendUp ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}>
+                  {trendUp ? 'Effective' : 'Needs improvement'}
+                </span>
+              </div>
+              <div className="text-[10px] text-muted-foreground mt-0.5">
+                (BLOCK + ALLOW) / total decisions
+              </div>
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-[10px] text-muted-foreground">Traces analyzed</div>
+            <div className="font-mono tabular-nums font-bold text-lg">{traces.length}</div>
+          </div>
+        </div>
+
+        {/* Role breakdown bars */}
+        <div className="space-y-2.5">
+          <div className="text-xs font-medium text-muted-foreground">Impact by Agent Role</div>
+          {roleScores.map((rs) => {
+            const color = IMPACT_ROLE_COLORS[rs.role] ?? '#888'
+            const barWidth = Math.max(rs.score, 2)
+            return (
+              <div key={rs.role} className="space-y-1">
+                <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
+                    <span>{rs.role.replace('Agent', '')}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground text-[10px]">{rs.traces} traces</span>
+                    <span className="font-mono tabular-nums font-medium">{rs.score}%</span>
+                  </div>
+                </div>
+                <div className="h-2 bg-muted rounded-full overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${barWidth}%` }}
+                    transition={{ duration: 0.6, ease: 'easeOut' }}
+                    className="h-full rounded-full"
+                    style={{ backgroundColor: color, opacity: 0.8 }}
+                  />
+                </div>
+              </div>
+            )
+          })}
+          {roleScores.length === 0 && (
+            <div className="text-center text-muted-foreground text-xs py-4">No trace data available</div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  )
 }
 
 export function PolicyManager() {
@@ -436,6 +606,12 @@ export function PolicyManager() {
           )}
         </CardContent>
       </Card>
+
+      {/* Policy Conflict Detector */}
+      <PolicyConflictDetector />
+
+      {/* Policy Impact Score */}
+      <PolicyImpactScore />
 
       {/* Create/Edit Dialog */}
       <PolicyForm open={formOpen} onOpenChange={setFormOpen} policy={editPolicy} />

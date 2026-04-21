@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -16,9 +16,10 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Webhook as WebhookIcon, Plus, Pencil, Trash2, Loader2, Send, MessageSquare, MessagesSquare, Plane } from 'lucide-react'
+import { Webhook as WebhookIcon, Plus, Pencil, Trash2, Loader2, Send, MessageSquare, MessagesSquare, Plane, BarChart3, TrendingUp, Clock, CheckCircle2, XCircle, Zap } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { motion } from 'framer-motion'
 
 interface WebhookConfigType {
   id: string
@@ -81,6 +82,150 @@ const mockDeliveryHistory: Record<string, DeliveryRecord[]> = {
     { id: '1', timestamp: new Date(Date.now() - 1200000).toISOString(), status: 'success', statusCode: 200 },
     { id: '2', timestamp: new Date(Date.now() - 3600000).toISOString(), status: 'failed', statusCode: 401 },
   ],
+}
+
+// ─── Delivery Analytics Component ─────────────────────────────────────────────
+
+function DeliveryAnalyticsCard() {
+  // Simulated delivery data for analytics
+  const analyticsData = useMemo(() => {
+    const allDeliveries = Object.values(mockDeliveryHistory).flat()
+    const totalSent = 42
+    const successCount = 38
+    const failedCount = totalSent - successCount
+    const successRate = Math.round((successCount / totalSent) * 100)
+    const avgLatency = 245
+
+    // Generate 24h success rate data for line chart
+    const chartData: Array<{ hour: string; rate: number }> = []
+    for (let i = 23; i >= 0; i--) {
+      const h = new Date()
+      h.setHours(h.getHours() - i)
+      const hourLabel = h.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      // Simulate varying success rate
+      const baseRate = 85 + Math.random() * 15
+      const rate = i < 3 ? baseRate - Math.random() * 20 : baseRate
+      chartData.push({ hour: hourLabel, rate: Math.min(Math.round(rate), 100) })
+    }
+
+    return { totalSent, successCount, failedCount, successRate, avgLatency, chartData }
+  }, [])
+
+  const { totalSent, successCount, failedCount, successRate, avgLatency, chartData } = analyticsData
+
+  // SVG chart
+  const chartWidth = 400
+  const chartHeight = 80
+  const padding = { top: 8, right: 8, bottom: 4, left: 8 }
+
+  const linePoints = useMemo(() => {
+    const cW = chartWidth - padding.left - padding.right
+    const cH = chartHeight - padding.top - padding.bottom
+    return chartData.map((d, i) => {
+      const x = padding.left + (i / Math.max(chartData.length - 1, 1)) * cW
+      const y = padding.top + cH - (d.rate / 100) * cH
+      return { x, y }
+    })
+  }, [chartData, chartWidth, chartHeight, padding])
+
+  const polylineStr = linePoints.map(p => `${p.x},${p.y}`).join(' ')
+
+  const areaPath = useMemo(() => {
+    if (linePoints.length === 0) return ''
+    const cH = chartHeight - padding.top - padding.bottom
+    let d = `M ${linePoints[0].x} ${padding.top + cH}`
+    linePoints.forEach(p => { d += ` L ${p.x} ${p.y}` })
+    d += ` L ${linePoints[linePoints.length - 1].x} ${padding.top + cH} Z`
+    return d
+  }, [linePoints, chartHeight, padding])
+
+  const miniStatBoxes = [
+    { label: 'Total Sent', value: totalSent, icon: Send, color: 'text-teal-600 dark:text-teal-400' },
+    { label: 'Success Rate', value: `${successRate}%`, icon: CheckCircle2, color: 'text-emerald-600 dark:text-emerald-400' },
+    { label: 'Avg Latency', value: `${avgLatency}ms`, icon: Clock, color: 'text-cyan-600 dark:text-cyan-400' },
+    { label: 'Failed', value: failedCount, icon: XCircle, color: 'text-red-600 dark:text-red-400' },
+  ]
+
+  return (
+    <Card className="border-0 shadow-sm glass-card glow-hover corner-accent">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-semibold flex items-center gap-2">
+          <BarChart3 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+          Delivery Analytics
+          <Badge variant="outline" className="text-[10px] font-mono tabular-nums ml-auto">Last 24h</Badge>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Mini stat boxes */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {miniStatBoxes.map((box) => (
+            <div key={box.label} className="rounded-lg border border-border/50 bg-muted/30 p-3 flex flex-col items-center gap-1">
+              <box.icon className={`h-4 w-4 ${box.color}`} />
+              <span className="font-mono tabular-nums text-sm font-bold">{box.value}</span>
+              <span className="text-[10px] text-muted-foreground text-center leading-tight">{box.label}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Success rate line chart */}
+        <div className="space-y-1">
+          <div className="text-xs text-muted-foreground flex items-center gap-1">
+            <TrendingUp className="h-3 w-3" />
+            Delivery Success Rate
+          </div>
+          <svg
+            width="100%"
+            height={chartHeight}
+            viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+            preserveAspectRatio="none"
+            className="min-w-[300px]"
+          >
+            <defs>
+              <linearGradient id="deliveryGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#10b981" stopOpacity={0.25} />
+                <stop offset="100%" stopColor="#10b981" stopOpacity={0.02} />
+              </linearGradient>
+            </defs>
+            {/* 80% baseline */}
+            {(() => {
+              const cH = chartHeight - padding.top - padding.bottom
+              const y80 = padding.top + cH - 0.8 * cH
+              return (
+                <line
+                  x1={padding.left}
+                  y1={y80}
+                  x2={chartWidth - padding.right}
+                  y2={y80}
+                  stroke="currentColor"
+                  strokeOpacity={0.08}
+                  strokeDasharray="3 3"
+                />
+              )
+            })()}
+            <path d={areaPath} fill="url(#deliveryGrad)" />
+            <polyline
+              points={polylineStr}
+              fill="none"
+              stroke="#10b981"
+              strokeWidth={1.5}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            {linePoints.map((p, i) => (
+              <circle
+                key={i}
+                cx={p.x}
+                cy={p.y}
+                r={1.5}
+                fill="#10b981"
+                opacity={0.6}
+              />
+            ))}
+          </svg>
+        </div>
+      </CardContent>
+    </Card>
+  )
 }
 
 export function WebhookConfigComponent() {
@@ -241,6 +386,9 @@ export function WebhookConfigComponent() {
           </Button>
         </div>
       </div>
+
+      {/* Delivery Analytics */}
+      <DeliveryAnalyticsCard />
 
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

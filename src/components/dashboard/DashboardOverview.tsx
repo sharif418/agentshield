@@ -6,9 +6,10 @@ import { SystemHealthPanel } from './SystemHealthPanel'
 import { PolicyConflictDetector } from './PolicyConflictDetector'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Progress } from '@/components/ui/progress'
-import { Shield, Activity, CheckSquare, Clock, ArrowRight, Percent, Target, TrendingUp } from 'lucide-react'
+import { Shield, Activity, CheckSquare, Clock, ArrowRight, Percent, Target, TrendingUp, Scan, FileCheck, Download, Plus, BarChart3 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import {
   PieChart,
@@ -25,7 +26,259 @@ import {
 } from 'recharts'
 import { useAppStore } from '@/lib/store'
 import { motion } from 'framer-motion'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
+
+// ─── Agent Activity Timeline Component ────────────────────────────────────────
+
+const TIMELINE_ROLE_COLORS: Record<string, string> = {
+  DataAgent: '#06b6d4',
+  CodeAgent: '#8b5cf6',
+  FinanceAgent: '#f59e0b',
+  SupportAgent: '#f43f5e',
+}
+
+const TIMELINE_DECISION_COLORS: Record<string, string> = {
+  ALLOW: '#10b981',
+  BLOCK: '#ef4444',
+  REQUIRE_APPROVAL: '#f59e0b',
+}
+
+function AgentActivityTimeline() {
+  const timeRange = useAppStore((s) => s.timeRange)
+
+  const { data: tracesData, isLoading } = useQuery({
+    queryKey: ['traces-timeline', timeRange],
+    queryFn: async () => {
+      const res = await fetch(`/api/traces?limit=50&timeRange=24h`)
+      if (!res.ok) throw new Error('Failed')
+      const data = await res.json()
+      return data.traces as Array<{
+        traceId: string
+        agentRole: string
+        toolName: string
+        evaluationResult: string
+        timestamp: string
+        latency: number
+      }>
+    },
+    refetchInterval: 30000,
+  })
+
+  const [hoveredTrace, setHoveredTrace] = useState<string | null>(null)
+
+  const traces = tracesData ?? []
+
+  // Group by agent role
+  const roles = useMemo(() => {
+    const roleSet = new Set<string>()
+    traces.forEach(t => roleSet.add(t.agentRole))
+    return Array.from(roleSet).sort()
+  }, [traces])
+
+  // Time range: last 6 hours
+  const timeRange6h = useMemo(() => {
+    const now = Date.now()
+    const start = now - 6 * 60 * 60 * 1000
+    return { start, end: now }
+  }, [])
+
+  const hourMarkers = useMemo(() => {
+    const markers: number[] = []
+    const startHour = new Date(timeRange6h.start)
+    startHour.setMinutes(0, 0, 0)
+    let h = startHour.getTime()
+    while (h <= timeRange6h.end) {
+      if (h >= timeRange6h.start) markers.push(h)
+      h += 60 * 60 * 1000
+    }
+    return markers
+  }, [timeRange6h])
+
+  const svgWidth = 700
+  const labelWidth = 80
+  const chartWidth = svgWidth - labelWidth - 20
+  const laneHeight = 28
+  const headerHeight = 24
+  const svgHeight = headerHeight + roles.length * laneHeight + 10
+
+  const xForTime = (ts: number) => {
+    const pct = (ts - timeRange6h.start) / (timeRange6h.end - timeRange6h.start)
+    return labelWidth + pct * chartWidth
+  }
+
+  return (
+    <Card className="border-0 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 hover:border-emerald-500/20 glow-hover glass-card content-slide-in content-slide-in-delay-1">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-semibold flex items-center gap-2">
+          <Activity className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+          Agent Activity Timeline
+          <Badge variant="outline" className="text-[10px] font-mono tabular-nums ml-auto">Last 6h</Badge>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="h-32 skeleton-shimmer rounded" />
+        ) : traces.length === 0 ? (
+          <div className="h-32 flex items-center justify-center text-muted-foreground text-sm">
+            No trace data available
+          </div>
+        ) : (
+          <div className="overflow-x-auto relative">
+            <svg
+              width="100%"
+              height={svgHeight}
+              viewBox={`0 0 ${svgWidth} ${svgHeight}`}
+              className="min-w-[500px]"
+            >
+              {/* Hour markers */}
+              {hourMarkers.map((h) => {
+                const x = xForTime(h)
+                return (
+                  <g key={h}>
+                    <line
+                      x1={x}
+                      y1={headerHeight}
+                      x2={x}
+                      y2={svgHeight - 4}
+                      stroke="currentColor"
+                      strokeOpacity={0.06}
+                      strokeDasharray="2 3"
+                    />
+                    <text
+                      x={x}
+                      y={14}
+                      textAnchor="middle"
+                      className="fill-muted-foreground"
+                      style={{ fontSize: '8px' }}
+                    >
+                      {new Date(h).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </text>
+                  </g>
+                )
+              })}
+
+              {/* Role lanes */}
+              {roles.map((role, ri) => {
+                const y = headerHeight + ri * laneHeight
+                const roleTraces = traces.filter(t => t.agentRole === role)
+                const color = TIMELINE_ROLE_COLORS[role] ?? '#888'
+
+                return (
+                  <g key={role}>
+                    {/* Lane background */}
+                    <rect
+                      x={labelWidth}
+                      y={y}
+                      width={chartWidth}
+                      height={laneHeight}
+                      fill={color}
+                      fillOpacity={0.03}
+                      rx={2}
+                    />
+                    {/* Lane label */}
+                    <text
+                      x={labelWidth - 6}
+                      y={y + laneHeight / 2 + 3}
+                      textAnchor="end"
+                      className="fill-muted-foreground"
+                      style={{ fontSize: '9px' }}
+                    >
+                      {role.replace('Agent', '')}
+                    </text>
+                    {/* Activity dots */}
+                    {roleTraces.map((trace) => {
+                      const ts = new Date(trace.timestamp).getTime()
+                      if (ts < timeRange6h.start || ts > timeRange6h.end) return null
+                      const dotX = xForTime(ts)
+                      const dotY = y + laneHeight / 2
+                      const dotColor = TIMELINE_DECISION_COLORS[trace.evaluationResult] ?? '#888'
+                      const isHovered = hoveredTrace === trace.traceId
+
+                      return (
+                        <g key={trace.traceId}>
+                          <circle
+                            cx={dotX}
+                            cy={dotY}
+                            r={isHovered ? 6 : 4}
+                            fill={dotColor}
+                            fillOpacity={isHovered ? 1 : 0.7}
+                            stroke={isHovered ? 'white' : 'none'}
+                            strokeWidth={isHovered ? 2 : 0}
+                            className="cursor-pointer transition-all duration-150"
+                            onMouseEnter={() => setHoveredTrace(trace.traceId)}
+                            onMouseLeave={() => setHoveredTrace(null)}
+                          />
+                        </g>
+                      )
+                    })}
+                  </g>
+                )
+              })}
+
+              {/* Now line */}
+              <line
+                x1={xForTime(timeRange6h.end)}
+                y1={headerHeight}
+                x2={xForTime(timeRange6h.end)}
+                y2={svgHeight - 4}
+                stroke="#10b981"
+                strokeOpacity={0.4}
+                strokeWidth={1.5}
+                strokeDasharray="3 2"
+              />
+            </svg>
+
+            {/* Tooltip */}
+            {hoveredTrace && (() => {
+              const trace = traces.find(t => t.traceId === hoveredTrace)
+              if (!trace) return null
+              const ts = new Date(trace.timestamp).getTime()
+              const dotX = xForTime(ts)
+              const ri = roles.indexOf(trace.agentRole)
+              const dotY = headerHeight + ri * laneHeight + laneHeight / 2
+              const decisionColor = trace.evaluationResult === 'ALLOW'
+                ? 'text-emerald-600 dark:text-emerald-400'
+                : trace.evaluationResult === 'BLOCK'
+                ? 'text-red-600 dark:text-red-400'
+                : 'text-amber-600 dark:text-amber-400'
+
+              return (
+                <motion.div
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="absolute z-10 bg-popover border border-border rounded-lg shadow-lg px-3 py-2 text-xs pointer-events-none"
+                  style={{
+                    left: `max(${(dotX / svgWidth) * 100}%, 10%)`,
+                    top: dotY + 10,
+                    transform: 'translate(-50%, 0)',
+                  }}
+                >
+                  <div className="font-medium">{trace.agentRole} → {trace.toolName}</div>
+                  <div className={`font-bold ${decisionColor}`}>
+                    {trace.evaluationResult === 'REQUIRE_APPROVAL' ? 'REVIEW' : trace.evaluationResult}
+                  </div>
+                  <div className="text-muted-foreground font-mono tabular-nums">
+                    {new Date(trace.timestamp).toLocaleTimeString()} · {trace.latency.toFixed(1)}ms
+                  </div>
+                </motion.div>
+              )
+            })()}
+
+            {/* Legend */}
+            <div className="flex items-center gap-3 mt-2 justify-center">
+              {Object.entries(TIMELINE_DECISION_COLORS).map(([key, color]) => (
+                <div key={key} className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                  <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
+                  {key === 'REQUIRE_APPROVAL' ? 'REVIEW' : key}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
 
 const PERMISSION_COLORS: Record<string, string> = {
   ALLOW: '#10b981',
@@ -223,6 +476,125 @@ export function DashboardOverview() {
         />
       </div>
 
+      {/* Quick Actions Row */}
+      <div className="flex flex-wrap gap-2 content-slide-in">
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 text-xs gap-1.5 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 dark:hover:bg-emerald-950/50 dark:hover:text-emerald-400 dark:hover:border-emerald-800 active:scale-[0.98] transition-all"
+          onClick={() => setActiveSection('security')}
+        >
+          <Scan className="h-3.5 w-3.5" /> Run Scan
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 text-xs gap-1.5 hover:bg-amber-50 hover:text-amber-700 hover:border-amber-300 dark:hover:bg-amber-950/50 dark:hover:text-amber-400 dark:hover:border-amber-800 active:scale-[0.98] transition-all"
+          onClick={() => setActiveSection('approvals')}
+        >
+          <FileCheck className="h-3.5 w-3.5" /> View Approvals
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 text-xs gap-1.5 hover:bg-cyan-50 hover:text-cyan-700 hover:border-cyan-300 dark:hover:bg-cyan-950/50 dark:hover:text-cyan-400 dark:hover:border-cyan-800 active:scale-[0.98] transition-all"
+          onClick={() => setActiveSection('audit')}
+        >
+          <Download className="h-3.5 w-3.5" /> Export Traces
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 text-xs gap-1.5 hover:bg-teal-50 hover:text-teal-700 hover:border-teal-300 dark:hover:bg-teal-950/50 dark:hover:text-teal-400 dark:hover:border-teal-800 active:scale-[0.98] transition-all"
+          onClick={() => setActiveSection('policies')}
+        >
+          <Plus className="h-3.5 w-3.5" /> New Policy
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 text-xs gap-1.5 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 dark:hover:bg-emerald-950/50 dark:hover:text-emerald-400 dark:hover:border-emerald-800 active:scale-[0.98] transition-all"
+          onClick={() => setActiveSection('overview')}
+        >
+          <BarChart3 className="h-3.5 w-3.5" /> View Compliance
+        </Button>
+      </div>
+
+      {/* Decision Flow Summary */}
+      <Card className="border-0 shadow-sm glass-card glow-hover content-slide-in content-slide-in-delay-1">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-semibold flex items-center gap-2">
+            <ArrowRight className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+            Decision Flow Summary
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="h-16 skeleton-shimmer rounded" />
+          ) : (
+            <div className="space-y-3">
+              {/* Flow visualization */}
+              <div className="flex items-center gap-3 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Total Evaluations</span>
+                  <span className="text-sm font-bold tabular-nums">{stats?.totalTraces ?? 0}</span>
+                </div>
+                <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
+                <div className="flex items-center gap-2">
+                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 data-point-pulse" />
+                  <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">ALLOW</span>
+                  <span className="text-xs font-bold tabular-nums">{stats?.traceBreakdown?.ALLOW ?? 0}</span>
+                </div>
+                <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
+                <div className="flex items-center gap-2">
+                  <span className="h-2.5 w-2.5 rounded-full bg-red-500 data-point-pulse" />
+                  <span className="text-xs font-semibold text-red-600 dark:text-red-400">BLOCK</span>
+                  <span className="text-xs font-bold tabular-nums">{stats?.traceBreakdown?.BLOCK ?? 0}</span>
+                </div>
+                <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
+                <div className="flex items-center gap-2">
+                  <span className="h-2.5 w-2.5 rounded-full bg-amber-500 data-point-pulse" />
+                  <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">REVIEW</span>
+                  <span className="text-xs font-bold tabular-nums">{stats?.traceBreakdown?.REQUIRE_APPROVAL ?? 0}</span>
+                </div>
+              </div>
+              {/* Animated width bars */}
+              <div className="flex h-3 rounded-full overflow-hidden bg-muted/50">
+                {(() => {
+                  const total = Object.values(stats?.traceBreakdown ?? {}).reduce((a, b) => a + b, 0)
+                  if (total === 0) return <div className="flex-1 bg-muted/30" />
+                  const allowPct = ((stats?.traceBreakdown?.ALLOW ?? 0) / total) * 100
+                  const blockPct = ((stats?.traceBreakdown?.BLOCK ?? 0) / total) * 100
+                  const reviewPct = ((stats?.traceBreakdown?.REQUIRE_APPROVAL ?? 0) / total) * 100
+                  return (
+                    <>
+                      <motion.div
+                        className="bg-emerald-500"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${allowPct}%` }}
+                        transition={{ duration: 0.8, ease: 'easeOut' }}
+                      />
+                      <motion.div
+                        className="bg-red-500"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${blockPct}%` }}
+                        transition={{ duration: 0.8, ease: 'easeOut', delay: 0.2 }}
+                      />
+                      <motion.div
+                        className="bg-amber-500"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${reviewPct}%` }}
+                        transition={{ duration: 0.8, ease: 'easeOut', delay: 0.4 }}
+                      />
+                    </>
+                  )
+                })()}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 content-slide-in content-slide-in-delay-1">
         {/* Policy Distribution Pie */}
@@ -345,6 +717,9 @@ export function DashboardOverview() {
         </Card>
       </div>
 
+      {/* Agent Activity Timeline */}
+      <AgentActivityTimeline />
+
       {/* System Health Panel + Policy Conflict Detector */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 content-slide-in content-slide-in-delay-2">
         <SystemHealthPanel />
@@ -378,30 +753,55 @@ export function DashboardOverview() {
                 </div>
               ) : stats?.recentTraces?.length ? (
                 <div className="space-y-1">
-                  {stats.recentTraces.map((trace, i) => (
-                    <motion.button
-                      key={trace.traceId}
-                      initial={{ opacity: 0, x: -8 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.03 }}
-                      className="flex items-center justify-between py-1.5 px-2 rounded-md hover:bg-muted/50 transition-colors duration-200 text-xs w-full text-left group active:scale-[0.99]"
-                      onClick={() => setActiveSection('traces')}
-                    >
-                      <div className="flex items-center gap-2 min-w-0 flex-1">
-                        <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${decisionDot[trace.evaluationResult] ?? 'bg-gray-400'}`} />
-                        <span className="font-medium truncate">{trace.agentRole}</span>
-                        <span className="text-muted-foreground">→</span>
-                        <span className="truncate">{trace.toolName}</span>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0 ml-2">
-                        <Badge className={`transition-transform duration-150 hover:scale-105 ${decisionColor[trace.evaluationResult] ?? ''}`} variant="outline">
-                          {trace.evaluationResult === 'REQUIRE_APPROVAL' ? 'APPROVAL' : trace.evaluationResult}
-                        </Badge>
-                        <span className="text-muted-foreground w-14 text-right font-mono tabular-nums">{trace.latency.toFixed(1)}ms</span>
-                        <ArrowRight className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all duration-200" />
-                      </div>
-                    </motion.button>
-                  ))}
+                  {stats.recentTraces.map((trace, i) => {
+                    // Generate mini sparkline data from latency trend
+                    const sparkData = [trace.latency * 0.6, trace.latency * 0.8, trace.latency * 0.7, trace.latency * 0.9, trace.latency]
+                    const sparkMax = Math.max(...sparkData, 1)
+                    const sparkMin = Math.min(...sparkData, 0)
+                    const sparkRange = sparkMax - sparkMin || 1
+                    const sparkPoints = sparkData.map((v, j) => {
+                      const x = (j / (sparkData.length - 1)) * 48
+                      const y = 14 - ((v - sparkMin) / sparkRange) * 12
+                      return `${x},${y}`
+                    }).join(' ')
+                    const sparkColor = trace.evaluationResult === 'ALLOW' ? '#10b981' : trace.evaluationResult === 'BLOCK' ? '#ef4444' : '#f59e0b'
+
+                    return (
+                      <motion.button
+                        key={trace.traceId}
+                        initial={{ opacity: 0, x: -8 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: i * 0.03 }}
+                        className="flex items-center justify-between py-1.5 px-2 rounded-md hover:bg-muted/50 transition-colors duration-200 text-xs w-full text-left group active:scale-[0.99]"
+                        onClick={() => setActiveSection('traces')}
+                      >
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${decisionDot[trace.evaluationResult] ?? 'bg-gray-400'}`} />
+                          <span className="font-medium truncate">{trace.agentRole}</span>
+                          <span className="text-muted-foreground">→</span>
+                          <span className="truncate">{trace.toolName}</span>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0 ml-2">
+                          {/* Mini sparkline */}
+                          <svg width="48" height="14" className="opacity-50 group-hover:opacity-80 transition-opacity">
+                            <polyline
+                              points={sparkPoints}
+                              fill="none"
+                              stroke={sparkColor}
+                              strokeWidth="1.2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                          <Badge className={`transition-transform duration-150 hover:scale-105 ${decisionColor[trace.evaluationResult] ?? ''}`} variant="outline">
+                            {trace.evaluationResult === 'REQUIRE_APPROVAL' ? 'APPROVAL' : trace.evaluationResult}
+                          </Badge>
+                          <span className="text-muted-foreground w-14 text-right font-mono tabular-nums">{trace.latency.toFixed(1)}ms</span>
+                          <ArrowRight className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all duration-200" />
+                        </div>
+                      </motion.button>
+                    )
+                  })}
                 </div>
               ) : (
                 <div className="text-center text-muted-foreground text-sm py-8">

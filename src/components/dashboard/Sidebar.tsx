@@ -26,6 +26,7 @@ import {
   ChevronRight,
   ShieldCheck,
   CheckCircle,
+  Heart,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -47,6 +48,7 @@ const navItems: { id: SectionId; label: string; icon: React.ReactNode; shortcut:
   { id: 'simulator', label: 'Simulator', icon: <FlaskConical className="h-5 w-5" />, shortcut: '8' },
   { id: 'widgets', label: 'Widgets', icon: <LayoutGrid className="h-5 w-5" />, shortcut: 'B' },
   { id: 'securityscanner', label: 'Security', icon: <ScanSearch className="h-5 w-5" />, shortcut: 'S' },
+  { id: 'systemhealth', label: 'System Health', icon: <Heart className="h-5 w-5" />, shortcut: 'H' },
   { id: 'rateanalytics', label: 'Rate Analytics', icon: <Gauge className="h-5 w-5" />, shortcut: 'E' },
   { id: 'policydiff', label: 'Policy Diff', icon: <GitCompare className="h-5 w-5" />, shortcut: 'D' },
   { id: 'dependencygraph', label: 'Dep. Graph', icon: <Network className="h-5 w-5" />, shortcut: 'G' },

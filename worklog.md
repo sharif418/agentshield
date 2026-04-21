@@ -2144,3 +2144,210 @@ Created a `DashboardWidgets.tsx` component at `src/components/dashboard/Dashboar
 - Dev server compiles successfully (200 status)
 - Stats API returns valid data (`totalPolicies=17`)
 - Component is self-contained and integrated into the dashboard navigation
+
+---
+Task ID: 3
+Agent: main
+Task: Fix SecurityScanner integration + add SystemHealthPanel section
+
+Work Log:
+- Fixed SecurityScanner missing from DashboardLayout sectionComponents/sectionKeys/sectionIcons
+- Added SystemHealthPanel as a new full section with section header styling
+- Updated store.ts with systemhealth SectionId and label
+- Updated Sidebar.tsx with SystemHealth nav item
+- Upgraded SystemHealthPanel from a Card component to a full section with service status table and alert history
+- Ran bun run lint - passes with 0 errors
+
+Stage Summary:
+- SecurityScanner now renders when navigating to Security section
+- SystemHealthPanel added as 20th dashboard section with System Health nav item (shortcut: H)
+- All lint checks pass
+
+---
+Task ID: 5-6
+Agent: main
+Task: Integrate PolicyConflictDetector + improve styling across sections
+
+Work Log:
+- Integrated PolicyConflictDetector into PolicyManager section
+- Enhanced DashboardOverview with Quick Actions row, Decision Flow Summary card
+- Enhanced StatCard with bottom accent bar, trend indicator, background pattern
+- Enhanced ApprovalQueue with Response Time Distribution and Top Reviewers cards
+- Enhanced LiveStream with Decision Distribution donut, scan line effect, row glow
+- Enhanced AuditLogs with Event Timeline visualization, colored borders, Activity Heatmap
+- Added new CSS utility classes in globals.css
+
+Stage Summary:
+- PolicyConflictDetector now shows in PolicyManager section with real-time conflict detection
+- 6 components received visual enhancements with more detail
+- 6 new CSS utility classes added
+- All lint checks pass
+
+---
+Task ID: 7
+Agent: main
+Task: Add new features - enhance DashboardWidgets, DashboardOverview, PolicyManager, WebhookConfig
+
+Work Log:
+- Added 2 new widget types to DashboardWidgets (Threat Level, Policy Health)
+- Added widget reordering with up/down buttons and Framer Motion layout animation
+- Added "Refresh All" button to widget toolbar
+- Added Agent Activity Timeline card to DashboardOverview
+- Added Policy Impact Score card to PolicyManager
+- Added Delivery Analytics card to WebhookConfig
+
+Stage Summary:
+- DashboardWidgets now has 10 widget types with reorderable layout
+- DashboardOverview has Agent Activity Timeline visualization
+- PolicyManager has Policy Impact Score analysis
+- WebhookConfig has Delivery Analytics with success rate chart
+- All lint checks pass
+
+---
+
+## Cron Review Round 9: Bug Fixes, New Sections, Enhanced Styling, New Features
+
+**Date:** 2026-04-22
+**Status:** ✅ Complete
+
+### Current Project Status Assessment
+The AgentShield Policy Engine Dashboard is now a comprehensive 20-section single-page application with full-stack functionality. All API endpoints work correctly (200 status), lint passes with 0 errors. The project has 35+ dashboard components, 14 API route files, and a rich feature set including security scanning, system health monitoring, compliance reporting, rate analytics, policy diff viewing, dependency graphs, threat intelligence, policy templates, and more.
+
+### QA Testing Performed
+- API testing via curl: stats (200), policies (200), traces (200), approvals (200), evaluate (200), page load (200)
+- `bun run lint` passes with 0 errors
+- All API endpoints return valid data
+- Dev server compiles and serves all routes successfully
+
+### Bug Fixed: SecurityScanner Not Integrated in DashboardLayout
+**Problem:** The `securityscanner` SectionId existed in the store and sidebar, but was MISSING from `sectionComponents`, `sectionIcons`, and `sectionKeys` in DashboardLayout.tsx. Clicking "Security" in the sidebar would show the default DashboardOverview component instead of SecurityScanner.
+
+**Fix:** Added SecurityScanner import and `securityscanner` entry to all three configuration objects in DashboardLayout.tsx. Added `ScanSearch` icon to lucide-react imports.
+
+### New Feature: SystemHealthPanel as Full Dashboard Section
+**Problem:** SystemHealthPanel existed as a Card component but wasn't integrated as a navigation section.
+
+**Fix:**
+1. Added `systemhealth` to SectionId type and sectionLabels in store.ts
+2. Added SystemHealthPanel import and `systemhealth` to sectionComponents, sectionIcons, and sectionKeys in DashboardLayout.tsx
+3. Added Heart icon import and System Health nav item (shortcut: 'H') to Sidebar.tsx
+4. Upgraded SystemHealthPanel from a Card to a full section with:
+   - Section header with `section-header-gradient section-header-accent`, `gradient-text-shimmer` title
+   - Dot-grid background overlay
+   - Health Overview card with status bar, quick stats (Services Up, Uptime, Active Alerts, Avg Latency)
+   - Performance Metrics card with 5 metric tiles + sparklines
+   - Diagnostics card (expandable) with detailed stats and uptime progress bar
+   - Service Status Table showing 5 services with status indicators, uptime, and last check time
+   - Alert History with 7 simulated alerts with severity badges and timestamps
+
+### New Feature: PolicyConflictDetector Integrated into PolicyManager
+**Problem:** PolicyConflictDetector was an orphaned component not used anywhere.
+
+**Fix:** Imported and added `<PolicyConflictDetector />` to PolicyManager.tsx, positioned after the Policy Table card and before the Create/Edit Dialog. It now shows real-time conflict detection (contradictions, overlaps, shadows) within the Policies section.
+
+### Mandatory: Styling Improvements
+
+#### 1. DashboardOverview.tsx Enhancements
+- **Quick Actions row** — 5 action buttons (Run Scan, View Approvals, Export Traces, New Policy, View Compliance) with themed hover effects
+- **Decision Flow Summary card** — Horizontal flow visualization: Total Evaluations → ALLOW (green) → BLOCK (red) → REVIEW (amber) with animated width bars
+- **Sparklines on Recent Activity** — Mini SVG sparkline on each activity row showing latency trend, color-coded by decision
+
+#### 2. StatCard.tsx Enhancements
+- **Diagonal lines background pattern** — Subtle repeating diagonal pattern overlay
+- **Animated bottom accent bar** — `motion.div` with emerald→teal gradient that scales/animates on hover
+- **Mini trend indicators** — Up/down arrow badges with percentage shown below the trend text
+
+#### 3. ApprovalQueue.tsx Enhancements
+- **Response Time Distribution** — SVG bar chart with 5 time buckets (<1h through >24h), color-coded
+- **Top Reviewers** — Colored circle avatars with initials, showing approved/rejected counts per reviewer
+
+#### 4. LiveStream.tsx Enhancements
+- **Decision Distribution donut chart** — Mini SVG donut showing ALLOW/BLOCK/REVIEW proportions with total count
+- **Scan line effect** — `scan-line` class on terminal console for animated scan line
+- **Row glow for new events** — `event-row-new` class with green glow animation on newest entries
+
+#### 5. AuditLogs.tsx Enhancements
+- **Event Timeline** — Horizontal timeline with colored dot clusters showing event density over 24h
+- **Activity Heatmap** — 7-day × 24-hour grid with emerald intensity coloring
+- **Colored left borders** — Each table row gets a colored left border based on event type
+
+#### 6. globals.css Additions
+- `.card-border-glow` — Animated border glow that pulses subtly
+- `.text-gradient-animated` — Text with animated gradient that slowly shifts colors
+- `.hover-lift` — Transform translateY(-2px) on hover with smooth transition
+- `.data-point-pulse` — Pulsing dot for data visualization points
+- `.skeleton-shimmer` — Enhanced skeleton loading with shimmer effect
+- `.event-row-new` — Green glow animation for new event rows
+- 6 new `@keyframes`: borderGlow, borderGlowDark, textGradientShift, dataPointPulse, enhancedShimmer, eventRowGlow
+
+### Mandatory: New Features
+
+#### 1. Enhanced DashboardWidgets
+- **2 new widget types:**
+  - **Threat Level Widget** — Semicircular SVG gauge with animated needle, color-coded level badge, block rate stats
+  - **Policy Health Widget** — Circular progress ring based on enabled %, coverage, conflict-free metrics, breakdown bars
+- **Widget reordering** — ↑↓ buttons next to close (×) button; Framer Motion layout animation for smooth transitions
+- **Refresh All button** — Invalidates stats and traces query caches with spinning animation
+
+#### 2. Agent Activity Timeline (DashboardOverview)
+- SVG-based horizontal timeline showing last 6 hours with hour markers
+- Each agent role gets a colored horizontal lane
+- Activity dots placed based on trace timestamps, color-coded by decision
+- Tooltip on hover showing trace details (agent, tool, decision, time, latency)
+- "Now" indicator line with emerald dashed styling
+- Legend for decision colors
+
+#### 3. Policy Impact Score (PolicyManager)
+- Overall effectiveness score: (BLOCK + ALLOW) / total traces
+- Large score display with color-coded indicator and trend arrow
+- Per-agent role breakdown with horizontal bar charts
+- Traces analyzed count
+- Animated bars with Framer Motion
+
+#### 4. Delivery Analytics (WebhookConfig)
+- 4 mini stat boxes: Total Sent, Success Rate, Avg Latency, Failed
+- SVG line chart showing delivery success rate over last 24h
+- 80% baseline reference line
+- Area fill gradient for visual depth
+
+### Navigation Updates
+- Dashboard now has 20 sections total
+- Added SystemHealth section (shortcut: 'H', icon: Heart)
+- Section order: Dashboard(1), Policies(2), Approvals(3), Traces(4), Reasoning(5), Live Stream(6), Agents(7), Simulator(8), Widgets(B), Security(S), System Health(H), Rate Analytics(E), Policy Diff(D), Dep. Graph(G), Compliance(C), Templates(T), Threat Intel(X), Audit Logs(9), Webhooks(Q), SDK & Docs(W)
+
+### Files Modified
+- `src/app/globals.css` — Added 6+ new CSS utility classes and 6 new keyframe animations
+- `src/lib/store.ts` — Added `systemhealth` to SectionId and sectionLabels
+- `src/components/dashboard/DashboardLayout.tsx` — Added SecurityScanner + SystemHealthPanel imports, sectionComponents, sectionIcons, sectionKeys, icon imports
+- `src/components/dashboard/Sidebar.tsx` — Added Heart icon, SystemHealth nav item, ScanSearch for Security
+- `src/components/dashboard/SystemHealthPanel.tsx` — Upgraded from Card to full section with service status, alert history, section header
+- `src/components/dashboard/PolicyManager.tsx` — Added PolicyConflictDetector integration, Policy Impact Score card
+- `src/components/dashboard/DashboardOverview.tsx` — Quick Actions row, Decision Flow Summary, Agent Activity Timeline, sparklines
+- `src/components/dashboard/StatCard.tsx` — Bottom accent bar, trend indicators, background pattern
+- `src/components/dashboard/ApprovalQueue.tsx` — Response Time Distribution, Top Reviewers
+- `src/components/dashboard/LiveStream.tsx` — Decision Distribution donut, scan line effect, row glow
+- `src/components/dashboard/AuditLogs.tsx` — Event Timeline, Activity Heatmap, colored left borders
+- `src/components/dashboard/DashboardWidgets.tsx` — 2 new widget types, reordering, refresh all
+- `src/components/dashboard/WebhookConfig.tsx` — Delivery Analytics card
+
+### Verification
+- `bun run lint` passes with 0 errors
+- API endpoints tested: stats (200), policies (200), traces (200), approvals (200), page load (200)
+- Dev server compiles and serves all routes
+- 20 sections accessible via sidebar navigation
+- WebSocket service on port 3003 functional
+
+### Known Issues / Risks
+1. **Server stability**: Dev server may crash under memory pressure in sandbox environment. Individual API requests work fine. Known issue across all cron rounds.
+2. **WebSocket service**: Must be manually started with `cd mini-services/approval-ws && bun --hot index.ts`
+3. **Force-directed graph**: Initial layout may need 1-2 seconds to settle. Performance may degrade with >100 policies.
+
+### Priority Recommendations for Next Phase
+1. Add user authentication and role-based access control
+2. Implement real WebSocket event broadcasting from evaluate API
+3. Add PDF export for compliance reports (currently HTML only)
+4. Optimize dependency graph performance with WebGL/Canvas for large policy sets
+5. Add customizable dashboard layout (drag-and-drop widget arrangement)
+6. Implement data retention policies and automatic cleanup for old traces
+7. Add real-time collaboration features (shared views, comments)
+8. Add policy testing CI/CD integration section

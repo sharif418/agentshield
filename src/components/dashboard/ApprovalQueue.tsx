@@ -1,6 +1,6 @@
 'use client'
 
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -18,7 +18,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { CheckSquare, CheckCircle, XCircle } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { useAppStore } from '@/lib/store'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { toast } from 'sonner'
 
 interface ApprovalWithTrace {
@@ -232,6 +232,141 @@ export function ApprovalQueue() {
             ))}
           </div>
         )}
+      </div>
+
+      {/* Response Time Distribution + Top Reviewers */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Response Time Distribution */}
+        <Card className="border-0 shadow-sm glass-card glow-hover">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold">Response Time Distribution</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {allLoading ? (
+              <div className="h-32 skeleton-shimmer rounded" />
+            ) : historyApprovals.length === 0 ? (
+              <div className="h-32 flex items-center justify-center text-muted-foreground text-xs">
+                No completed approvals yet
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {(() => {
+                  // Calculate response times in hours
+                  const responseTimes = historyApprovals
+                    .filter(a => a.reviewTimestamp && a.createdAt)
+                    .map(a => {
+                      const created = new Date(a.createdAt).getTime()
+                      const reviewed = new Date(a.reviewTimestamp!).getTime()
+                      return (reviewed - created) / (1000 * 60 * 60) // hours
+                    })
+
+                  // Bucket into ranges
+                  const buckets = [
+                    { label: '< 1h', min: 0, max: 1, color: 'bg-emerald-500' },
+                    { label: '1-4h', min: 1, max: 4, color: 'bg-teal-500' },
+                    { label: '4-12h', min: 4, max: 12, color: 'bg-amber-500' },
+                    { label: '12-24h', min: 12, max: 24, color: 'bg-orange-500' },
+                    { label: '> 24h', min: 24, max: Infinity, color: 'bg-red-500' },
+                  ]
+
+                  const counts = buckets.map(b => ({
+                    ...b,
+                    count: responseTimes.filter(t => t >= b.min && t < b.max).length,
+                  }))
+
+                  const maxCount = Math.max(...counts.map(b => b.count), 1)
+
+                  return (
+                    <div className="flex items-end gap-2 h-32">
+                      {counts.map((bucket) => (
+                        <div key={bucket.label} className="flex-1 flex flex-col items-center gap-1">
+                          <span className="text-[10px] font-mono tabular-nums text-muted-foreground">{bucket.count}</span>
+                          <div className="w-full flex items-end" style={{ height: '80px' }}>
+                            <div
+                              className={`w-full ${bucket.color} rounded-t transition-all duration-500 opacity-80`}
+                              style={{ height: `${(bucket.count / maxCount) * 100}%`, minHeight: bucket.count > 0 ? '4px' : '0' }}
+                            />
+                          </div>
+                          <span className="text-[10px] text-muted-foreground">{bucket.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )
+                })()}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Top Reviewers */}
+        <Card className="border-0 shadow-sm glass-card glow-hover">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold">Top Reviewers</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {allLoading ? (
+              <div className="space-y-2">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="h-8 skeleton-shimmer rounded" />
+                ))}
+              </div>
+            ) : historyApprovals.length === 0 ? (
+              <div className="h-32 flex items-center justify-center text-muted-foreground text-xs">
+                No reviewer data yet
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {(() => {
+                  // Count reviewer actions
+                  const reviewerMap = new Map<string, { approved: number; rejected: number }>()
+                  historyApprovals.forEach(a => {
+                    if (!a.humanReviewerId) return
+                    const current = reviewerMap.get(a.humanReviewerId) ?? { approved: 0, rejected: 0 }
+                    if (a.status === 'APPROVED' || a.status === 'MODIFIED') current.approved++
+                    if (a.status === 'REJECTED') current.rejected++
+                    reviewerMap.set(a.humanReviewerId, current)
+                  })
+
+                  // Sort by total actions
+                  const reviewers = [...reviewerMap.entries()]
+                    .map(([id, stats]) => ({ id, ...stats, total: stats.approved + stats.rejected }))
+                    .sort((a, b) => b.total - a.total)
+                    .slice(0, 5)
+
+                  if (reviewers.length === 0) {
+                    return (
+                      <div className="h-32 flex items-center justify-center text-muted-foreground text-xs">
+                        No reviewer data yet
+                      </div>
+                    )
+                  }
+
+                  // Color palette for avatars
+                  const avatarColors = ['bg-emerald-500', 'bg-teal-500', 'bg-cyan-500', 'bg-amber-500', 'bg-violet-500']
+
+                  return reviewers.map((reviewer, i) => (
+                    <div key={reviewer.id} className="flex items-center gap-3 py-1">
+                      {/* Colored circle with initials */}
+                      <div className={`h-7 w-7 rounded-full ${avatarColors[i % avatarColors.length]} flex items-center justify-center text-white text-[10px] font-bold shrink-0`}>
+                        {reviewer.id.slice(0, 2).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium truncate">{reviewer.id}</p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-[10px] text-emerald-600 dark:text-emerald-400">{reviewer.approved} approved</span>
+                          <span className="text-[10px] text-red-600 dark:text-red-400">{reviewer.rejected} rejected</span>
+                        </div>
+                      </div>
+                      <Badge variant="secondary" className="text-[10px] h-5 font-mono tabular-nums">
+                        {reviewer.total}
+                      </Badge>
+                    </div>
+                  ))
+                })()}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       {/* Approval History */}

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -15,7 +15,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { useQuery } from '@tanstack/react-query'
-import { FileText, Lock, ChevronLeft, ChevronRight, Shield, ShieldCheck, ShieldX, Activity, CheckSquare, ChevronDown, ChevronRight as ChevronR } from 'lucide-react'
+import { FileText, Lock, ChevronLeft, ChevronRight, Shield, ShieldCheck, ShieldX, Activity, CheckSquare, ChevronDown, ChevronRight as ChevronR, Clock } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { motion, AnimatePresence } from 'framer-motion'
 import { DataExport } from './DataExport'
@@ -43,6 +43,15 @@ const eventTypeIcons: Record<string, React.ReactNode> = {
   POLICY_DELETED: <ShieldX className="h-3.5 w-3.5" />,
   TRACE_EVALUATED: <Activity className="h-3.5 w-3.5" />,
   APPROVAL_DECISION: <CheckSquare className="h-3.5 w-3.5" />,
+}
+
+// Left border colors for table rows based on event type
+const eventTypeBorder: Record<string, string> = {
+  POLICY_CREATED: 'border-l-3 border-l-emerald-500/50',
+  POLICY_UPDATED: 'border-l-3 border-l-violet-500/50',
+  POLICY_DELETED: 'border-l-3 border-l-red-500/50',
+  TRACE_EVALUATED: 'border-l-3 border-l-cyan-500/50',
+  APPROVAL_DECISION: 'border-l-3 border-l-amber-500/50',
 }
 
 function formatJsonSafe(str: string): string {
@@ -129,6 +138,157 @@ export function AuditLogs() {
         />
       </div>
 
+      {/* Event Timeline + Activity Heatmap */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Event Timeline Visualization */}
+        <Card className="border-0 shadow-sm glass-card glow-hover">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <Clock className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+              Event Timeline
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="h-16 skeleton-shimmer rounded" />
+            ) : !data?.logs.length ? (
+              <div className="h-16 flex items-center justify-center text-muted-foreground text-xs">
+                No events to display
+              </div>
+            ) : (
+              <div className="relative h-16">
+                {/* Timeline line */}
+                <div className="absolute top-1/2 left-0 right-0 h-[2px] bg-border/50" />
+                {/* Event clusters */}
+                <div className="relative flex items-center justify-between h-full px-2">
+                  {(() => {
+                    // Group events by rough time buckets
+                    const now = Date.now()
+                    const bucketCount = 12
+                    const bucketWidth = (24 * 60 * 60 * 1000) / bucketCount // last 24h divided
+                    const buckets = Array.from({ length: bucketCount }, (_, i) => ({
+                      time: now - (bucketCount - 1 - i) * bucketWidth,
+                      count: 0,
+                      types: new Set<string>(),
+                    }))
+
+                    data.logs.forEach((log) => {
+                      const logTime = new Date(log.timestamp).getTime()
+                      const bucketIdx = Math.floor((logTime - (now - 24 * 60 * 60 * 1000)) / bucketWidth)
+                      if (bucketIdx >= 0 && bucketIdx < bucketCount) {
+                        buckets[bucketIdx].count++
+                        buckets[bucketIdx].types.add(log.eventType)
+                      }
+                    })
+
+                    const maxCount = Math.max(...buckets.map(b => b.count), 1)
+
+                    return buckets.map((bucket, i) => {
+                      const size = Math.max(4, (bucket.count / maxCount) * 16)
+                      const dominantType = bucket.types.size > 0
+                        ? [...bucket.types][Math.floor(Math.random() * bucket.types.size)]
+                        : null
+                      const color = dominantType
+                        ? (dominantType.includes('CREATED') ? 'bg-emerald-500' :
+                           dominantType.includes('DELETED') ? 'bg-red-500' :
+                           dominantType.includes('UPDATED') ? 'bg-violet-500' :
+                           dominantType.includes('TRACE') ? 'bg-cyan-500' :
+                           'bg-amber-500')
+                        : 'bg-muted-foreground/20'
+
+                      return (
+                        <div key={i} className="flex flex-col items-center gap-1" title={`${bucket.count} events`}>
+                          <span className="text-[8px] text-muted-foreground tabular-nums">
+                            {bucket.count > 0 ? bucket.count : ''}
+                          </span>
+                          <div
+                            className={`rounded-full ${bucket.count > 0 ? color : 'bg-muted-foreground/10'} transition-all duration-300`}
+                            style={{ width: `${size}px`, height: `${size}px` }}
+                          />
+                        </div>
+                      )
+                    })
+                  })()}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Recent Activity Heatmap */}
+        <Card className="border-0 shadow-sm glass-card glow-hover">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <Activity className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+              Activity Heatmap (7d × 24h)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="h-24 skeleton-shimmer rounded" />
+            ) : !data?.logs.length ? (
+              <div className="h-24 flex items-center justify-center text-muted-foreground text-xs">
+                No activity data
+              </div>
+            ) : (
+              <div className="space-y-1">
+                {/* Day labels */}
+                <div className="flex items-center gap-0.5">
+                  <div className="w-6" />
+                  {Array.from({ length: 7 }, (_, i) => (
+                    <div key={i} className="flex-1 text-center text-[8px] text-muted-foreground">
+                      {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i]}
+                    </div>
+                  ))}
+                </div>
+                {/* Hour rows */}
+                {Array.from({ length: 4 }, (_, hourGroup) => {
+                  const hours = [hourGroup * 6, hourGroup * 6 + 1, hourGroup * 6 + 2, hourGroup * 6 + 3, hourGroup * 6 + 4, hourGroup * 6 + 5]
+                  return (
+                    <div key={hourGroup} className="flex items-center gap-0.5">
+                      <div className="w-6 text-[8px] text-muted-foreground text-right pr-1 tabular-nums">
+                        {`${hours[0]}h`}
+                      </div>
+                      {Array.from({ length: 7 }, (_, dayIdx) => {
+                        // Calculate activity intensity for this cell
+                        const cellHour = hours[0]
+                        const now = new Date()
+                        const dayOffset = 6 - dayIdx
+                        const cellDate = new Date(now)
+                        cellDate.setDate(cellDate.getDate() - dayOffset)
+                        cellDate.setHours(cellHour, 0, 0, 0)
+
+                        const cellEnd = new Date(cellDate.getTime() + 6 * 60 * 60 * 1000)
+                        const count = data.logs.filter(log => {
+                          const t = new Date(log.timestamp)
+                          return t >= cellDate && t < cellEnd
+                        }).length
+
+                        const maxLogCount = Math.max(data.logs.length / 28, 1)
+                        const intensity = Math.min(count / maxLogCount, 1)
+
+                        return (
+                          <div
+                            key={dayIdx}
+                            className="flex-1 h-4 rounded-sm transition-all duration-300"
+                            style={{
+                              backgroundColor: count === 0
+                                ? 'hsl(var(--muted) / 0.3)'
+                                : `rgba(16, 185, 129, ${0.15 + intensity * 0.65})`,
+                            }}
+                            title={`${count} events`}
+                          />
+                        )
+                      })}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Table - horizontally scrollable */}
       <Card className="border-0 shadow-sm glass-card glow-hover">
         <CardContent className="p-0">
@@ -160,7 +320,7 @@ export function AuditLogs() {
                   {data.logs.map((log) => {
                     const isExpanded = expandedRows.has(log.id)
                     return (
-                      <TableRow key={log.id} className="transition-all duration-150 hover:bg-muted/30">
+                      <TableRow key={log.id} className={`transition-all duration-150 hover:bg-muted/30 ${eventTypeBorder[log.eventType] ?? ''}`}>
                         <TableCell className="w-8">
                           <div className={eventTypeColors[log.eventType] ?? 'text-muted-foreground'}>
                             {eventTypeIcons[log.eventType] ?? <FileText className="h-3.5 w-3.5" />}

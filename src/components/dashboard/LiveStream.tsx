@@ -245,6 +245,15 @@ export function LiveStream() {
   // Unique agent roles for filter
   const agentRoles = [...new Set(events.map(e => e.agentRole))].sort()
 
+  // Decision distribution for donut chart
+  const decisionDist = useMemo(() => {
+    const allow = events.filter(e => e.evaluationResult === 'ALLOW').length
+    const block = events.filter(e => e.evaluationResult === 'BLOCK').length
+    const review = events.filter(e => e.evaluationResult === 'REQUIRE_APPROVAL').length
+    const total = allow + block + review
+    return { allow, block, review, total }
+  }, [events])
+
   return (
     <div className="h-full flex flex-col p-4 md:p-6 gap-4">
       {/* Header */}
@@ -290,6 +299,70 @@ export function LiveStream() {
           <Sparkline data={rateHistory} width={200} height={24} />
         </div>
       )}
+
+      {/* Decision Distribution Mini Donut + Stats Row */}
+      <div className="flex items-center gap-4">
+        {decisionDist.total > 0 && (
+          <div className="flex items-center gap-3">
+            {/* Mini donut chart */}
+            <svg width="48" height="48" viewBox="0 0 48 48" className="shrink-0">
+              {(() => {
+                const segments = [
+                  { value: decisionDist.allow, color: '#10b981' },
+                  { value: decisionDist.block, color: '#ef4444' },
+                  { value: decisionDist.review, color: '#f59e0b' },
+                ].filter(s => s.value > 0)
+
+                let currentAngle = 0
+                const radius = 18
+                const cx = 24
+                const cy = 24
+
+                return segments.map((seg, i) => {
+                  const angle = (seg.value / decisionDist.total) * 360
+                  const startAngle = currentAngle
+                  const endAngle = currentAngle + angle
+                  currentAngle = endAngle
+
+                  const startRad = (startAngle - 90) * Math.PI / 180
+                  const endRad = (endAngle - 90) * Math.PI / 180
+
+                  const largeArc = angle > 180 ? 1 : 0
+
+                  const x1 = cx + radius * Math.cos(startRad)
+                  const y1 = cy + radius * Math.sin(startRad)
+                  const x2 = cx + radius * Math.cos(endRad)
+                  const y2 = cy + radius * Math.sin(endRad)
+
+                  return (
+                    <path
+                      key={i}
+                      d={`M ${cx} ${cy} L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2} Z`}
+                      fill={seg.color}
+                      opacity={0.8}
+                    />
+                  )
+                })
+              })()}
+              <circle cx="24" cy="24" r="12" fill="#030712" />
+              <text x="24" y="27" textAnchor="middle" fill="#9ca3af" fontSize="8" fontFamily="monospace">
+                {decisionDist.total}
+              </text>
+            </svg>
+            <div className="flex items-center gap-3 text-[10px]">
+              <span className="flex items-center gap-1">
+                <span className="h-2 w-2 rounded-full bg-emerald-500" /> {decisionDist.allow}
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="h-2 w-2 rounded-full bg-red-500" /> {decisionDist.block}
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="h-2 w-2 rounded-full bg-amber-500" /> {decisionDist.review}
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Controls Bar */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
@@ -354,7 +427,7 @@ export function LiveStream() {
       </div>
 
       {/* Event Stream Console */}
-      <Card className="flex-1 min-h-0 bg-gray-950 dark:bg-gray-950 border-gray-800 overflow-hidden">
+      <Card className="flex-1 min-h-0 bg-gray-950 dark:bg-gray-950 border-gray-800 overflow-hidden relative scan-line">
         <div
           ref={containerRef}
           className="h-full overflow-y-auto custom-scrollbar font-mono text-xs leading-relaxed"
@@ -383,7 +456,7 @@ export function LiveStream() {
                     animate={{ opacity: 1, x: 0, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
                     transition={{ duration: 0.25, delay: index < 5 ? index * 0.03 : 0 }}
-                    className="group flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-800/60 cursor-pointer transition-colors"
+                    className={`group flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-800/60 cursor-pointer transition-colors ${index < 5 ? 'event-row-new' : ''}`}
                     onClick={() => handleEventClick(event)}
                   >
                     {/* Timestamp */}

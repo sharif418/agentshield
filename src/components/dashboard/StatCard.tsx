@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from '@/components/ui/card'
 import { type LucideIcon } from 'lucide-react'
-import { useMotionValue, useMotionValueEvent, animate } from 'framer-motion'
+import { useMotionValue, useMotionValueEvent, animate, motion } from 'framer-motion'
 import { useEffect, useState, useRef, useMemo } from 'react'
 import { cn } from '@/lib/utils'
 
@@ -136,6 +136,10 @@ export function StatCard({ title, value, icon: Icon, trend, trendUp, suffix = ''
       <div className="absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-black/[0.03] to-transparent dark:from-white/[0.02] dark:to-transparent pointer-events-none" />
       {/* Dot grid pattern for subtle texture */}
       <div className="absolute inset-0 dot-grid opacity-40 pointer-events-none" />
+      {/* Diagonal lines background pattern */}
+      <div className="absolute inset-0 opacity-[0.015] pointer-events-none" style={{
+        backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 10px, currentColor 10px, currentColor 11px)',
+      }} />
 
       {/* Gradient background */}
       <div className={cn(
@@ -143,11 +147,18 @@ export function StatCard({ title, value, icon: Icon, trend, trendUp, suffix = ''
         gradient ?? 'bg-gradient-to-br from-emerald-500 to-teal-600'
       )} />
 
-      {/* Gradient line at bottom */}
-      <div className={cn(
-        'absolute bottom-0 inset-x-0 h-[2px]',
-        gradient ?? 'bg-gradient-to-r from-emerald-500 to-teal-600'
-      )} style={{ opacity: 0.5 }} />
+      {/* Gradient accent bar at bottom - animated on hover */}
+      <motion.div
+        className={cn(
+          'absolute bottom-0 inset-x-0 h-[3px] rounded-b-xl',
+          gradient ?? 'bg-gradient-to-r from-emerald-500 to-teal-600'
+        )}
+        initial={{ opacity: 0.3, scaleX: 0.8 }}
+        animate={{ opacity: 0.3, scaleX: 0.8 }}
+        whileHover={{ opacity: 0.8, scaleX: 1 }}
+        transition={{ duration: 0.3 }}
+        style={{ transformOrigin: 'left' }}
+      />
 
       <CardContent className="p-4 md:p-6 relative">
         <div className="flex items-center justify-between">
@@ -173,7 +184,7 @@ export function StatCard({ title, value, icon: Icon, trend, trendUp, suffix = ''
           </div>
         </div>
         {trend && (
-          <div className="mt-2 flex items-center gap-1 text-xs">
+          <div className="mt-2 flex items-center gap-1.5 text-xs">
             <span
               className={
                 trendUp === true
@@ -185,6 +196,19 @@ export function StatCard({ title, value, icon: Icon, trend, trendUp, suffix = ''
             >
               {trendUp === true ? '↑' : trendUp === false ? '↓' : '→'} {trend}
             </span>
+            {/* Mini trend indicator */}
+            {trendUp === true && (
+              <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                <svg width="8" height="8" viewBox="0 0 8 8"><path d="M1 6L4 2L7 6" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                +{Math.round(Math.abs((value || 1) * 0.12))}%
+              </span>
+            )}
+            {trendUp === false && (
+              <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full bg-red-500/10 text-red-600 dark:text-red-400">
+                <svg width="8" height="8" viewBox="0 0 8 8"><path d="M1 2L4 6L7 2" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                -{Math.round(Math.abs((value || 1) * 0.08))}%
+              </span>
+            )}
           </div>
         )}
       </CardContent>

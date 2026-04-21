@@ -22,7 +22,7 @@ import {
   DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu'
 import { AnimatePresence, motion } from 'framer-motion'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAppStore } from '@/lib/store'
 import {
   LayoutGrid,
@@ -43,6 +43,11 @@ import {
   LayoutList,
   ArrowUpRight,
   ArrowDownRight,
+  RefreshCw,
+  ChevronUp,
+  ChevronDown,
+  AlertTriangle,
+  Heart,
 } from 'lucide-react'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -56,6 +61,8 @@ type WidgetType =
   | 'compliance_score'
   | 'recent_blocks'
   | 'quick_stats'
+  | 'threat_level'
+  | 'policy_health'
 
 interface WidgetConfig {
   type: WidgetType
@@ -105,6 +112,8 @@ const WIDGET_META: Record<WidgetType, { label: string; description: string; icon
   compliance_score: { label: 'Compliance Score', description: 'Overall compliance with circular progress', icon: Shield },
   recent_blocks: { label: 'Recent Blocks', description: 'Last 5 BLOCK traces with details', icon: Zap },
   quick_stats: { label: 'Quick Stats', description: 'Key metrics at a glance in 2×2 grid', icon: Database },
+  threat_level: { label: 'Threat Level', description: 'Current threat level gauge with color-coded indicator', icon: AlertTriangle },
+  policy_health: { label: 'Policy Health', description: 'Policy health score with circular progress ring', icon: Heart },
 }
 
 const DEFAULT_WIDGETS: WidgetConfig[] = [
@@ -114,6 +123,8 @@ const DEFAULT_WIDGETS: WidgetConfig[] = [
   { type: 'latency_monitor', id: 'w-latency_monitor' },
   { type: 'agent_activity', id: 'w-agent_activity' },
   { type: 'quick_stats', id: 'w-quick_stats' },
+  { type: 'threat_level', id: 'w-threat_level' },
+  { type: 'policy_health', id: 'w-policy_health' },
 ]
 
 const ROLE_COLORS: Record<string, string> = {
@@ -657,17 +668,322 @@ function QuickStatsWidget({ stats }: { stats: DashboardStats | undefined }) {
   )
 }
 
+// ─── Widget: Threat Level ────────────────────────────────────────────────────
+
+type ThreatLevel = 'Low' | 'Moderate' | 'High' | 'Critical'
+
+function ThreatLevelWidget({ stats, traces }: { stats: DashboardStats | undefined; traces: TraceRecord[] }) {
+  const threatInfo = useMemo(() => {
+    const blockRate = (() => {
+      const total = Object.values(stats?.traceBreakdown ?? {}).reduce((a, b) => a + b, 0)
+      if (total === 0) return 0
+      return (stats?.traceBreakdown?.BLOCK ?? 0) / total
+    })()
+
+    const recentBlockCount = traces.filter(t => t.evaluationResult === 'BLOCK').length
+    const pendingApprovals = stats?.pendingApprovals ?? 0
+
+    let level: ThreatLevel = 'Low'
+    let score = 0
+    if (blockRate > 0.5 || recentBlockCount > 20) {
+      level = 'Critical'
+      score = 90 + Math.min(blockRate * 10, 10)
+    } else if (blockRate > 0.3 || recentBlockCount > 10) {
+      level = 'High'
+      score = 65 + blockRate * 25
+    } else if (blockRate > 0.15 || recentBlockCount > 5 || pendingApprovals > 3) {
+      level = 'Moderate'
+      score = 35 + blockRate * 30
+    } else {
+      score = blockRate * 35 + 5
+    }
+
+    score = Math.min(Math.round(score), 100)
+
+    const levelColors: Record<ThreatLevel, { bg: string; text: string; gauge: string; glow: string }> = {
+      Low: { bg: 'bg-emerald-500/10', text: 'text-emerald-600 dark:text-emerald-400', gauge: '#10b981', glow: '0 0 12px rgba(16,185,129,0.3)' },
+      Moderate: { bg: 'bg-amber-500/10', text: 'text-amber-600 dark:text-amber-400', gauge: '#f59e0b', glow: '0 0 12px rgba(245,158,11,0.3)' },
+      High: { bg: 'bg-orange-500/10', text: 'text-orange-600 dark:text-orange-400', gauge: '#f97316', glow: '0 0 12px rgba(249,115,22,0.3)' },
+      Critical: { bg: 'bg-red-500/10', text: 'text-red-600 dark:text-red-400', gauge: '#ef4444', glow: '0 0 12px rgba(239,68,68,0.3)' },
+    }
+
+    return { level, score, colors: levelColors[level], blockRate, recentBlockCount, pendingApprovals }
+  }, [stats, traces])
+
+  const { level, score, colors } = threatInfo
+
+  // Gauge arc
+  const gaugeWidth = 160
+  const gaugeHeight = 100
+  const cx = gaugeWidth / 2
+  const cy = 75
+  const r = 55
+
+  // Arc from -180° to 0° (semicircle)
+  const startAngle = -180
+  const endAngle = 0
+  const scoreAngle = startAngle + (score / 100) * (endAngle - startAngle)
+
+  const polarToCart = (angle: number) => {
+    const rad = (angle * Math.PI) / 180
+    return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) }
+  }
+
+  const arcPath = (start: number, end: number) => {
+    const s = polarToCart(start)
+    const e = polarToCart(end)
+    const largeArc = Math.abs(end - start) > 180 ? 1 : 0
+    return `M ${s.x} ${s.y} A ${r} ${r} 0 ${largeArc} 1 ${e.x} ${e.y}`
+  }
+
+  // Needle endpoint
+  const needleTip = polarToCart(scoreAngle)
+
+  return (
+    <div className="flex flex-col items-center gap-2">
+      <svg width={gaugeWidth} height={gaugeHeight} viewBox={`0 0 ${gaugeWidth} ${gaugeHeight}`}>
+        {/* Background arc */}
+        <path
+          d={arcPath(startAngle, endAngle)}
+          fill="none"
+          stroke="currentColor"
+          strokeOpacity={0.08}
+          strokeWidth="10"
+          strokeLinecap="round"
+        />
+        {/* Colored arc up to score */}
+        <motion.path
+          d={arcPath(startAngle, startAngle - 1)}
+          fill="none"
+          stroke={colors.gauge}
+          strokeWidth="10"
+          strokeLinecap="round"
+          initial={{ pathLength: 0 }}
+          animate={{ pathLength: score / 100 }}
+          transition={{ duration: 1.2, ease: 'easeOut' }}
+          style={{ filter: `drop-shadow(${colors.glow})` }}
+        />
+        {/* Tick marks */}
+        {[0, 25, 50, 75, 100].map((tick) => {
+          const angle = startAngle + (tick / 100) * (endAngle - startAngle)
+          const inner = polarToCart(angle)
+          const outerR = r + 12
+          const rad = (angle * Math.PI) / 180
+          const outer = { x: cx + outerR * Math.cos(rad), y: cy + outerR * Math.sin(rad) }
+          return (
+            <line
+              key={tick}
+              x1={inner.x}
+              y1={inner.y}
+              x2={outer.x}
+              y2={outer.y}
+              stroke="currentColor"
+              strokeOpacity={0.15}
+              strokeWidth={1.5}
+            />
+          )
+        })}
+        {/* Animated needle */}
+        <motion.line
+          x1={cx}
+          y1={cy}
+          x2={needleTip.x}
+          y2={needleTip.y}
+          stroke={colors.gauge}
+          strokeWidth={2}
+          strokeLinecap="round"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5, duration: 0.5 }}
+        />
+        {/* Center dot */}
+        <circle cx={cx} cy={cy} r={4} fill={colors.gauge} />
+        <circle cx={cx} cy={cy} r={2} fill="white" />
+        {/* Score text */}
+        <text
+          x={cx}
+          y={cy - 16}
+          textAnchor="middle"
+          className="fill-foreground font-bold tabular-nums font-mono"
+          style={{ fontSize: '16px' }}
+        >
+          {score}
+        </text>
+        <text
+          x={cx}
+          y={cy - 4}
+          textAnchor="middle"
+          className="fill-muted-foreground"
+          style={{ fontSize: '8px' }}
+        >
+          threat score
+        </text>
+      </svg>
+
+      {/* Level badge */}
+      <motion.div
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ delay: 0.3, type: 'spring', stiffness: 200 }}
+        className={`px-3 py-1 rounded-full text-xs font-bold ${colors.bg} ${colors.text} border border-current/20`}
+      >
+        {level}
+      </motion.div>
+
+      {/* Stats row */}
+      <div className="flex items-center gap-3 text-[10px] text-muted-foreground mt-1">
+        <span>Block rate: <span className="font-mono tabular-nums font-medium text-foreground">{(threatInfo.blockRate * 100).toFixed(1)}%</span></span>
+        <span>Blocks: <span className="font-mono tabular-nums font-medium text-foreground">{threatInfo.recentBlockCount}</span></span>
+      </div>
+    </div>
+  )
+}
+
+// ─── Widget: Policy Health ───────────────────────────────────────────────────
+
+function PolicyHealthWidget({ stats }: { stats: DashboardStats | undefined }) {
+  const healthData = useMemo(() => {
+    const total = stats?.totalPolicies ?? 0
+    const enabledPolicies = Object.values(stats?.policyBreakdown ?? {}).reduce((a, b) => a + b, 0)
+    const rolesWithPolicies = Object.values(stats?.policiesByRole ?? {}).filter(c => c > 0).length
+    const totalRoles = 4 // DataAgent, CodeAgent, FinanceAgent, SupportAgent
+
+    // Health score based on: enabled %, coverage, conflict-free (assume no conflicts for now)
+    const enabledPct = total > 0 ? (enabledPolicies / total) * 100 : 0
+    const coveragePct = (rolesWithPolicies / totalRoles) * 100
+    const conflictFreePct = 100 // Assumed since we don't have conflict data here
+
+    const healthScore = Math.round(enabledPct * 0.4 + coveragePct * 0.35 + conflictFreePct * 0.25)
+
+    return {
+      healthScore: Math.min(healthScore, 100),
+      enabledPct: Math.round(enabledPct),
+      coveragePct: Math.round(coveragePct),
+      conflictFreePct,
+      rolesWithPolicies,
+      totalRoles,
+    }
+  }, [stats])
+
+  const { healthScore, enabledPct, coveragePct, conflictFreePct, rolesWithPolicies, totalRoles } = healthData
+
+  const color = healthScore >= 80 ? '#10b981' : healthScore >= 50 ? '#f59e0b' : '#ef4444'
+  const size = 110
+  const strokeWidth = 8
+  const radius = (size - strokeWidth) / 2
+  const circumference = 2 * Math.PI * radius
+  const dashOffset = circumference - (healthScore / 100) * circumference
+
+  const trendUp = healthScore >= 70
+
+  return (
+    <div className="flex flex-col items-center gap-2">
+      <div className="relative">
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="gauge-glow">
+          {/* Background ring */}
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            fill="none"
+            stroke="currentColor"
+            strokeOpacity={0.06}
+            strokeWidth={strokeWidth}
+          />
+          {/* Progress ring */}
+          <motion.circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            fill="none"
+            stroke={color}
+            strokeWidth={strokeWidth}
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            initial={{ strokeDashoffset: circumference }}
+            animate={{ strokeDashoffset: dashOffset }}
+            transition={{ duration: 1.2, ease: 'easeOut' }}
+            transform={`rotate(-90 ${size / 2} ${size / 2})`}
+          />
+          {/* Center text */}
+          <text
+            x={size / 2}
+            y={size / 2 - 6}
+            textAnchor="middle"
+            className="fill-foreground font-bold tabular-nums font-mono"
+            style={{ fontSize: '24px' }}
+          >
+            {healthScore}
+          </text>
+          <text
+            x={size / 2}
+            y={size / 2 + 10}
+            textAnchor="middle"
+            className="fill-muted-foreground"
+            style={{ fontSize: '8px' }}
+          >
+            health score
+          </text>
+          {/* Trend indicator */}
+          {trendUp ? (
+            <ArrowUpRight x={size / 2 - 5} y={size / 2 + 18} className="fill-emerald-500" width={10} height={10} />
+          ) : (
+            <ArrowDownRight x={size / 2 - 5} y={size / 2 + 18} className="fill-red-500" width={10} height={10} />
+          )}
+        </svg>
+      </div>
+
+      {/* Breakdown bars */}
+      <div className="w-full space-y-1.5">
+        {[
+          { label: 'Enabled', pct: enabledPct, color: '#10b981' },
+          { label: 'Coverage', pct: coveragePct, color: '#06b6d4' },
+          { label: 'Conflict-free', pct: conflictFreePct, color: '#8b5cf6' },
+        ].map((item) => (
+          <div key={item.label} className="space-y-0.5">
+            <div className="flex items-center justify-between text-[10px]">
+              <span className="text-muted-foreground">{item.label}</span>
+              <span className="font-mono tabular-nums font-medium">{item.pct}%</span>
+            </div>
+            <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${item.pct}%` }}
+                transition={{ duration: 0.8, ease: 'easeOut', delay: 0.2 }}
+                className="h-full rounded-full"
+                style={{ backgroundColor: item.color, opacity: 0.8 }}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="text-[10px] text-muted-foreground">
+        {rolesWithPolicies}/{totalRoles} roles covered
+      </div>
+    </div>
+  )
+}
+
 // ─── Widget Card ─────────────────────────────────────────────────────────────
 
 function WidgetCard({
   config,
   onRemove,
+  onMoveUp,
+  onMoveDown,
+  canMoveUp,
+  canMoveDown,
   stats,
   traces,
   isLoading,
 }: {
   config: WidgetConfig
   onRemove: (id: string) => void
+  onMoveUp: (id: string) => void
+  onMoveDown: (id: string) => void
+  canMoveUp: boolean
+  canMoveDown: boolean
   stats: DashboardStats | undefined
   traces: TraceRecord[]
   isLoading: boolean
@@ -695,6 +1011,10 @@ function WidgetCard({
         return <RecentBlocksWidget traces={traces} />
       case 'quick_stats':
         return <QuickStatsWidget stats={stats} />
+      case 'threat_level':
+        return <ThreatLevelWidget stats={stats} traces={traces} />
+      case 'policy_health':
+        return <PolicyHealthWidget stats={stats} />
     }
   }
 
@@ -704,14 +1024,35 @@ function WidgetCard({
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      transition={{ duration: 0.25 }}
+      transition={{ duration: 0.25, layout: { duration: 0.3 } }}
       className="glass-card glow-hover card-shine corner-accent rounded-xl border border-border/50 shadow-sm min-h-[200px] flex flex-col"
     >
       {/* Title Bar */}
       <div className="flex items-center gap-1.5 px-3 py-2 border-b border-border/30">
-        <GripVertical className="h-3.5 w-3.5 text-muted-foreground/40 cursor-grab shrink-0" />
+        <GripVertical className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0" />
         <Icon className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
         <span className="text-xs font-semibold flex-1 truncate">{meta.label}</span>
+        {/* Reorder buttons */}
+        <button
+          onClick={() => onMoveUp(config.id)}
+          disabled={!canMoveUp}
+          className={`h-5 w-5 rounded-md flex items-center justify-center transition-colors duration-150 shrink-0 active:scale-95 ${
+            canMoveUp ? 'text-muted-foreground hover:text-foreground hover:bg-muted/60' : 'text-muted-foreground/20 cursor-not-allowed'
+          }`}
+          aria-label={`Move ${meta.label} up`}
+        >
+          <ChevronUp className="h-3 w-3" />
+        </button>
+        <button
+          onClick={() => onMoveDown(config.id)}
+          disabled={!canMoveDown}
+          className={`h-5 w-5 rounded-md flex items-center justify-center transition-colors duration-150 shrink-0 active:scale-95 ${
+            canMoveDown ? 'text-muted-foreground hover:text-foreground hover:bg-muted/60' : 'text-muted-foreground/20 cursor-not-allowed'
+          }`}
+          aria-label={`Move ${meta.label} down`}
+        >
+          <ChevronDown className="h-3 w-3" />
+        </button>
         <button
           onClick={() => onRemove(config.id)}
           className="h-5 w-5 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors duration-150 shrink-0 active:scale-95"
@@ -751,6 +1092,8 @@ function AddWidgetDialog({
     'compliance_score',
     'recent_blocks',
     'quick_stats',
+    'threat_level',
+    'policy_health',
   ]
 
   return (
@@ -813,11 +1156,13 @@ function AddWidgetDialog({
 
 export function DashboardWidgets() {
   const timeRange = useAppStore((s) => s.timeRange)
+  const queryClient = useQueryClient()
 
   // Layout state
   const [widgets, setWidgets] = useState<WidgetConfig[]>(DEFAULT_WIDGETS)
   const [layout, setLayout] = useState<'grid' | 'compact'>('grid')
   const [addDialogOpen, setAddDialogOpen] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   // Data fetching
   const { data: stats, isLoading: statsLoading } = useQuery<DashboardStats>({
@@ -858,6 +1203,37 @@ export function DashboardWidgets() {
     setWidgets(DEFAULT_WIDGETS)
   }, [])
 
+  const moveWidgetUp = useCallback((id: string) => {
+    setWidgets(prev => {
+      const idx = prev.findIndex(w => w.id === id)
+      if (idx <= 0) return prev
+      const next = [...prev]
+      const tmp = next[idx]
+      next[idx] = next[idx - 1]
+      next[idx - 1] = tmp
+      return next
+    })
+  }, [])
+
+  const moveWidgetDown = useCallback((id: string) => {
+    setWidgets(prev => {
+      const idx = prev.findIndex(w => w.id === id)
+      if (idx < 0 || idx >= prev.length - 1) return prev
+      const next = [...prev]
+      const tmp = next[idx]
+      next[idx] = next[idx + 1]
+      next[idx + 1] = tmp
+      return next
+    })
+  }, [])
+
+  const refreshAll = useCallback(async () => {
+    setIsRefreshing(true)
+    await queryClient.invalidateQueries({ queryKey: ['stats'] })
+    await queryClient.invalidateQueries({ queryKey: ['traces-widgets'] })
+    setTimeout(() => setIsRefreshing(false), 600)
+  }, [queryClient])
+
   const gridCols = layout === 'compact'
     ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
     : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
@@ -873,7 +1249,7 @@ export function DashboardWidgets() {
           <LayoutGrid className="h-5 w-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
           <h2 className="text-lg font-bold tracking-tight gradient-text-shimmer">Dashboard Widgets</h2>
         </div>
-        <p className="text-sm text-muted-foreground ml-7">Customizable widget-based overview with drag-and-drop arrangement</p>
+        <p className="text-sm text-muted-foreground ml-7">Customizable widget-based overview with reorderable arrangement</p>
       </div>
 
       {/* Widget Toolbar */}
@@ -925,6 +1301,18 @@ export function DashboardWidgets() {
 
         <Separator orientation="vertical" className="h-5" />
 
+        {/* Refresh All */}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 text-xs gap-1.5 active:scale-[0.98] transition-transform"
+          onClick={refreshAll}
+          disabled={isRefreshing}
+        >
+          <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+          Refresh All
+        </Button>
+
         {/* Reset Layout */}
         <Button
           variant="ghost"
@@ -967,11 +1355,15 @@ export function DashboardWidgets() {
       {/* Widget Grid */}
       <AnimatePresence mode="popLayout">
         <div className={`grid ${gridCols} gap-3 md:gap-4`}>
-          {widgets.map((config) => (
+          {widgets.map((config, index) => (
             <WidgetCard
               key={config.id}
               config={config}
               onRemove={removeWidget}
+              onMoveUp={moveWidgetUp}
+              onMoveDown={moveWidgetDown}
+              canMoveUp={index > 0}
+              canMoveDown={index < widgets.length - 1}
               stats={stats}
               traces={traces}
               isLoading={isLoading}
