@@ -87,11 +87,13 @@ export function AuditLogs() {
   }
 
   return (
-    <div className="p-4 md:p-6 space-y-4">
-      <div className="section-header-gradient rounded-xl px-4 py-3 -mx-4 -mt-2 md:-mx-6 md:-mt-4 mb-2">
+    <div className="p-4 md:p-6 space-y-4 relative">
+      <div className="absolute inset-0 dot-grid opacity-30 pointer-events-none rounded-xl" />
+
+      <div className="section-header-gradient section-header-accent rounded-xl px-4 py-3 -mx-4 -mt-2 md:-mx-6 md:-mt-4 mb-2 relative overflow-hidden">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div>
-            <h2 className="text-lg font-bold tracking-tight flex items-center gap-2 bg-gradient-to-r from-emerald-700 to-teal-600 dark:from-emerald-400 dark:to-teal-400 bg-clip-text text-transparent">
+            <h2 className="text-lg font-bold tracking-tight flex items-center gap-2 gradient-text-shimmer">
               <FileText className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
               Audit Logs
               <Badge variant="outline" className="text-xs border-emerald-500/30 text-emerald-600 dark:text-emerald-400">

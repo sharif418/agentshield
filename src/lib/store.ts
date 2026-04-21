@@ -11,6 +11,8 @@ export type SectionId =
   | 'simulator'
   | 'rateanalytics'
   | 'policydiff'
+  | 'dependencygraph'
+  | 'compliance'
   | 'audit'
   | 'webhooks'
   | 'sdk'
@@ -72,6 +74,8 @@ export const sectionLabels: Record<SectionId, string> = {
   simulator: 'Simulator',
   rateanalytics: 'Rate Analytics',
   policydiff: 'Policy Diff',
+  dependencygraph: 'Dep. Graph',
+  compliance: 'Compliance',
   audit: 'Audit Logs',
   webhooks: 'Webhooks',
   sdk: 'SDK & Docs',

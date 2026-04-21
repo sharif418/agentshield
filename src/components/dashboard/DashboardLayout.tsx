@@ -15,11 +15,13 @@ import { AgentRoles } from './AgentRoles'
 import { PolicySimulator } from './PolicySimulator'
 import { RateAnalytics } from './RateAnalytics'
 import { PolicyDiffViewer } from './PolicyDiffViewer'
+import { PolicyDependencyGraph } from './PolicyDependencyGraph'
+import { ComplianceReport } from './ComplianceReport'
 import { ThemeToggle } from './ThemeToggle'
 import { NotificationCenter } from './NotificationCenter'
 import { GlobalTimeRange } from './GlobalTimeRange'
 import { useWebSocket } from '@/lib/use-websocket'
-import { Shield, WifiOff, Menu, Search, LayoutDashboard, Activity, CheckSquare, GitBranch, FileText, Webhook, Code2, Clock, Database, ChevronRight, Radio, Bot, FlaskConical, Gauge, GitCompare } from 'lucide-react'
+import { Shield, WifiOff, Menu, Search, LayoutDashboard, Activity, CheckSquare, GitBranch, FileText, Webhook, Code2, Clock, Database, ChevronRight, Radio, Bot, FlaskConical, Gauge, GitCompare, Network, FileCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet'
@@ -48,6 +50,8 @@ const sectionComponents: Record<string, React.ComponentType> = {
   simulator: PolicySimulator,
   rateanalytics: RateAnalytics,
   policydiff: PolicyDiffViewer,
+  dependencygraph: PolicyDependencyGraph,
+  compliance: ComplianceReport,
   audit: AuditLogs,
   webhooks: WebhookConfig,
   sdk: SDKIntegration,
@@ -64,12 +68,14 @@ const sectionIcons: Record<SectionId, React.ReactNode> = {
   simulator: <FlaskConical className="h-4 w-4" />,
   rateanalytics: <Gauge className="h-4 w-4" />,
   policydiff: <GitCompare className="h-4 w-4" />,
+  dependencygraph: <Network className="h-4 w-4" />,
+  compliance: <FileCheck className="h-4 w-4" />,
   audit: <FileText className="h-4 w-4" />,
   webhooks: <Webhook className="h-4 w-4" />,
   sdk: <Code2 className="h-4 w-4" />,
 }
 
-const sectionKeys: SectionId[] = ['dashboard', 'policies', 'approvals', 'traces', 'reasoning', 'livestream', 'agents', 'simulator', 'rateanalytics', 'policydiff', 'audit', 'webhooks', 'sdk']
+const sectionKeys: SectionId[] = ['dashboard', 'policies', 'approvals', 'traces', 'reasoning', 'livestream', 'agents', 'simulator', 'rateanalytics', 'policydiff', 'dependencygraph', 'compliance', 'audit', 'webhooks', 'sdk']
 
 export function DashboardLayout() {
   const { activeSection, wsConnected, wsReconnecting, wsReconnectAttempt, commandOpen, setCommandOpen, setActiveSection, lastRefresh, setLastRefresh, dbRecordCount, setDbRecordCount, timeRange } = useAppStore()

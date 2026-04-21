@@ -202,11 +202,14 @@ export function PolicyManager() {
   }
 
   return (
-    <div className="p-4 md:p-6 space-y-4">
-      <div className="section-header-gradient rounded-xl px-4 py-3 -mx-4 -mt-2 md:-mx-6 md:-mt-4 mb-2">
+    <div className="p-4 md:p-6 space-y-4 relative">
+      {/* Dot grid background */}
+      <div className="absolute inset-0 dot-grid opacity-30 pointer-events-none rounded-xl" />
+
+      <div className="section-header-gradient section-header-accent rounded-xl px-4 py-3 -mx-4 -mt-2 md:-mx-6 md:-mt-4 mb-2 relative overflow-hidden">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2">
-            <h2 className="text-lg font-bold tracking-tight bg-gradient-to-r from-emerald-700 to-teal-600 dark:from-emerald-400 dark:to-teal-400 bg-clip-text text-transparent">Policy Management</h2>
+            <h2 className="text-lg font-bold tracking-tight gradient-text-shimmer">Policy Management</h2>
             <Badge variant="secondary" className="text-xs font-mono tabular-nums">{policies.length}</Badge>
           </div>
         <div className="flex items-center gap-2 flex-wrap">
@@ -321,7 +324,7 @@ export function PolicyManager() {
       </AnimatePresence>
 
       {/* Policy Table - horizontally scrollable on mobile */}
-      <Card className="border-0 shadow-sm">
+      <Card className="border-0 shadow-sm glass-card corner-accent">
         <CardContent className="p-0">
           {isLoading ? (
             <div className="space-y-2 p-4">
@@ -362,7 +365,7 @@ export function PolicyManager() {
                     <TableRow
                       key={policy.policyId}
                       className={cn(
-                        'transition-all duration-150',
+                        'transition-all duration-150 table-row-hover',
                         rowBg[policy.permissionLevel] ?? '',
                         rowBorder[policy.permissionLevel] ?? ''
                       )}
@@ -381,7 +384,7 @@ export function PolicyManager() {
                       <TableCell className="text-xs text-muted-foreground">{policy.resource}</TableCell>
                       <TableCell className="text-xs text-muted-foreground">{policy.action}</TableCell>
                       <TableCell>
-                        <Badge className={`transition-transform duration-150 hover:scale-105 text-xs ${decisionColor[policy.permissionLevel] ?? ''}`} variant="outline">
+                        <Badge className={`transition-transform duration-150 hover:scale-105 badge-glow text-xs ${decisionColor[policy.permissionLevel] ?? ''}`} variant="outline">
                           {policy.permissionLevel === 'REQUIRE_APPROVAL' ? 'APPROVAL' : policy.permissionLevel}
                         </Badge>
                       </TableCell>
