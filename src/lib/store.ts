@@ -13,6 +13,8 @@ export type SectionId =
   | 'policydiff'
   | 'dependencygraph'
   | 'compliance'
+  | 'templates'
+  | 'threatintel'
   | 'audit'
   | 'webhooks'
   | 'sdk'
@@ -76,6 +78,8 @@ export const sectionLabels: Record<SectionId, string> = {
   policydiff: 'Policy Diff',
   dependencygraph: 'Dep. Graph',
   compliance: 'Compliance',
+  templates: 'Templates',
+  threatintel: 'Threat Intel',
   audit: 'Audit Logs',
   webhooks: 'Webhooks',
   sdk: 'SDK & Docs',

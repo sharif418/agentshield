@@ -822,3 +822,201 @@
   background-size: 1rem 1rem;
   animation: progressStripe 0.6s linear infinite;
 }
+
+/* ===== Round 8 Enhanced Visual Effects ===== */
+
+/* Threat level background - gradient backgrounds for severity indicators */
+.threat-bg-critical {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.08), rgba(220, 38, 38, 0.04));
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+.dark .threat-bg-critical {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.12), rgba(220, 38, 38, 0.06));
+  border-color: rgba(239, 68, 68, 0.15);
+}
+
+.threat-bg-high {
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.08), rgba(234, 88, 12, 0.04));
+  border-color: rgba(249, 115, 22, 0.2);
+}
+
+.dark .threat-bg-high {
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.12), rgba(234, 88, 12, 0.06));
+  border-color: rgba(249, 115, 22, 0.15);
+}
+
+.threat-bg-moderate {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(217, 119, 6, 0.04));
+  border-color: rgba(245, 158, 11, 0.2);
+}
+
+.dark .threat-bg-moderate {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(217, 119, 6, 0.06));
+  border-color: rgba(245, 158, 11, 0.15);
+}
+
+.threat-bg-low {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(5, 150, 105, 0.04));
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+.dark .threat-bg-low {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(5, 150, 105, 0.06));
+  border-color: rgba(16, 185, 129, 0.15);
+}
+
+/* Critical pulse - intense red pulse for critical severity */
+@keyframes criticalPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+}
+
+.critical-pulse {
+  animation: criticalPulse 1.5s ease-in-out infinite;
+}
+
+/* Animated data flow - moving dots for connection lines */
+@keyframes dataFlow {
+  0% { stroke-dashoffset: 20; }
+  100% { stroke-dashoffset: 0; }
+}
+
+.data-flow-line {
+  stroke-dasharray: 4 4;
+  animation: dataFlow 1s linear infinite;
+}
+
+/* Template card hover enhancement */
+.template-card-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.template-card-hover:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 40px -12px rgba(0, 0, 0, 0.1), 0 4px 12px -4px rgba(0, 0, 0, 0.06);
+}
+
+.dark .template-card-hover:hover {
+  box-shadow: 0 12px 40px -12px rgba(0, 0, 0, 0.4), 0 4px 12px -4px rgba(0, 0, 0, 0.3);
+}
+
+/* Category pill with gradient underline */
+.category-pill {
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.category-pill::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  width: 0;
+  height: 2px;
+  border-radius: 1px;
+  background: linear-gradient(90deg, #10b981, #14b8a6);
+  transition: all 0.2s ease;
+  transform: translateX(-50%);
+}
+
+.category-pill.active::after,
+.category-pill:hover::after {
+  width: 80%;
+}
+
+/* Stat card with top accent bar */
+.stat-accent-top {
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-accent-top::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #10b981, #14b8a6, #06b6d4);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.stat-accent-top:hover::before {
+  opacity: 1;
+}
+
+/* Terminal cursor blink for live feed sections */
+@keyframes cursorBlink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+.terminal-cursor::after {
+  content: '▌';
+  animation: cursorBlink 1s step-end infinite;
+  color: #10b981;
+}
+
+/* Scan line effect for threat monitor */
+@keyframes scanLine {
+  0% { top: -2px; }
+  100% { top: 100%; }
+}
+
+.scan-line::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.15), transparent);
+  animation: scanLine 4s linear infinite;
+  pointer-events: none;
+}
+
+/* Tag chip with subtle hover */
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 500;
+  background: oklch(0.95 0 0);
+  color: oklch(0.4 0 0);
+  border: 1px solid oklch(0.9 0 0);
+  transition: all 0.15s ease;
+}
+
+.dark .tag-chip {
+  background: oklch(0.25 0 0);
+  color: oklch(0.7 0 0);
+  border-color: oklch(0.3 0 0);
+}
+
+.tag-chip:hover {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.2);
+  color: rgba(16, 185, 129, 1);
+}
+
+/* Complexity stars with animation */
+.complexity-star-filled {
+  color: #f59e0b;
+  transition: transform 0.15s ease;
+}
+
+.complexity-star-filled:hover {
+  transform: scale(1.2);
+}
+
+.complexity-star-empty {
+  color: oklch(0.85 0 0);
+}
+
+.dark .complexity-star-empty {
+  color: oklch(0.35 0 0);
+}

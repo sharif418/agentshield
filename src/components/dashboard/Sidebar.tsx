@@ -18,6 +18,8 @@ import {
   GitCompare,
   Network,
   FileCheck,
+  BookOpen,
+  ShieldAlert,
   ChevronLeft,
   ChevronRight,
   ShieldCheck,
@@ -45,6 +47,8 @@ const navItems: { id: SectionId; label: string; icon: React.ReactNode; shortcut:
   { id: 'policydiff', label: 'Policy Diff', icon: <GitCompare className="h-5 w-5" />, shortcut: 'D' },
   { id: 'dependencygraph', label: 'Dep. Graph', icon: <Network className="h-5 w-5" />, shortcut: 'G' },
   { id: 'compliance', label: 'Compliance', icon: <FileCheck className="h-5 w-5" />, shortcut: 'C' },
+  { id: 'templates', label: 'Templates', icon: <BookOpen className="h-5 w-5" />, shortcut: 'T' },
+  { id: 'threatintel', label: 'Threat Intel', icon: <ShieldAlert className="h-5 w-5" />, shortcut: 'X' },
   { id: 'audit', label: 'Audit Logs', icon: <FileText className="h-5 w-5" />, shortcut: '9' },
   { id: 'webhooks', label: 'Webhooks', icon: <Webhook className="h-5 w-5" />, shortcut: 'Q' },
   { id: 'sdk', label: 'SDK & Docs', icon: <Code2 className="h-5 w-5" />, shortcut: 'W' },
@@ -97,57 +101,228 @@ export function Sidebar() {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 py-2 space-y-0.5 px-2 overflow-y-auto custom-scrollbar">
-          {navItems.map((item) => {
-            const isActive = activeSection === item.id
-            const button = (
-              <Button
-                key={item.id}
-                variant={isActive ? 'secondary' : 'ghost'}
-                size={sidebarCollapsed ? 'icon' : 'default'}
-                className={cn(
-                  'w-full justify-start gap-3 transition-all duration-200 relative',
-                  isActive && 'bg-emerald-600/10 text-emerald-600 dark:text-emerald-400 dark:bg-emerald-400/10 font-medium',
-                  !isActive && 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
-                  sidebarCollapsed && 'justify-center px-0'
-                )}
-                onClick={() => setActiveSection(item.id)}
-              >
-                {/* Active left border indicator */}
-                {isActive && (
-                  <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-emerald-600 dark:bg-emerald-400 rounded-r" />
-                )}
-                <span className={cn(isActive && 'text-emerald-600 dark:text-emerald-400')}>
-                  {item.icon}
-                </span>
-                {!sidebarCollapsed && <span className="text-sm">{item.label}</span>}
-                {!sidebarCollapsed && (
-                  <kbd className={cn(
-                    'ml-auto pointer-events-none inline-flex h-4 select-none items-center rounded border bg-muted px-1 font-mono text-[10px] font-medium',
-                    isActive ? 'text-emerald-600/50 dark:text-emerald-400/50 border-emerald-500/20' : 'text-muted-foreground border-border'
-                  )}>
-                    {item.shortcut}
-                  </kbd>
-                )}
-              </Button>
-            )
+        <nav className="flex-1 py-2 px-2 overflow-y-auto custom-scrollbar">
+          {/* Core section group */}
+          <div className="mb-1">
+            {!sidebarCollapsed && <span className="px-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60 mb-1 block">Core</span>}
+            <div className="space-y-0.5">
+              {navItems.slice(0, 5).map((item) => {
+                const isActive = activeSection === item.id
+                const button = (
+                  <Button
+                    key={item.id}
+                    variant={isActive ? 'secondary' : 'ghost'}
+                    size={sidebarCollapsed ? 'icon' : 'default'}
+                    className={cn(
+                      'w-full justify-start gap-3 transition-all duration-200 relative',
+                      isActive && 'bg-emerald-600/10 text-emerald-600 dark:text-emerald-400 dark:bg-emerald-400/10 font-medium',
+                      !isActive && 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
+                      sidebarCollapsed && 'justify-center px-0'
+                    )}
+                    onClick={() => setActiveSection(item.id)}
+                  >
+                    {isActive && (
+                      <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-emerald-600 dark:bg-emerald-400 rounded-r" />
+                    )}
+                    <span className={cn(isActive && 'text-emerald-600 dark:text-emerald-400')}>
+                      {item.icon}
+                    </span>
+                    {!sidebarCollapsed && <span className="text-sm">{item.label}</span>}
+                    {!sidebarCollapsed && (
+                      <kbd className={cn(
+                        'ml-auto pointer-events-none inline-flex h-4 select-none items-center rounded border bg-muted px-1 font-mono text-[10px] font-medium',
+                        isActive ? 'text-emerald-600/50 dark:text-emerald-400/50 border-emerald-500/20' : 'text-muted-foreground border-border'
+                      )}>
+                        {item.shortcut}
+                      </kbd>
+                    )}
+                  </Button>
+                )
+                if (sidebarCollapsed) {
+                  return (
+                    <Tooltip key={item.id}>
+                      <TooltipTrigger asChild>{button}</TooltipTrigger>
+                      <TooltipContent side="right" className="font-medium flex items-center gap-2">
+                        {item.label}
+                        <kbd className="inline-flex h-4 select-none items-center rounded border bg-muted px-1 font-mono text-[10px] font-medium text-muted-foreground">
+                          {item.shortcut}
+                        </kbd>
+                      </TooltipContent>
+                    </Tooltip>
+                  )
+                }
+                return button
+              })}
+            </div>
+          </div>
 
-            if (sidebarCollapsed) {
-              return (
-                <Tooltip key={item.id}>
-                  <TooltipTrigger asChild>{button}</TooltipTrigger>
-                  <TooltipContent side="right" className="font-medium flex items-center gap-2">
-                    {item.label}
-                    <kbd className="inline-flex h-4 select-none items-center rounded border bg-muted px-1 font-mono text-[10px] font-medium text-muted-foreground">
-                      {item.shortcut}
-                    </kbd>
-                  </TooltipContent>
-                </Tooltip>
-              )
-            }
+          <div className="border-t border-border/50 mx-2 my-1.5" />
 
-            return button
-          })}
+          {/* Monitoring section group */}
+          <div className="mb-1">
+            {!sidebarCollapsed && <span className="px-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60 mb-1 block">Monitoring</span>}
+            <div className="space-y-0.5">
+              {navItems.slice(5, 8).map((item) => {
+                const isActive = activeSection === item.id
+                const button = (
+                  <Button
+                    key={item.id}
+                    variant={isActive ? 'secondary' : 'ghost'}
+                    size={sidebarCollapsed ? 'icon' : 'default'}
+                    className={cn(
+                      'w-full justify-start gap-3 transition-all duration-200 relative',
+                      isActive && 'bg-emerald-600/10 text-emerald-600 dark:text-emerald-400 dark:bg-emerald-400/10 font-medium',
+                      !isActive && 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
+                      sidebarCollapsed && 'justify-center px-0'
+                    )}
+                    onClick={() => setActiveSection(item.id)}
+                  >
+                    {isActive && (
+                      <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-emerald-600 dark:bg-emerald-400 rounded-r" />
+                    )}
+                    <span className={cn(isActive && 'text-emerald-600 dark:text-emerald-400')}>
+                      {item.icon}
+                    </span>
+                    {!sidebarCollapsed && <span className="text-sm">{item.label}</span>}
+                    {!sidebarCollapsed && (
+                      <kbd className={cn(
+                        'ml-auto pointer-events-none inline-flex h-4 select-none items-center rounded border bg-muted px-1 font-mono text-[10px] font-medium',
+                        isActive ? 'text-emerald-600/50 dark:text-emerald-400/50 border-emerald-500/20' : 'text-muted-foreground border-border'
+                      )}>
+                        {item.shortcut}
+                      </kbd>
+                    )}
+                  </Button>
+                )
+                if (sidebarCollapsed) {
+                  return (
+                    <Tooltip key={item.id}>
+                      <TooltipTrigger asChild>{button}</TooltipTrigger>
+                      <TooltipContent side="right" className="font-medium flex items-center gap-2">
+                        {item.label}
+                        <kbd className="inline-flex h-4 select-none items-center rounded border bg-muted px-1 font-mono text-[10px] font-medium text-muted-foreground">
+                          {item.shortcut}
+                        </kbd>
+                      </TooltipContent>
+                    </Tooltip>
+                  )
+                }
+                return button
+              })}
+            </div>
+          </div>
+
+          <div className="border-t border-border/50 mx-2 my-1.5" />
+
+          {/* Analysis section group */}
+          <div className="mb-1">
+            {!sidebarCollapsed && <span className="px-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60 mb-1 block">Analysis</span>}
+            <div className="space-y-0.5">
+              {navItems.slice(8, 14).map((item) => {
+                const isActive = activeSection === item.id
+                const button = (
+                  <Button
+                    key={item.id}
+                    variant={isActive ? 'secondary' : 'ghost'}
+                    size={sidebarCollapsed ? 'icon' : 'default'}
+                    className={cn(
+                      'w-full justify-start gap-3 transition-all duration-200 relative',
+                      isActive && 'bg-emerald-600/10 text-emerald-600 dark:text-emerald-400 dark:bg-emerald-400/10 font-medium',
+                      !isActive && 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
+                      sidebarCollapsed && 'justify-center px-0'
+                    )}
+                    onClick={() => setActiveSection(item.id)}
+                  >
+                    {isActive && (
+                      <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-emerald-600 dark:bg-emerald-400 rounded-r" />
+                    )}
+                    <span className={cn(isActive && 'text-emerald-600 dark:text-emerald-400')}>
+                      {item.icon}
+                    </span>
+                    {!sidebarCollapsed && <span className="text-sm">{item.label}</span>}
+                    {!sidebarCollapsed && (
+                      <kbd className={cn(
+                        'ml-auto pointer-events-none inline-flex h-4 select-none items-center rounded border bg-muted px-1 font-mono text-[10px] font-medium',
+                        isActive ? 'text-emerald-600/50 dark:text-emerald-400/50 border-emerald-500/20' : 'text-muted-foreground border-border'
+                      )}>
+                        {item.shortcut}
+                      </kbd>
+                    )}
+                  </Button>
+                )
+                if (sidebarCollapsed) {
+                  return (
+                    <Tooltip key={item.id}>
+                      <TooltipTrigger asChild>{button}</TooltipTrigger>
+                      <TooltipContent side="right" className="font-medium flex items-center gap-2">
+                        {item.label}
+                        <kbd className="inline-flex h-4 select-none items-center rounded border bg-muted px-1 font-mono text-[10px] font-medium text-muted-foreground">
+                          {item.shortcut}
+                        </kbd>
+                      </TooltipContent>
+                    </Tooltip>
+                  )
+                }
+                return button
+              })}
+            </div>
+          </div>
+
+          <div className="border-t border-border/50 mx-2 my-1.5" />
+
+          {/* System section group */}
+          <div className="mb-1">
+            {!sidebarCollapsed && <span className="px-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60 mb-1 block">System</span>}
+            <div className="space-y-0.5">
+              {navItems.slice(14).map((item) => {
+                const isActive = activeSection === item.id
+                const button = (
+                  <Button
+                    key={item.id}
+                    variant={isActive ? 'secondary' : 'ghost'}
+                    size={sidebarCollapsed ? 'icon' : 'default'}
+                    className={cn(
+                      'w-full justify-start gap-3 transition-all duration-200 relative',
+                      isActive && 'bg-emerald-600/10 text-emerald-600 dark:text-emerald-400 dark:bg-emerald-400/10 font-medium',
+                      !isActive && 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
+                      sidebarCollapsed && 'justify-center px-0'
+                    )}
+                    onClick={() => setActiveSection(item.id)}
+                  >
+                    {isActive && (
+                      <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-emerald-600 dark:bg-emerald-400 rounded-r" />
+                    )}
+                    <span className={cn(isActive && 'text-emerald-600 dark:text-emerald-400')}>
+                      {item.icon}
+                    </span>
+                    {!sidebarCollapsed && <span className="text-sm">{item.label}</span>}
+                    {!sidebarCollapsed && (
+                      <kbd className={cn(
+                        'ml-auto pointer-events-none inline-flex h-4 select-none items-center rounded border bg-muted px-1 font-mono text-[10px] font-medium',
+                        isActive ? 'text-emerald-600/50 dark:text-emerald-400/50 border-emerald-500/20' : 'text-muted-foreground border-border'
+                      )}>
+                        {item.shortcut}
+                      </kbd>
+                    )}
+                  </Button>
+                )
+                if (sidebarCollapsed) {
+                  return (
+                    <Tooltip key={item.id}>
+                      <TooltipTrigger asChild>{button}</TooltipTrigger>
+                      <TooltipContent side="right" className="font-medium flex items-center gap-2">
+                        {item.label}
+                        <kbd className="inline-flex h-4 select-none items-center rounded border bg-muted px-1 font-mono text-[10px] font-medium text-muted-foreground">
+                          {item.shortcut}
+                        </kbd>
+                      </TooltipContent>
+                    </Tooltip>
+                  )
+                }
+                return button
+              })}
+            </div>
+          </div>
         </nav>
 
         {/* Quick Stats section */}

@@ -1640,3 +1640,319 @@ Components updated:
 4. Optimize dependency graph performance with WebGL/Canvas for large policy sets
 5. Add customizable dashboard layout (drag-and-drop widget arrangement)
 6. Implement data retention policies and automatic cleanup for old traces
+
+---
+
+## Task 8-a: Create PolicyTemplates Component
+**Date:** 2026-04-21
+**Status:** ✅ Complete
+
+### What was done:
+
+Created a `PolicyTemplates.tsx` component at `src/components/dashboard/PolicyTemplates.tsx` — a Policy Templates Gallery section for browsing, previewing, and importing pre-built policy templates.
+
+### Features implemented:
+
+1. **Section Header** — Uses `section-header-gradient section-header-accent` CSS classes with animated gradient, "Policy Templates" title with `gradient-text-shimmer` class, and BookOpen icon from lucide-react
+
+2. **Template Categories** — Filter tabs/buttons for: All, Security, Data Protection, Compliance, Operations, Custom
+   - Each category has a distinct color (Security=red, Data Protection=cyan, Compliance=amber, Operations=violet, Custom=emerald)
+   - Active category highlighted with emerald background
+   - Template count badge per category (font-mono tabular-nums)
+
+3. **Template Cards Grid** — Responsive grid (1 col mobile, 2 col md, 3 col lg) of template cards with:
+   - Template name with category badge
+   - Description text (line-clamp-2)
+   - Tags row (e.g., "SQL Injection", "Data Exfiltration", "Access Control")
+   - Permission level indicator (ALLOW/BLOCK/REQUIRE_APPROVAL) with colored dot (emerald/red/amber)
+   - Complexity rating (Simple/Moderate/Advanced) with star icons (filled/unfilled)
+   - Agent role badge with role-specific icon and color
+   - Resource and action info
+   - "Preview" and "Import" buttons (Import changes to "Imported" with CheckCircle after successful import)
+   - `glass-card glow-hover card-shine corner-accent` CSS classes
+   - Framer Motion staggered entrance animation (opacity + y with delay per card)
+   - AnimatePresence with popLayout mode for smooth filtering transitions
+
+4. **Template Preview Dialog** — When clicking "Preview":
+   - Full policy configuration display in a Dialog
+   - Condition rules shown as formatted JSON in a pre block
+   - Copy button for condition rules (copies to clipboard with toast)
+   - Agent role assignment display with icon
+   - Resource and action details in bordered boxes
+   - Tags display
+   - Priority value (font-mono tabular-nums)
+   - "Import This Template" button in the dialog footer
+   - "Already Imported" state when template was previously imported
+   - Uses `dialog-fullscreen-mobile` class for mobile
+   - ScrollArea for overflow content
+
+5. **Import Functionality** — When clicking "Import":
+   - POST to `/api/policies` to create the policy from the template
+   - Success toast: `Template "{name}" imported successfully`
+   - Error toast: `Failed to import "{name}"`
+   - Template card updates to show "Imported" status with CheckCircle icon and disabled button
+   - Uses `useMutation` from @tanstack/react-query
+   - Import tracking via `importedIds` Set state (persists during session)
+
+6. **Search Bar** — Filter templates by name, description, or tags with debounced input (300ms)
+   - Search icon on the left
+   - Clear (X) button when query is non-empty
+   - Filters in combination with category filter
+
+7. **Template Statistics Card** — 4-card grid showing:
+   - Total templates available (Layers icon, emerald)
+   - Templates imported count (Download icon, cyan)
+   - Most popular category (TrendingUp icon, amber)
+   - Import success rate (BarChart3 icon, violet) — 100% when imports exist, 0% when none
+   - All counts use `font-mono tabular-nums`
+
+8. **Hardcoded Template Data** — 14 realistic policy templates:
+   - SQL Injection Prevention (Security, BLOCK, DataAgent/PostgreSQL, Advanced)
+   - Data Exfiltration Block (Security, BLOCK, DataAgent/FileSystem, Advanced)
+   - Unauthorized Merge Protection (Security, BLOCK, CodeAgent/GitHub, Moderate)
+   - Financial Transaction Limit (Compliance, REQUIRE_APPROVAL, FinanceAgent/Stripe, Moderate)
+   - Bulk Email Restriction (Operations, REQUIRE_APPROVAL, SupportAgent/EmailAPI, Simple)
+   - File System Read Access (Data Protection, ALLOW, DataAgent/FileSystem, Simple)
+   - GitHub Read Access (Data Protection, ALLOW, CodeAgent/GitHub, Simple)
+   - Stripe Read-Only Access (Data Protection, ALLOW, FinanceAgent/Stripe, Simple)
+   - Production Deploy Gate (Operations, REQUIRE_APPROVAL, CodeAgent/Kubernetes, Advanced)
+   - Sensitive Data Access (Compliance, BLOCK, DataAgent/PostgreSQL, Moderate)
+   - Refund Approval Flow (Compliance, REQUIRE_APPROVAL, FinanceAgent/Stripe, Simple)
+   - Slack Message Moderation (Operations, REQUIRE_APPROVAL, SupportAgent/SlackAPI, Simple)
+   - Container Escalation Block (Security, BLOCK, CodeAgent/Kubernetes, Advanced)
+   - API Rate Limiting (Operations, BLOCK, DataAgent/PostgreSQL, Moderate)
+
+   Each template includes: id, name, description, category, permissionLevel, agentRole, resource, action, conditionRules (JSON object with $and/$or/$contains/$equals/$in/$gt operators), complexity, tags array, priority number, isImported boolean.
+
+9. **Empty State** — BookOpen icon with "No templates found" message when filters return no results
+
+10. **Visual Design:**
+   - Section header with `section-header-gradient section-header-accent` CSS classes
+   - Title with `gradient-text-shimmer` class and BookOpen icon
+   - Cards with `glass-card glow-hover card-shine corner-accent` CSS classes
+   - Category colors: Security=red, Data Protection=cyan, Compliance=amber, Operations=violet, Custom=emerald
+   - Permission level colors: ALLOW=emerald, BLOCK=red, REQUIRE_APPROVAL=amber
+   - Role-specific badge colors and icons (DataAgent=Database/cyan, CodeAgent=Code2/violet, FinanceAgent=DollarSign/amber, SupportAgent=Headphones/rose)
+   - `font-mono tabular-nums` for counts and metrics
+   - `active:scale-[0.98]` for tactile button feedback on all interactive buttons
+   - Responsive design with mobile-first approach
+
+### Technical:
+- `'use client'` directive
+- Imports from `@/components/ui/` (Button, Input, Card, Badge, Dialog, ScrollArea, Separator)
+- Uses `framer-motion` for animations (AnimatePresence, motion.div with layout, staggered entrance)
+- Uses `@tanstack/react-query` `useMutation` for the import API call
+- Uses `lucide-react` for icons (BookOpen, Search, Star, Eye, Download, CheckCircle, ShieldCheck, ShieldX, AlertTriangle, Loader2, Database, Code2, DollarSign, Headphones, Copy, Layers, TrendingUp, BarChart3, X)
+- Uses `sonner` for toast notifications
+- Debounced search with useRef for timeout cleanup
+- Import state tracked via Set<string> (importedIds)
+- useMemo for filtered templates, category counts, and statistics
+
+### Files created:
+- `src/components/dashboard/PolicyTemplates.tsx` (945 lines) — Policy templates gallery component
+
+### Verification:
+- `bun run lint` passes with 0 errors
+- Component is self-contained and ready for integration into the dashboard layout
+
+## Task 8-b: Create ThreatIntelFeed Component
+**Date:** 2026-04-21
+**Status:** ✅ Complete
+
+### What was done:
+
+Created a ThreatIntelFeed component at `src/components/dashboard/ThreatIntelFeed.tsx` that provides a comprehensive Threat Intelligence section for the dashboard, with simulated real-time threat detection and policy protection analysis.
+
+### Features implemented:
+
+1. **Section Header** — Uses `section-header-gradient section-header-accent` CSS classes with animated gradient, "Threat Intelligence" title with `gradient-text-shimmer` class, and ShieldAlert icon from lucide-react
+
+2. **Threat Level Banner** — Top-level threat assessment card:
+   - Overall threat level computed dynamically: Low (green), Moderate (amber), High (red), Critical (pulsing red)
+   - Large animated threat level indicator with color-coded circular icon (pulsing ShieldAlert for Critical)
+   - Threat score (0-100) with SVG gauge chart (arc with tick marks at 25/50/75/100)
+   - "Last updated: X minutes ago" timestamp with auto-refresh
+   - Active threats count and blocked attempts count in metric boxes
+
+3. **Live Threat Feed** — Terminal/console-style feed similar to LiveStream:
+   - Dark background (`bg-gray-950`) with monospace green text
+   - Each threat event shows: [TIMESTAMP] Threat Type | Source → Target | Severity Badge | Status Badge
+   - Severity badges: Critical (red), High (orange), Medium (amber), Low (green)
+   - Status: Blocked (emerald), Monitored (amber), Investigating (red)
+   - Auto-scrolling with new threat events appearing every 3-5 seconds (simulated via useEffect + setInterval)
+   - Pause/Resume button with tactile feedback
+   - Clear button
+   - Framer Motion slide-in animation for new events
+   - Filter by severity and status using Select dropdowns
+   - Feed header with Terminal icon, event count, and live indicator
+
+4. **Threat Map Visualization** — SVG-based visualization:
+   - Grid of agent roles (left) as source nodes and target tools (right) as target nodes
+   - Connecting bezier curves showing threat sources → targets
+   - Line color based on highest severity (red=Critical, orange=High, amber=Medium, green=Low)
+   - Line thickness based on threat count frequency
+   - Animated dots traveling along active High/Critical connections
+   - Click a connection to see detail panel with severity breakdown
+   - AnimatePresence for smooth detail panel open/close
+
+5. **Threat Statistics Panel** — 4 stat cards in a responsive row (2 cols mobile, 4 cols desktop):
+   - Total Threats Detected (Activity icon, red, +12% trend)
+   - Blocked Attempts (ShieldCheck icon, emerald, +8% trend)
+   - Active Investigations (Search icon, amber, dynamic trend)
+   - Avg Response Time (Clock icon, cyan, -3% trend)
+   - Each with trend indicator (TrendingUp/TrendingDown arrow with percentage)
+
+6. **Top Threat Sources Table** — Table showing:
+   - Agent Role (color-coded by source)
+   - Tool Name
+   - Threat Count (font-mono tabular-nums)
+   - Last Threat Time (relative, font-mono tabular-nums)
+   - Risk Level (with colored badge, hover:scale-105)
+   - Most Common Attack Type
+   - `table-row-hover` CSS class for rows
+
+7. **Policy Protection Coverage** — Grid of 10 threat categories:
+   - SQL Injection, Data Exfiltration, Unauthorized Access, Privilege Escalation, DDoS Attempt, Brute Force, XSS Attack, CSRF Attack, Token Theft, Container Escape
+   - Each with: category-specific icon, protection status (Fully Protected=emerald, Partially Protected=amber, Not Protected=red)
+   - Active policy count
+   - Total threats count for that category
+   - "Add Policy" button for unprotected/partially protected categories
+
+8. **Severity Distribution** — Bar chart showing threat distribution:
+   - Critical, High, Medium, Low bars with animated width (Framer Motion)
+   - Percentage and count display
+
+9. **Simulated Threat Data** — Realistic mock data generation:
+   - Threat types: SQL Injection, Data Exfiltration, Unauthorized Access, Privilege Escalation, DDoS Attempt, Brute Force, XSS Attack, CSRF Attack, Token Theft, Container Escape
+   - Sources: DataAgent, CodeAgent, FinanceAgent, SupportAgent
+   - Targets: PostgreSQL, GitHub, Stripe, EmailAPI, FileSystem, Kubernetes, SlackAPI
+   - Simulate new threats every 3-5 seconds using useEffect + setInterval
+   - Initial 35 events generated with timestamps in the past 24 hours
+   - Severity-weighted random generation (Low=38%, Medium=34%, High=20%, Critical=8%)
+   - Status correlated with severity (High/Critical more likely Blocked/Investigating)
+
+### Technical details:
+- `'use client'` directive
+- Import from `@/components/ui/` (Button, Card, CardContent, CardHeader, CardTitle, Badge, ScrollArea, Separator, Input, Select, Table components)
+- Uses `framer-motion` for animations (motion.div, AnimatePresence)
+- Uses `lucide-react` for icons (ShieldAlert, Activity, ShieldCheck, Search, Clock, AlertTriangle, ShieldX, Zap, Eye, Bug, Lock, Unlock, Terminal, Pause, Play, Trash2, Filter, TrendingUp, TrendingDown, Plus, Shield, ChevronRight)
+- Responsive design with mobile-first approach (2-col mobile grids, flex-wrap controls)
+- `font-mono tabular-nums` for numbers and timestamps
+- `active:scale-[0.98]` for tactile button feedback
+- `glass-card glow-hover` classes on all cards
+- `gauge-glow` CSS class on SVG gauge chart
+- Component is self-contained — no API calls, all data is simulated
+
+### Files created:
+- `src/components/dashboard/ThreatIntelFeed.tsx` (1079 lines)
+
+### Verification:
+- `bun run lint` passes with 0 errors
+- Component is self-contained and ready for integration into the dashboard layout
+
+---
+
+## Cron Review Round 8: New Sections, Enhanced Styling, Sidebar Improvements
+
+**Date:** 2026-04-21
+**Status:** ✅ Complete
+
+### Current Project Status Assessment
+The AgentShield Policy Engine Dashboard is now a comprehensive 17-section single-page application with full-stack functionality. All API endpoints work correctly (200 status), lint passes with 0 errors. The sandbox memory constraint persists (dev server + Chrome = OOM), but the application is stable when accessed via curl alone.
+
+### QA Testing Performed
+- API testing via curl: stats (200), policies (200), traces (200), approvals (200), page load (200)
+- `bun run lint` passes with 0 errors
+- Agent-browser tested: Dashboard, Policies, Rate Analytics, Dep. Graph, Compliance sections confirmed rendering
+- Dark mode toggle confirmed working
+- 17 sections visible in sidebar navigation
+- WebSocket service tested on port 3003
+
+### New Feature: Policy Templates Gallery Section
+
+#### PolicyTemplates Component (`PolicyTemplates.tsx`, ~945 lines)
+Full dashboard section for browsing, previewing, and importing pre-built policy templates:
+
+1. **Section Header** — `section-header-gradient section-header-accent` with animated gradient, "Policy Templates" title with `gradient-text-shimmer`, BookOpen icon
+2. **Template Categories** — 6 filter tabs (All, Security, Data Protection, Compliance, Operations, Custom) with distinct colors, emerald active highlight, count badges per category
+3. **Template Cards Grid** — Responsive 1/2/3 col grid with category badge, description, tags, permission dot indicator, star complexity rating, agent role badge, resource/action info, `glass-card glow-hover card-shine corner-accent` CSS classes, Framer Motion staggered entrance animation
+4. **Template Preview Dialog** — Full policy config display with formatted JSON condition rules, copy button, "Import This Template" button, `dialog-fullscreen-mobile`
+5. **Import Functionality** — POST to `/api/policies` via `useMutation`, success/error toasts, card updates to "Imported" with CheckCircle icon
+6. **Search Bar** — Debounced (300ms) input filtering by name, description, or tags, with clear button
+7. **Template Statistics Card** — 4-card grid: Total templates, Imported count, Most popular category, Success rate
+8. **14 Hardcoded Templates** — SQL Injection Prevention, Data Exfiltration Block, Unauthorized Merge Protection, Financial Transaction Limit, Bulk Email Restriction, File System Read Access, GitHub Read Access, Stripe Read-Only Access, Production Deploy Gate, Sensitive Data Access, Refund Approval Flow, Slack Message Moderation, Container Escalation Block, API Rate Limiting
+
+### New Feature: Threat Intelligence Feed Section
+
+#### ThreatIntelFeed Component (`ThreatIntelFeed.tsx`, ~1079 lines)
+Full dashboard section with simulated threat feed and real-time threat detection:
+
+1. **Section Header** — `section-header-gradient section-header-accent` with `gradient-text-shimmer` title and ShieldAlert icon
+2. **Threat Level Banner** — Dynamic threat level (Low/Moderate/High/Critical) with color-coded indicator, SVG gauge chart (0-100 score), "last updated" timestamp, active threats & blocked attempts counts
+3. **Live Threat Feed** — Terminal-style (`bg-gray-950`) with monospace text, `[TIMESTAMP] ThreatType | Source → Target | Severity Badge | Status Badge`, auto-scrolling, 3-5s simulated events, Pause/Resume + Clear buttons, Framer Motion slide-in animations, severity & status filters
+4. **Threat Map Visualization** — SVG with source nodes (agents) on left, target nodes (tools) on right, bezier curve connections colored by severity, animated dots on active threats, click-to-detail panel
+5. **Threat Statistics Panel** — 4 stat cards: Total Threats, Blocked Attempts, Active Investigations, Avg Response Time — each with trend indicators
+6. **Top Threat Sources Table** — Agent Role, Tool Name, Threat Count, Last Threat Time, Risk Level badge, Most Common Attack — with `table-row-hover` class
+7. **Policy Protection Coverage** — 10 threat categories showing protection status (Fully/Partially/Not Protected), policy count, threat count, "Add Policy" button for unprotected categories
+8. **Simulated Threat Data** — 10 threat types, 4 sources, 7 targets, severity-weighted generation, auto-generation every 3-5 seconds
+
+### Styling Improvements
+
+#### 1. Global CSS Enhancements (`globals.css`, Round 8 additions)
+- `.threat-bg-critical/high/moderate/low` — Gradient backgrounds for severity indicators (light/dark variants)
+- `.critical-pulse` — Intense red pulse animation for critical severity items
+- `.data-flow-line` — Animated dashed stroke for SVG connection lines
+- `.template-card-hover` — Enhanced card hover with translateY(-3px) elevation and deeper shadow
+- `.category-pill` — Category filter button with animated gradient underline on hover/active
+- `.stat-accent-top` — Card with top accent bar that appears on hover (gradient #10b981 → #14b8a6 → #06b6d4)
+- `.terminal-cursor` — Blinking cursor animation for terminal-style feeds
+- `.scan-line` — Moving horizontal line effect for threat monitor backgrounds
+- `.tag-chip` — Styled tag/pill with hover state transitioning to emerald colors
+- `.complexity-star-filled/empty` — Star rating with scale animation on hover
+- 4 new `@keyframes`: criticalPulse, dataFlow, cursorBlink, scanLine
+
+#### 2. Sidebar Enhancement — Section Grouping
+- Navigation items now grouped into 4 categories with labels:
+  - **Core** (Dashboard, Policies, Approvals, Traces, Reasoning)
+  - **Monitoring** (Live Stream, Agents, Simulator)
+  - **Analysis** (Rate Analytics, Policy Diff, Dep. Graph, Compliance, Templates, Threat Intel)
+  - **System** (Audit Logs, Webhooks, SDK & Docs)
+- Each group has a subtle `border-t border-border/50` separator
+- Group labels: `text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60`
+- Labels hidden when sidebar is collapsed
+- Improves navigation discoverability and visual hierarchy
+
+### Navigation Updates
+- Added `templates` SectionId (shortcut: 'T', icon: BookOpen, label: "Templates")
+- Added `threatintel` SectionId (shortcut: 'X', icon: ShieldAlert, label: "Threat Intel")
+- Dashboard now has 17 sections total
+
+### Files Created
+- `/src/components/dashboard/PolicyTemplates.tsx` (~945 lines) — Policy template gallery section
+- `/src/components/dashboard/ThreatIntelFeed.tsx` (~1079 lines) — Threat intelligence feed section
+
+### Files Modified
+- `/src/app/globals.css` — Added 14 new CSS classes, 4 new keyframe animations (Round 8)
+- `/src/lib/store.ts` — Added `templates` and `threatintel` to SectionId and sectionLabels
+- `/src/components/dashboard/DashboardLayout.tsx` — Integrated both new components, icons, section keys, imports
+- `/src/components/dashboard/Sidebar.tsx` — Added BookOpen/ShieldAlert icons, Templates/Threat Intel nav items, section grouping with dividers and labels
+
+### Verification
+- `bun run lint` passes with 0 errors
+- API endpoints tested: stats (200), policies (200), traces (200), approvals (200), page load (200)
+- Dev server compiles and serves all routes
+- 17 sections accessible via sidebar navigation
+- WebSocket service on port 3003 functional
+
+### Known Issues / Risks
+1. **Server stability**: Dev server crashes after rendering complex pages due to sandbox memory constraints. Individual API requests work fine. Known issue across all cron rounds. Avoid using agent-browser alongside the dev server.
+2. **WebSocket service**: Must be manually started with `cd mini-services/approval-ws && bun --hot index.ts`
+3. **Force-directed graph**: Initial layout may need 1-2 seconds to settle. Performance may degrade with >100 policies.
+
+### Priority Recommendations for Next Phase
+1. Add user authentication and role-based access control
+2. Implement real WebSocket event broadcasting from evaluate API
+3. Add PDF export for compliance reports (currently HTML only)
+4. Optimize dependency graph performance with WebGL/Canvas for large policy sets
+5. Add customizable dashboard layout (drag-and-drop widget arrangement)
+6. Implement data retention policies and automatic cleanup for old traces
