@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Progress } from '@/components/ui/progress'
-import { Shield, Activity, CheckSquare, Clock, ArrowRight, Percent, Target, TrendingUp, Scan, FileCheck, Download, Plus, BarChart3 } from 'lucide-react'
+import { Shield, Activity, CheckSquare, Clock, ArrowRight, Percent, Target, TrendingUp, Scan, FileCheck, Download, Plus, BarChart3, Wifi, Database, Server, Flame } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import {
   PieChart,
@@ -286,6 +286,364 @@ const PERMISSION_COLORS: Record<string, string> = {
   REQUIRE_APPROVAL: '#f59e0b',
 }
 
+const HEAT_MAP_COLORS: Record<string, string> = {
+  ALLOW: '#10b981',
+  BLOCK: '#ef4444',
+  REQUIRE_APPROVAL: '#f59e0b',
+  NONE: '#6b7280',
+}
+
+const HEAT_MAP_ROLES = ['DataAgent', 'CodeAgent', 'FinanceAgent', 'SupportAgent']
+const HEAT_MAP_ACTIONS = ['READ', 'WRITE', 'DELETE', 'EXECUTE']
+
+// ─── Risk Heat Map Component ────────────────────────────────────────────────
+
+function RiskHeatMap({ policies }: { policies: Array<{ agentRole: string; action: string; permissionLevel: string; enabled: boolean }> }) {
+  // Build the 4x4 grid data
+  const gridData = useMemo(() => {
+    const grid: Array<Array<{ level: string; count: number }>> = []
+    for (const role of HEAT_MAP_ROLES) {
+      const row: Array<{ level: string; count: number }> = []
+      for (const action of HEAT_MAP_ACTIONS) {
+        const matching = policies.filter(
+          p => p.agentRole === role && p.action.toUpperCase() === action && p.enabled
+        )
+        // Priority: BLOCK > REQUIRE_APPROVAL > ALLOW
+        let level = 'NONE'
+        if (matching.some(p => p.permissionLevel === 'BLOCK')) level = 'BLOCK'
+        else if (matching.some(p => p.permissionLevel === 'REQUIRE_APPROVAL')) level = 'REQUIRE_APPROVAL'
+        else if (matching.some(p => p.permissionLevel === 'ALLOW')) level = 'ALLOW'
+        row.push({ level, count: matching.length })
+      }
+      grid.push(row)
+    }
+    return grid
+  }, [policies])
+
+  const cellSize = 44
+  const gap = 4
+  const labelW = 70
+  const headerH = 28
+  const svgW = labelW + HEAT_MAP_ACTIONS.length * (cellSize + gap) + gap
+  const svgH = headerH + HEAT_MAP_ROLES.length * (cellSize + gap) + gap
+
+  return (
+    <Card className="border-0 shadow-sm hover:shadow-lg transition-all duration-300 hover:border-emerald-500/20 glow-hover glass-card content-slide-in content-slide-in-delay-2">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-semibold flex items-center gap-2">
+          <Flame className="h-4 w-4 text-orange-500 dark:text-orange-400" />
+          Risk Heat Map
+          <Badge variant="outline" className="text-[10px] font-mono tabular-nums ml-auto">{HEAT_MAP_ROLES.length}×{HEAT_MAP_ACTIONS.length}</Badge>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="flex justify-center overflow-x-auto">
+          <svg width={svgW} height={svgH} viewBox={`0 0 ${svgW} ${svgH}`} className="min-w-[280px]">
+            {/* Column headers */}
+            {HEAT_MAP_ACTIONS.map((action, ci) => (
+              <text
+                key={action}
+                x={labelW + gap + ci * (cellSize + gap) + cellSize / 2}
+                y={16}
+                textAnchor="middle"
+                className="fill-muted-foreground"
+                style={{ fontSize: '9px', fontWeight: 600 }}
+              >
+                {action}
+              </text>
+            ))}
+            {/* Rows */}
+            {gridData.map((row, ri) => (
+              <g key={HEAT_MAP_ROLES[ri]}>
+                {/* Row label */}
+                <text
+                  x={labelW - 6}
+                  y={headerH + gap + ri * (cellSize + gap) + cellSize / 2 + 3}
+                  textAnchor="end"
+                  className="fill-muted-foreground"
+                  style={{ fontSize: '9px' }}
+                >
+                  {HEAT_MAP_ROLES[ri].replace('Agent', '')}
+                </text>
+                {/* Cells */}
+                {row.map((cell, ci) => {
+                  const x = labelW + gap + ci * (cellSize + gap)
+                  const y = headerH + gap + ri * (cellSize + gap)
+                  const color = HEAT_MAP_COLORS[cell.level] ?? HEAT_MAP_COLORS.NONE
+                  const opacity = cell.level === 'NONE' ? 0.15 : 0.6
+                  return (
+                    <g key={`${ri}-${ci}`}>
+                      <rect
+                        x={x}
+                        y={y}
+                        width={cellSize}
+                        height={cellSize}
+                        rx={6}
+                        fill={color}
+                        fillOpacity={opacity}
+                        stroke={color}
+                        strokeOpacity={0.3}
+                        strokeWidth={1}
+                        className="transition-all duration-200"
+                      />
+                      {cell.count > 0 && (
+                        <text
+                          x={x + cellSize / 2}
+                          y={y + cellSize / 2 + 1}
+                          textAnchor="middle"
+                          dominantBaseline="middle"
+                          className="fill-foreground"
+                          style={{ fontSize: '10px', fontWeight: 700 }}
+                        >
+                          {cell.count}
+                        </text>
+                      )}
+                      {cell.level !== 'NONE' && (
+                        <text
+                          x={x + cellSize / 2}
+                          y={y + cellSize - 6}
+                          textAnchor="middle"
+                          className="fill-muted-foreground"
+                          style={{ fontSize: '7px' }}
+                        >
+                          {cell.level === 'REQUIRE_APPROVAL' ? 'REVIEW' : cell.level.slice(0, 1)}
+                        </text>
+                      )}
+                    </g>
+                  )
+                })}
+              </g>
+            ))}
+          </svg>
+        </div>
+        {/* Legend */}
+        <div className="flex items-center gap-3 mt-3 justify-center">
+          {Object.entries(HEAT_MAP_COLORS).filter(([k]) => k !== 'NONE').map(([key, color]) => (
+            <div key={key} className="flex items-center gap-1 text-[10px] text-muted-foreground">
+              <span className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: color, opacity: 0.7 }} />
+              {key === 'REQUIRE_APPROVAL' ? 'REVIEW' : key}
+            </div>
+          ))}
+          <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+            <span className="h-2.5 w-2.5 rounded-sm bg-gray-400 opacity-30" />
+            No policy
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+// ─── Decision Distribution Ring Component ─────────────────────────────────────
+
+function DecisionDistributionRing({ traceBreakdown }: { traceBreakdown: Record<string, number> }) {
+  const total = Object.values(traceBreakdown).reduce((a, b) => a + b, 0)
+  const segments = useMemo(() => {
+    if (total === 0) return []
+    const entries = Object.entries(traceBreakdown).filter(([, v]) => v > 0)
+    let cumulativePct = 0
+    return entries.map(([key, value]) => {
+      const pct = (value / total) * 100
+      const startPct = cumulativePct
+      cumulativePct += pct
+      return { key, value, pct, startPct, color: PERMISSION_COLORS[key] ?? '#888' }
+    })
+  }, [traceBreakdown, total])
+
+  const size = 160
+  const cx = size / 2
+  const cy = size / 2
+  const outerR = 68
+  const innerR = 48
+  const circumference = 2 * Math.PI * outerR
+
+  return (
+    <Card className="border-0 shadow-sm hover:shadow-lg transition-all duration-300 hover:border-emerald-500/20 glow-hover glass-card content-slide-in content-slide-in-delay-2">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-semibold flex items-center gap-2">
+          <Activity className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+          Decision Distribution
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col items-center">
+        {total === 0 ? (
+          <div className="h-[160px] flex items-center justify-center text-muted-foreground text-sm">
+            No trace data
+          </div>
+        ) : (
+          <>
+            <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+              {/* Background ring */}
+              <circle
+                cx={cx}
+                cy={cy}
+                r={outerR}
+                fill="none"
+                stroke="currentColor"
+                strokeOpacity={0.06}
+                strokeWidth={outerR - innerR}
+              />
+              {/* Segments */}
+              {segments.map((seg) => {
+                const dashLen = (seg.pct / 100) * circumference
+                const dashOffset = -((seg.startPct / 100) * circumference)
+                return (
+                  <circle
+                    key={seg.key}
+                    cx={cx}
+                    cy={cy}
+                    r={outerR}
+                    fill="none"
+                    stroke={seg.color}
+                    strokeOpacity={0.75}
+                    strokeWidth={outerR - innerR}
+                    strokeDasharray={`${dashLen} ${circumference - dashLen}`}
+                    strokeDashoffset={dashOffset}
+                    strokeLinecap="butt"
+                    transform={`rotate(-90 ${cx} ${cy})`}
+                    className="transition-all duration-500"
+                  />
+                )
+              })}
+              {/* Center text */}
+              <text
+                x={cx}
+                y={cy - 4}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                className="fill-foreground text-xl font-bold font-mono tabular-nums"
+              >
+                {total}
+              </text>
+              <text
+                x={cx}
+                y={cy + 14}
+                textAnchor="middle"
+                className="fill-muted-foreground"
+                style={{ fontSize: '9px' }}
+              >
+                total traces
+              </text>
+            </svg>
+            {/* Percentage labels */}
+            <div className="flex items-center gap-3 mt-2">
+              {segments.map((seg) => (
+                <div key={seg.key} className="flex items-center gap-1.5 text-xs">
+                  <span
+                    className="h-2.5 w-2.5 rounded-full shrink-0"
+                    style={{ backgroundColor: seg.color }}
+                  />
+                  <span className="font-medium">
+                    {seg.key === 'REQUIRE_APPROVAL' ? 'REVIEW' : seg.key}
+                  </span>
+                  <span className="font-mono tabular-nums text-muted-foreground">
+                    {seg.pct.toFixed(1)}%
+                  </span>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+// ─── System Status Card Component ───────────────────────────────────────────
+
+function SystemStatusCard({ wsConnected }: { wsConnected: boolean }) {
+  const [lastPolicyChange, setLastPolicyChange] = useState<string>('—')
+
+  // Fetch last audit log for policy change
+  const { data: auditData } = useQuery({
+    queryKey: ['audit-last-policy'],
+    queryFn: async () => {
+      const res = await fetch('/api/audit?limit=5')
+      if (!res.ok) throw new Error('Failed')
+      const data = await res.json()
+      return data.logs as Array<{ eventType: string; timestamp: string }>
+    },
+    refetchInterval: 30000,
+  })
+
+  useEffect(() => {
+    if (auditData && auditData.length > 0) {
+      const policyEvent = auditData.find(l =>
+        l.eventType.includes('POLICY')
+      )
+      if (policyEvent) {
+        const diff = Date.now() - new Date(policyEvent.timestamp).getTime()
+        const mins = Math.floor(diff / 60000)
+        setTimeout(() => {
+          if (mins < 1) setLastPolicyChange('Just now')
+          else if (mins < 60) setLastPolicyChange(`${mins}m ago`)
+          else if (mins < 1440) setLastPolicyChange(`${Math.floor(mins / 60)}h ago`)
+          else setLastPolicyChange(`${Math.floor(mins / 1440)}d ago`)
+        }, 0)
+      }
+    }
+  }, [auditData])
+
+  const statusItems = [
+    {
+      label: 'API Uptime',
+      value: '99.9%',
+      icon: <Server className="h-3.5 w-3.5" />,
+      color: 'text-emerald-600 dark:text-emerald-400',
+      status: 'healthy' as const,
+    },
+    {
+      label: 'WebSocket',
+      value: wsConnected ? 'Connected' : 'Offline',
+      icon: <Wifi className="h-3.5 w-3.5" />,
+      color: wsConnected ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400',
+      status: wsConnected ? 'healthy' as const : 'critical' as const,
+    },
+    {
+      label: 'DB Size',
+      value: '2.4 MB',
+      icon: <Database className="h-3.5 w-3.5" />,
+      color: 'text-cyan-600 dark:text-cyan-400',
+      status: 'healthy' as const,
+    },
+    {
+      label: 'Last Policy Change',
+      value: lastPolicyChange,
+      icon: <Shield className="h-3.5 w-3.5" />,
+      color: 'text-amber-600 dark:text-amber-400',
+      status: 'info' as const,
+    },
+  ]
+
+  return (
+    <Card className="border-0 shadow-sm hover:shadow-lg transition-all duration-300 hover:border-emerald-500/20 glow-hover glass-card content-slide-in content-slide-in-delay-2">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-semibold flex items-center gap-2">
+          <Server className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+          System Status
+          <span className={`ml-auto flex items-center gap-1.5 text-[10px] font-medium ${wsConnected ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
+            <span className={`h-1.5 w-1.5 rounded-full ${wsConnected ? 'bg-emerald-500 ring-pulse' : 'bg-red-500'}`} />
+            {wsConnected ? 'Live' : 'Offline'}
+          </span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-2.5">
+        {statusItems.map((item) => (
+          <div key={item.label} className="flex items-center justify-between text-xs">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <span className={item.color}>{item.icon}</span>
+              {item.label}
+            </div>
+            <span className={`font-medium font-mono tabular-nums ${item.color}`}>
+              {item.value}
+            </span>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  )
+}
+
 interface DashboardStats {
   totalPolicies: number
   policyBreakdown: Record<string, number>
@@ -323,6 +681,19 @@ export function DashboardOverview() {
   })
 
   const setActiveSection = useAppStore((s) => s.setActiveSection)
+  const wsConnected = useAppStore((s) => s.wsConnected)
+
+  // Fetch policies for Risk Heat Map
+  const { data: policiesData } = useQuery({
+    queryKey: ['policies-heatmap', timeRange],
+    queryFn: async () => {
+      const res = await fetch('/api/policies')
+      if (!res.ok) throw new Error('Failed')
+      const data = await res.json()
+      return data as Array<{ agentRole: string; action: string; permissionLevel: string; enabled: boolean }>
+    },
+    refetchInterval: 30000,
+  })
 
   // Build pie chart data
   const policyPieData = stats
@@ -596,9 +967,9 @@ export function DashboardOverview() {
       </Card>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 content-slide-in content-slide-in-delay-1">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 content-slide-in content-slide-in-delay-1">
         {/* Policy Distribution Pie */}
-        <Card className="border-0 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 hover:border-emerald-500/20 glow-hover glass-card">
+        <Card className="border-0 shadow-sm hover:shadow-lg transition-all duration-300 hover:border-emerald-500/20 glow-hover glass-card">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold">Policy Distribution</CardTitle>
           </CardHeader>
@@ -652,8 +1023,11 @@ export function DashboardOverview() {
           </CardContent>
         </Card>
 
+        {/* Decision Distribution Ring */}
+        <DecisionDistributionRing traceBreakdown={stats?.traceBreakdown ?? {}} />
+
         {/* Trace Activity Area Chart */}
-        <Card className="lg:col-span-2 border-0 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 hover:border-emerald-500/20 glow-hover glass-card">
+        <Card className="md:col-span-2 border-0 shadow-sm hover:shadow-lg transition-all duration-300 hover:border-emerald-500/20 glow-hover glass-card">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />

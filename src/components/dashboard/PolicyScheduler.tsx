@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -52,6 +52,69 @@ import { useQuery } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import { formatDistanceToNow } from 'date-fns'
+
+// ─── Persisted State Hook ────────────────────────────────────────────────────
+
+const STORAGE_PREFIX = 'agentshield:'
+
+/**
+ * A useState-like hook that persists state to localStorage.
+ * Falls back to regular in-memory state when localStorage is unavailable.
+ * Handles hydration by reading from localStorage after mount to avoid SSR mismatches.
+ */
+function usePersistedState<T>(
+  key: string,
+  initialValue: T,
+  options?: {
+    serialize?: (value: T) => string
+    deserialize?: (raw: string) => T
+  }
+): [T, React.Dispatch<React.SetStateAction<T>>] {
+  const prefixedKey = `${STORAGE_PREFIX}${key}`
+  const [hasHydrated, setHasHydrated] = useState(false)
+  const [storedValue, setStoredValue] = useState<T>(initialValue)
+
+  // Use refs for serializers so they don't trigger effect re-runs
+  const serializeRef = useRef(options?.serialize)
+  const deserializeRef = useRef(options?.deserialize)
+  // Sync refs in effect to satisfy react-hooks/refs lint rule
+  useEffect(() => {
+    serializeRef.current = options?.serialize
+    deserializeRef.current = options?.deserialize
+  })
+
+  // Hydrate from localStorage after mount to avoid SSR hydration mismatch
+  useEffect(() => {
+    try {
+      const item = window.localStorage.getItem(prefixedKey)
+      if (item !== null) {
+        const parsed = deserializeRef.current
+          ? deserializeRef.current(item)
+          : (JSON.parse(item) as T)
+        // Defer setState to avoid synchronous setState-in-effect lint error
+        setTimeout(() => setStoredValue(parsed), 0)
+      }
+    } catch {
+      // localStorage unavailable or data corrupt – fall back to initial value
+    }
+    setTimeout(() => setHasHydrated(true), 0)
+  }, [prefixedKey])
+
+  // Persist to localStorage on state changes (skip initial hydration write)
+  useEffect(() => {
+    if (!hasHydrated) return
+    try {
+      const serialized = serializeRef.current
+        ? serializeRef.current(storedValue)
+        : JSON.stringify(storedValue)
+      window.localStorage.setItem(prefixedKey, serialized)
+    } catch {
+      // localStorage unavailable – state update proceeds without persistence
+    }
+  }, [prefixedKey, storedValue, hasHydrated])
+
+  return [storedValue, setStoredValue]
+}
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -633,7 +696,25 @@ function ScheduleStats({ schedules }: { schedules: ScheduledItem[] }) {
 
 export function PolicyScheduler() {
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [schedules, setSchedules] = useState<ScheduledItem[]>([])
+
+  // Persisted schedules – survive page refreshes via localStorage
+  const [schedules, setSchedules] = usePersistedState<ScheduledItem[]>(
+    'policy-scheduler:schedules',
+    [],
+    {
+      // JSON.stringify converts Date objects to ISO strings automatically
+      serialize: (items) => JSON.stringify(items),
+      deserialize: (raw) => {
+        const parsed = JSON.parse(raw) as Array<
+          Omit<ScheduledItem, 'scheduledTime'> & { scheduledTime: string }
+        >
+        return parsed.map((item) => ({
+          ...item,
+          scheduledTime: new Date(item.scheduledTime),
+        }))
+      },
+    }
+  )
 
   // Fetch policies from API
   const { data: policies = [] } = useQuery<Policy[]>({
@@ -667,13 +748,13 @@ export function PolicyScheduler() {
       setSchedules((prev) => [...prev, newItem])
       toast.success(`Schedule created: ${item.action} "${item.policyName}"`)
     },
-    []
+    [setSchedules]
   )
 
   const handleDeleteSchedule = useCallback((id: string) => {
     setSchedules((prev) => prev.filter((s) => s.id !== id))
     toast.success('Schedule deleted')
-  }, [])
+  }, [setSchedules])
 
   const handleQuickSchedule = useCallback(
     (preset: QuickSchedulePreset) => {
@@ -718,7 +799,7 @@ export function PolicyScheduler() {
       setSchedules((prev) => [...prev, ...newSchedules])
       toast.success(`${preset.label}: ${newSchedules.length} schedules created`)
     },
-    [policies]
+    [policies, setSchedules]
   )
 
   return (
@@ -745,10 +826,10 @@ export function PolicyScheduler() {
         </div>
       </div>
 
-      {/* Ephemeral State Warning */}
+      {/* Persistence Notice */}
       <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-300 text-xs">
         <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-        <span>Schedules are stored in browser memory and will be lost on page refresh. Persistent scheduling is coming in a future release.</span>
+        <span>Schedules are persisted to browser storage and survive page refreshes, but are not synced to the server. Clearing browser data will remove them.</span>
       </div>
 
       {/* Schedule Statistics */}

@@ -430,9 +430,80 @@ export function DataExportManager() {
   const handleImport = useCallback(async () => {
     if (!importFile) return
     setShowImportConfirm(false)
-    toast.info('Import is not yet implemented. Data import API is coming in a future release.')
-    setImportFile(null)
-    setImportPreview(null)
+    setIsImporting(true)
+    setImportProgress(0)
+
+    try {
+      const fileText = await importFile.text()
+      let parsed: unknown
+      try {
+        parsed = JSON.parse(fileText)
+      } catch {
+        toast.error('Invalid JSON file. Please upload a valid .json file.')
+        setIsImporting(false)
+        return
+      }
+
+      // Determine import type and data from the file structure
+      let importType: 'policies' | 'webhooks' | 'full' = 'policies'
+      let importData = parsed
+
+      if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+        const obj = parsed as Record<string, unknown>
+        if (obj._meta && (obj as Record<string, unknown>)._meta?.type === 'agentshield-full-backup') {
+          importType = 'full'
+        } else if (obj.policies || obj.webhooks) {
+          importType = 'full'
+        } else if (Array.isArray(obj.data)) {
+          importData = obj.data
+        }
+      }
+
+      setImportProgress(30)
+
+      const res = await fetch('/api/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: importType,
+          data: importData,
+          mode: 'merge',
+          validateOnly: false,
+        }),
+      })
+
+      setImportProgress(80)
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ error: 'Import failed' }))
+        toast.error(errorData.error || 'Import failed')
+        return
+      }
+
+      const result = await res.json()
+      const totalImported = Object.values(result.results as Record<string, { imported: number; skipped: number; errors: string[] }>).reduce((sum, r) => sum + r.imported, 0)
+      const totalSkipped = Object.values(result.results as Record<string, { imported: number; skipped: number; errors: string[] }>).reduce((sum, r) => sum + r.skipped, 0)
+      const totalErrors = Object.values(result.results as Record<string, { imported: number; skipped: number; errors: string[] }>).reduce((sum, r) => sum + r.errors.length, 0)
+
+      setImportProgress(100)
+
+      if (totalErrors > 0) {
+        toast.warning(`Imported ${totalImported} records, skipped ${totalSkipped}, with ${totalErrors} errors`)
+      } else if (totalSkipped > 0) {
+        toast.success(`Imported ${totalImported} records, skipped ${totalSkipped} duplicates`)
+      } else {
+        toast.success(`Successfully imported ${totalImported} records`)
+      }
+    } catch {
+      toast.error('Import failed. Please check the file format and try again.')
+    } finally {
+      setTimeout(() => {
+        setIsImporting(false)
+        setImportProgress(0)
+      }, 500)
+      setImportFile(null)
+      setImportPreview(null)
+    }
   }, [importFile])
 
   // Backup handlers
@@ -648,9 +719,6 @@ export function DataExportManager() {
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
               <Upload className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
               Import Data
-              <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30">
-                Coming Soon
-              </Badge>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
