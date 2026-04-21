@@ -1,0 +1,43 @@
+{
+  "name": "agentshield",
+  "version": "1.0.0",
+  "description": "AgentShield SDK - Deterministic runtime policy governance for AI agents. Evaluate tool calls, enforce zero-trust policies, and govern autonomous AI agent behavior.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "module": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "tsc --noEmit"
+  },
+  "keywords": [
+    "agentshield",
+    "ai",
+    "agent",
+    "policy",
+    "governance",
+    "zero-trust",
+    "langchain",
+    "crewai",
+    "autogen",
+    "openai",
+    "safety",
+    "guardrails",
+    "tool-call",
+    "evaluation"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/agentshield/agentshield"
+  },
+  "homepage": "https://github.com/agentshield/agentshield#readme",
+  "devDependencies": {
+    "typescript": "^5",
+    "vitest": "^4.1.4"
+  },
+  "peerDependencies": {},
+  "dependencies": {}
+}

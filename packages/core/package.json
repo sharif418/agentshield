@@ -1,0 +1,20 @@
+{
+  "name": "@agentshield/core",
+  "version": "1.0.0",
+  "description": "Core policy evaluation engine for AgentShield - deterministic runtime policy governance for AI agents",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "tsc --noEmit"
+  },
+  "keywords": ["agentshield", "policy", "engine", "ai", "agent", "governance", "zero-trust"],
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5",
+    "vitest": "^4.1.4"
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "name": "agentshield-langchain",
+  "version": "1.0.0",
+  "description": "AgentShield LangChain Integration - Automatically intercept and govern AI agent tool calls in LangChain applications",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "module": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "tsc --noEmit"
+  },
+  "keywords": [
+    "agentshield",
+    "langchain",
+    "ai",
+    "agent",
+    "policy",
+    "governance",
+    "guardrails",
+    "callback",
+    "tool-call",
+    "safety"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/agentshield/agentshield"
+  },
+  "peerDependencies": {
+    "@langchain/core": ">=0.1.0"
+  },
+  "peerDependenciesMeta": {
+    "@langchain/core": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "typescript": "^5",
+    "vitest": "^4.1.4"
+  },
+  "dependencies": {}
+}
