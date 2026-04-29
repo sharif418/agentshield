@@ -1,0 +1,38 @@
+[
+  {
+    "policyId": "SHELL-001",
+    "name": "Block destructive shell commands",
+    "agentRole": "CodeAgent",
+    "resource": "Shell",
+    "action": "DELETE",
+    "permissionLevel": "BLOCK",
+    "priority": 100,
+    "enabled": true,
+    "conditionRules": {
+      "$or": [
+        { "command": { "$contains": "rm -rf" } },
+        { "command": { "$contains": "mkfs" } },
+        { "command": { "$contains": "dd if=" } },
+        { "command": { "$contains": ":(){ :|:& };:" } }
+      ]
+    }
+  },
+  {
+    "policyId": "SHELL-002",
+    "name": "Require approval for deploys and package installs",
+    "agentRole": "CodeAgent",
+    "resource": "Shell",
+    "action": "WRITE",
+    "permissionLevel": "REQUIRE_APPROVAL",
+    "priority": 80,
+    "enabled": true,
+    "conditionRules": {
+      "$or": [
+        { "command": { "$contains": "npm publish" } },
+        { "command": { "$contains": "docker push" } },
+        { "command": { "$contains": "kubectl apply" } },
+        { "command": { "$contains": "terraform apply" } }
+      ]
+    }
+  }
+]

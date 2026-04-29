@@ -1,10 +1,10 @@
 # @agentshieldhq/core
 
-[![npm version](https://img.shields.io/npm/v/@agentshieldhq/core.svg)](https://www.npmjs.com/package/@agentshieldhq/core) [![license](https://img.shields.io/npm/l/@agentshieldhq/core.svg)](https://github.com/agentshield/agentshield/blob/main/LICENSE) [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue.svg)](https://www.typescriptlang.org/)
+[![npm version](https://img.shields.io/npm/v/@agentshieldhq/core.svg)](https://www.npmjs.com/package/@agentshieldhq/core) [![license](https://img.shields.io/npm/l/@agentshieldhq/core.svg)](https://github.com/sharif418/agentshield/blob/main/LICENSE) [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue.svg)](https://www.typescriptlang.org/)
 
 Deterministic policy evaluation engine for AI agent governance. Framework-agnostic, zero-dependency, and works in any JavaScript runtime.
 
-This is the shared evaluation engine used by both the [`agentshield`](https://www.npmjs.com/package/agentshield) SDK and the AgentShield server. If you are building an application, you probably want the [SDK](https://www.npmjs.com/package/agentshield) instead. Use this package directly when you need low-level access to the evaluation functions.
+This is the shared evaluation engine used by both the [`@agentshieldhq/sdk`](https://www.npmjs.com/package/@agentshieldhq/sdk) SDK and the AgentShield server. If you are building an application, you probably want the [SDK](https://www.npmjs.com/package/@agentshieldhq/sdk) instead. Use this package directly when you need low-level access to the evaluation functions.
 
 ## Installation
 
@@ -320,7 +320,7 @@ interface Trace {
 
 ## Related Packages
 
-- **[agentshield](https://www.npmjs.com/package/agentshield)** — Full SDK with hosted and embedded modes
+- **[@agentshieldhq/sdk](https://www.npmjs.com/package/@agentshieldhq/sdk)** — Full SDK with hosted and embedded modes
 - **[@agentshieldhq/langchain](https://www.npmjs.com/package/@agentshieldhq/langchain)** — LangChain callback handler integration
 
 ## License

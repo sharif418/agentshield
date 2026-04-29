@@ -1,6 +1,6 @@
 # @agentshieldhq/langchain
 
-[![npm version](https://img.shields.io/npm/v/@agentshieldhq/langchain.svg)](https://www.npmjs.com/package/@agentshieldhq/langchain) [![license](https://img.shields.io/npm/l/@agentshieldhq/langchain.svg)](https://github.com/agentshield/agentshield/blob/main/LICENSE) [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue.svg)](https://www.typescriptlang.org/)
+[![npm version](https://img.shields.io/npm/v/@agentshieldhq/langchain.svg)](https://www.npmjs.com/package/@agentshieldhq/langchain) [![license](https://img.shields.io/npm/l/@agentshieldhq/langchain.svg)](https://github.com/sharif418/agentshield/blob/main/LICENSE) [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue.svg)](https://www.typescriptlang.org/)
 
 LangChain callback handler for AI agent policy governance. Automatically intercepts tool calls and evaluates them through AgentShield's policy engine.
 
@@ -374,7 +374,7 @@ import type {
 
 ## Related Packages
 
-- **[agentshield](https://www.npmjs.com/package/agentshield)** — Full SDK with hosted and embedded modes
+- **[@agentshieldhq/sdk](https://www.npmjs.com/package/@agentshieldhq/sdk)** — Full SDK with hosted and embedded modes
 - **[@agentshieldhq/core](https://www.npmjs.com/package/@agentshieldhq/core)** — Low-level evaluation engine (used internally)
 
 ## License

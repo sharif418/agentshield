@@ -1,0 +1,36 @@
+[
+  {
+    "policyId": "PAY-001",
+    "name": "Require approval for refunds and payouts",
+    "agentRole": "SupportAgent",
+    "resource": "PaymentsAPI",
+    "action": "WRITE",
+    "permissionLevel": "REQUIRE_APPROVAL",
+    "priority": 100,
+    "enabled": true,
+    "conditionRules": {
+      "$or": [
+        { "operation": { "$contains": "refund" } },
+        { "operation": { "$contains": "payout" } },
+        { "amount": { "$gt": 100 } }
+      ]
+    }
+  },
+  {
+    "policyId": "PAY-002",
+    "name": "Block privilege escalation",
+    "agentRole": "SupportAgent",
+    "resource": "AdminAPI",
+    "action": "ADMIN",
+    "permissionLevel": "BLOCK",
+    "priority": 100,
+    "enabled": true,
+    "conditionRules": {
+      "$or": [
+        { "operation": { "$contains": "make_admin" } },
+        { "role": { "$equals": "owner" } },
+        { "permission": { "$contains": "billing" } }
+      ]
+    }
+  }
+]

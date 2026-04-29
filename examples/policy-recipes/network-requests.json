@@ -1,0 +1,29 @@
+[
+  {
+    "policyId": "NET-001",
+    "name": "Allow read-only HTTP requests",
+    "agentRole": "ResearchAgent",
+    "resource": "HTTPClient",
+    "action": "GET",
+    "permissionLevel": "ALLOW",
+    "priority": 20,
+    "enabled": true
+  },
+  {
+    "policyId": "NET-002",
+    "name": "Require approval for outbound mutations",
+    "agentRole": "ResearchAgent",
+    "resource": "HTTPClient",
+    "action": "WRITE",
+    "permissionLevel": "REQUIRE_APPROVAL",
+    "priority": 70,
+    "enabled": true,
+    "conditionRules": {
+      "$or": [
+        { "method": { "$in": ["POST", "PUT", "PATCH", "DELETE"] } },
+        { "url": { "$contains": "/admin" } },
+        { "url": { "$contains": "/webhook" } }
+      ]
+    }
+  }
+]

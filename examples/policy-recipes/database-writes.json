@@ -1,0 +1,32 @@
+[
+  {
+    "policyId": "DB-001",
+    "name": "Block destructive SQL",
+    "agentRole": "DataAgent",
+    "resource": "PostgreSQL",
+    "action": "DROP",
+    "permissionLevel": "BLOCK",
+    "priority": 100,
+    "enabled": true
+  },
+  {
+    "policyId": "DB-002",
+    "name": "Require approval for database writes",
+    "agentRole": "DataAgent",
+    "resource": "PostgreSQL",
+    "action": "WRITE",
+    "permissionLevel": "REQUIRE_APPROVAL",
+    "priority": 80,
+    "enabled": true
+  },
+  {
+    "policyId": "DB-003",
+    "name": "Allow read-only queries",
+    "agentRole": "DataAgent",
+    "resource": "PostgreSQL",
+    "action": "READ",
+    "permissionLevel": "ALLOW",
+    "priority": 20,
+    "enabled": true
+  }
+]
