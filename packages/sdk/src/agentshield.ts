@@ -9,7 +9,7 @@
  *
  * @example Hosted mode (connects to AgentShield server)
  * ```typescript
- * import { AgentShield } from 'agentshield';
+ * import { AgentShield } from '@agentshieldhq/sdk';
  *
  * const shield = new AgentShield({
  *   mode: 'hosted',
@@ -27,7 +27,7 @@
  *
  * @example Embedded mode (no server needed)
  * ```typescript
- * import { AgentShield } from 'agentshield';
+ * import { AgentShield } from '@agentshieldhq/sdk';
  *
  * const shield = new AgentShield({
  *   mode: 'embedded',
@@ -57,7 +57,7 @@
  */
 
 import type { AgentShieldConfig, PolicyCreateParams, PolicyListParams, TraceListParams, Trace } from './types.js';
-import type { PolicyDefinition, EvaluateInput, EvaluateResult } from '@agentshield/core';
+import type { PolicyDefinition, EvaluateInput, EvaluateResult } from '@agentshieldhq/core';
 import { HostedClient } from './hosted-client.js';
 import { EmbeddedEngine } from './embedded-engine.js';
 
@@ -294,7 +294,7 @@ export class AgentShield {
  *
  * @example
  * ```typescript
- * import { createAgentShield } from 'agentshield';
+ * import { createAgentShield } from '@agentshieldhq/sdk';
  *
  * const shield = createAgentShield({
  *   mode: 'embedded',

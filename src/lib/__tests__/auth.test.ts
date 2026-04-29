@@ -46,13 +46,13 @@ describe('getApiKey', () => {
     process.env = originalEnv
   })
 
-  it('returns the AGENTSHEILD_API_KEY env var when set', () => {
-    process.env.AGENTSHEILD_API_KEY = 'test-secret-key'
+  it('returns the AGENTSHIELD_API_KEY env var when set', () => {
+    process.env.AGENTSHIELD_API_KEY = 'test-secret-key'
     expect(getApiKey()).toBe('test-secret-key')
   })
 
-  it('returns empty string when AGENTSHEILD_API_KEY is not set', () => {
-    delete process.env.AGENTSHEILD_API_KEY
+  it('returns empty string when AGENTSHIELD_API_KEY is not set', () => {
+    delete process.env.AGENTSHIELD_API_KEY
     expect(getApiKey()).toBe('')
   })
 })
@@ -120,7 +120,7 @@ describe('validateApiKey', () => {
   describe('production mode (auth enabled)', () => {
     beforeEach(() => {
       process.env.NODE_ENV = 'production'
-      process.env.AGENTSHEILD_API_KEY = 'valid-secret-key'
+      process.env.AGENTSHIELD_API_KEY = 'valid-secret-key'
     })
 
     it('returns null when valid API key is provided via header', () => {
@@ -186,10 +186,10 @@ describe('validateApiKey', () => {
     })
   })
 
-  describe('production mode without AGENTSHEILD_API_KEY set', () => {
+  describe('production mode without AGENTSHIELD_API_KEY set', () => {
     beforeEach(() => {
       process.env.NODE_ENV = 'production'
-      delete process.env.AGENTSHEILD_API_KEY
+      delete process.env.AGENTSHIELD_API_KEY
     })
 
     it('returns null (unprotected) when no API key is configured', () => {
@@ -198,7 +198,7 @@ describe('validateApiKey', () => {
       // When no API key is set, the function warns but returns null (unprotected)
       expect(validateApiKey(req as never)).toBeNull()
       expect(consoleWarnSpy).toHaveBeenCalledWith(
-        '[AUTH] AGENTSHEILD_API_KEY not set - API is unprotected!',
+        '[AUTH] AGENTSHIELD_API_KEY not set - API is unprotected!',
       )
       consoleWarnSpy.mockRestore()
     })

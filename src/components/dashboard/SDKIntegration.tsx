@@ -27,7 +27,7 @@ type Framework = (typeof FRAMEWORKS)[number]
 
 const codeSnippets: Record<Language, Record<Framework, string>> = {
   TypeScript: {
-    LangChain: `import { AgentShieldCallbackHandler } from '@agentshield/langchain';
+    LangChain: `import { AgentShieldCallbackHandler } from '@agentshieldhq/langchain';
 
 // Create a callback handler with embedded policies
 const handler = new AgentShieldCallbackHandler({
@@ -54,7 +54,7 @@ const executor = AgentExecutor.fromAgentAndTools({
   callbacks: [handler],
 });`,
 
-    CrewAI: `import { AgentShield } from 'agentshield';
+    CrewAI: `import { AgentShield } from '@agentshieldhq/sdk';
 
 // Create a shield in hosted mode (connects to dashboard)
 const shield = new AgentShield({
@@ -86,7 +86,7 @@ const agent = new Agent({
   },
 });`,
 
-    AutoGen: `import { AgentShield } from 'agentshield';
+    AutoGen: `import { AgentShield } from '@agentshieldhq/sdk';
 
 // Create a shield with embedded policies (no server needed)
 const shield = new AgentShield({
@@ -124,7 +124,7 @@ const assistant = new AssistantAgent('DataAgent', {
   },
 });`,
 
-    'OpenAI SDK': `import { AgentShield } from 'agentshield';
+    'OpenAI SDK': `import { AgentShield } from '@agentshieldhq/sdk';
 import OpenAI from 'openai';
 
 // Hosted mode — connects to the AgentShield dashboard
@@ -302,8 +302,8 @@ def call_with_guard(agent_role, function_name, args):
 const getInstallCommand = (language: Language, framework: Framework): string => {
   if (language === 'TypeScript') {
     return framework === 'LangChain'
-      ? 'npm install @agentshield/langchain agentshield'
-      : 'npm install agentshield'
+      ? 'npm install @agentshieldhq/langchain @agentshieldhq/sdk'
+      : 'npm install @agentshieldhq/sdk'
   }
   return framework === 'LangChain'
     ? 'pip install "agentshield[langchain]"'
@@ -555,7 +555,7 @@ export function SDKIntegration() {
           </div>
           {framework === 'LangChain' && (
             <p className="text-[10px] text-muted-foreground mt-2">
-              The <code className="font-mono">agentshield</code> core package is included as a dependency of <code className="font-mono">@agentshield/langchain</code>.
+              The <code className="font-mono">agentshield</code> core package is included as a dependency of <code className="font-mono">@agentshieldhq/langchain</code>.
             </p>
           )}
         </CardContent>

@@ -14,7 +14,7 @@ export const prismaClient =
 // Using Prisma client extensions ($extends) since $use middleware was removed in Prisma 5+
 export const db = prismaClient.$extends({
   query: {
-    AuditLog: {
+    auditLog: {
       async update({ model, operation }) {
         throw new Error(`AuditLog records are immutable. ${operation} operation is not allowed on AuditLog model.`)
       },

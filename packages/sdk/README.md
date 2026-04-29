@@ -7,7 +7,7 @@ Deterministic runtime policy engine for AI agents. Intercept, evaluate, and gove
 ## Installation
 
 ```bash
-npm install agentshield
+npm install @agentshieldhq/sdk
 ```
 
 ## Quick Start
@@ -17,7 +17,7 @@ npm install agentshield
 Run the policy engine entirely in-memory. Ideal for serverless functions, edge runtimes, or lightweight integrations.
 
 ```typescript
-import { AgentShield } from 'agentshield';
+import { AgentShield } from '@agentshieldhq/sdk';
 
 const shield = new AgentShield({
   mode: 'embedded',
@@ -71,7 +71,7 @@ console.log(result.reason);   // 'Blocked by policy: Block DROP on PostgreSQL'
 Connect to a running AgentShield server for centralized policy management, persistent storage, and audit trails.
 
 ```typescript
-import { AgentShield } from 'agentshield';
+import { AgentShield } from '@agentshieldhq/sdk';
 
 const shield = new AgentShield({
   mode: 'hosted',
@@ -93,7 +93,7 @@ console.log(result.traceId);  // 'TRC-...'
 ### Convenience Factory
 
 ```typescript
-import { createAgentShield } from 'agentshield';
+import { createAgentShield } from '@agentshieldhq/sdk';
 
 const shield = createAgentShield({
   mode: 'embedded',
@@ -236,7 +236,7 @@ Convenience factory function that returns a new `AgentShield` instance.
 Low-level HTTP client for the AgentShield server. Used internally by `AgentShield` in hosted mode. Available for direct use if needed.
 
 ```typescript
-import { HostedClient } from 'agentshield';
+import { HostedClient } from '@agentshieldhq/sdk';
 
 const client = new HostedClient('https://agentshield.example.com', 'sk-...');
 await client.evaluate({ agentRole: 'Agent', toolName: 'Tool' });
@@ -247,7 +247,7 @@ await client.evaluate({ agentRole: 'Agent', toolName: 'Tool' });
 In-memory policy engine. Used internally by `AgentShield` in embedded mode. Available for direct use if needed.
 
 ```typescript
-import { EmbeddedEngine } from 'agentshield';
+import { EmbeddedEngine } from '@agentshieldhq/sdk';
 
 const engine = new EmbeddedEngine(policies, /* zeroTrust: */ true);
 const result = engine.evaluate({ agentRole: 'Agent', toolName: 'Tool' });
@@ -311,11 +311,11 @@ interface TraceListParams {
 }
 ```
 
-All core types (`Decision`, `Policy`, `EvaluateRequest`, `EvaluateResult`, `ConditionRule`, `MatchedPolicy`, `Trace`) are re-exported from `@agentshield/core`. See the [core package documentation](https://www.npmjs.com/package/@agentshield/core) for full type definitions.
+All core types (`Decision`, `Policy`, `EvaluateRequest`, `EvaluateResult`, `ConditionRule`, `MatchedPolicy`, `Trace`) are re-exported from `@agentshieldhq/core`. See the [core package documentation](https://www.npmjs.com/package/@agentshieldhq/core) for full type definitions.
 
 ## Re-exported Core Functions
 
-The SDK re-exports all evaluation functions from `@agentshield/core` for advanced usage:
+The SDK re-exports all evaluation functions from `@agentshieldhq/core` for advanced usage:
 
 ```typescript
 import {
@@ -324,15 +324,15 @@ import {
   inferAction,
   enrichArgsFromQuery,
   getMatchingActions,
-} from 'agentshield';
+} from '@agentshieldhq/sdk';
 ```
 
-See [@agentshield/core](https://www.npmjs.com/package/@agentshield/core) for documentation on these functions.
+See [@agentshieldhq/core](https://www.npmjs.com/package/@agentshieldhq/core) for documentation on these functions.
 
 ## Related Packages
 
-- **[@agentshield/core](https://www.npmjs.com/package/@agentshield/core)** — Low-level evaluation engine (used internally)
-- **[@agentshield/langchain](https://www.npmjs.com/package/@agentshield/langchain)** — LangChain callback handler integration
+- **[@agentshieldhq/core](https://www.npmjs.com/package/@agentshieldhq/core)** — Low-level evaluation engine (used internally)
+- **[@agentshieldhq/langchain](https://www.npmjs.com/package/@agentshieldhq/langchain)** — LangChain callback handler integration
 
 ## License
 

@@ -14,17 +14,17 @@ export type {
   Trace,
   ConditionRule,
   MatchedPolicy,
-} from '@agentshield/core';
+} from '@agentshieldhq/core';
 
 // Backward-compatible aliases
 export type {
   Decision as PermissionLevel,
   Policy as PolicyDefinition,
   EvaluateRequest as EvaluateInput,
-} from '@agentshield/core';
+} from '@agentshieldhq/core';
 
 // Import core types for use in SDK-specific interfaces
-import type { Policy, Decision } from '@agentshield/core';
+import type { Policy, Decision } from '@agentshieldhq/core';
 
 /**
  * Configuration for the AgentShield SDK client.

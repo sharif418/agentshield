@@ -1,13 +1,13 @@
-# @agentshield/langchain
+# @agentshieldhq/langchain
 
-[![npm version](https://img.shields.io/npm/v/@agentshield/langchain.svg)](https://www.npmjs.com/package/@agentshield/langchain) [![license](https://img.shields.io/npm/l/@agentshield/langchain.svg)](https://github.com/agentshield/agentshield/blob/main/LICENSE) [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue.svg)](https://www.typescriptlang.org/)
+[![npm version](https://img.shields.io/npm/v/@agentshieldhq/langchain.svg)](https://www.npmjs.com/package/@agentshieldhq/langchain) [![license](https://img.shields.io/npm/l/@agentshieldhq/langchain.svg)](https://github.com/agentshield/agentshield/blob/main/LICENSE) [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue.svg)](https://www.typescriptlang.org/)
 
 LangChain callback handler for AI agent policy governance. Automatically intercepts tool calls and evaluates them through AgentShield's policy engine.
 
 ## Installation
 
 ```bash
-npm install @agentshield/langchain
+npm install @agentshieldhq/langchain
 ```
 
 **Peer dependency:** `langchain >= 0.1.0` (optional — the handler works with any callback system that calls `handleToolStart` / `handleToolEnd`).
@@ -17,7 +17,7 @@ npm install @agentshield/langchain
 ### Embedded Mode (No Server Needed)
 
 ```typescript
-import { AgentShieldCallbackHandler } from '@agentshield/langchain';
+import { AgentShieldCallbackHandler } from '@agentshieldhq/langchain';
 import { AgentExecutor } from 'langchain/agents';
 
 const handler = new AgentShieldCallbackHandler({
@@ -59,7 +59,7 @@ const executor = AgentExecutor.fromAgentAndTools({
 ### Hosted Mode (Connects to Server)
 
 ```typescript
-import { AgentShieldCallbackHandler } from '@agentshield/langchain';
+import { AgentShieldCallbackHandler } from '@agentshieldhq/langchain';
 
 const handler = new AgentShieldCallbackHandler({
   serverUrl: 'https://agentshield.example.com',
@@ -239,7 +239,7 @@ The `AgentShieldEvent` object contains:
 Thrown when a tool call is blocked and `onBlock` is `'throw'` (default).
 
 ```typescript
-import { AgentShieldBlockError } from '@agentshield/langchain';
+import { AgentShieldBlockError } from '@agentshieldhq/langchain';
 
 try {
   // ... agent execution
@@ -266,7 +266,7 @@ Properties:
 Thrown when a tool call requires approval and `onRequireApproval` is `'throw'` (default).
 
 ```typescript
-import { AgentShieldApprovalError } from '@agentshield/langchain';
+import { AgentShieldApprovalError } from '@agentshieldhq/langchain';
 
 try {
   // ... agent execution
@@ -369,13 +369,13 @@ import type {
   MatchedPolicy,
   ConditionRule,
   Trace,
-} from '@agentshield/langchain';
+} from '@agentshieldhq/langchain';
 ```
 
 ## Related Packages
 
 - **[agentshield](https://www.npmjs.com/package/agentshield)** — Full SDK with hosted and embedded modes
-- **[@agentshield/core](https://www.npmjs.com/package/@agentshield/core)** — Low-level evaluation engine (used internally)
+- **[@agentshieldhq/core](https://www.npmjs.com/package/@agentshieldhq/core)** — Low-level evaluation engine (used internally)
 
 ## License
 

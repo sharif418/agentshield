@@ -339,7 +339,7 @@ export async function POST(request: NextRequest) {
     const approvalStatuses = ['PENDING', 'APPROVED', 'REJECTED', 'MODIFIED'] as const;
     const reviewers = ['reviewer-alice', 'reviewer-bob', 'reviewer-carol', 'reviewer-dan'];
 
-    const approvalRecords = [];
+    const approvalRecords: Record<string, unknown>[] = [];
     for (let i = 0; i < Math.min(approvalTraces.length, 10); i++) {
       const trace = approvalTraces[i];
       const status = approvalStatuses[i % approvalStatuses.length];
@@ -379,7 +379,7 @@ export async function POST(request: NextRequest) {
     }
 
     const approvals = await db.approvalRequest.createMany({
-      data: approvalRecords as Parameters<typeof db.approvalRequest.createMany>[0]['data'],
+      data: approvalRecords as any,  
     });
 
     // === AUDIT LOGS (30+) ===

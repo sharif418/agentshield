@@ -10,7 +10,7 @@ services:
       - "3000:3000"
     environment:
       - DATABASE_URL=file:./../db/custom.db
-      - AGENTSHEILD_API_KEY=${AGENTSHEILD_API_KEY:-}
+      - AGENTSHIELD_API_KEY=${AGENTSHIELD_API_KEY:-}
       - NODE_ENV=production
     volumes:
       - agentshield-db:/app/db

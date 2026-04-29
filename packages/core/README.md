@@ -1,6 +1,6 @@
-# @agentshield/core
+# @agentshieldhq/core
 
-[![npm version](https://img.shields.io/npm/v/@agentshield/core.svg)](https://www.npmjs.com/package/@agentshield/core) [![license](https://img.shields.io/npm/l/@agentshield/core.svg)](https://github.com/agentshield/agentshield/blob/main/LICENSE) [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue.svg)](https://www.typescriptlang.org/)
+[![npm version](https://img.shields.io/npm/v/@agentshieldhq/core.svg)](https://www.npmjs.com/package/@agentshieldhq/core) [![license](https://img.shields.io/npm/l/@agentshieldhq/core.svg)](https://github.com/agentshield/agentshield/blob/main/LICENSE) [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue.svg)](https://www.typescriptlang.org/)
 
 Deterministic policy evaluation engine for AI agent governance. Framework-agnostic, zero-dependency, and works in any JavaScript runtime.
 
@@ -9,14 +9,14 @@ This is the shared evaluation engine used by both the [`agentshield`](https://ww
 ## Installation
 
 ```bash
-npm install @agentshield/core
+npm install @agentshieldhq/core
 ```
 
 ## Quick Start
 
 ```typescript
-import { evaluatePolicies } from '@agentshield/core';
-import type { Policy, EvaluateRequest } from '@agentshield/core';
+import { evaluatePolicies } from '@agentshieldhq/core';
+import type { Policy, EvaluateRequest } from '@agentshieldhq/core';
 
 const policies: Policy[] = [
   {
@@ -57,7 +57,7 @@ console.log(result.action);   // 'DROP'
 Policies support fine-grained condition matching with logical operators and field matchers:
 
 ```typescript
-import { evaluatePolicies, evaluateConditions } from '@agentshield/core';
+import { evaluatePolicies, evaluateConditions } from '@agentshieldhq/core';
 
 const policies = [
   {
@@ -99,7 +99,7 @@ const result2 = evaluatePolicies(policies, {
 Use `evaluateConditions` directly for custom logic:
 
 ```typescript
-import { evaluateConditions } from '@agentshield/core';
+import { evaluateConditions } from '@agentshieldhq/core';
 
 const rules = {
   $and: [
@@ -117,7 +117,7 @@ console.log(evaluateConditions(rules, args)); // true
 When no explicit `action` is provided, the engine automatically infers it from arguments and tool names:
 
 ```typescript
-import { inferAction, getMatchingActions } from '@agentshield/core';
+import { inferAction, getMatchingActions } from '@agentshieldhq/core';
 
 // Infer from SQL query
 inferAction({ query: 'DROP TABLE users' }, 'PostgreSQL'); // 'DROP'
@@ -137,7 +137,7 @@ getMatchingActions('REFUND'); // ['REFUND', 'WRITE']
 SQL queries are automatically enriched with an inferred operation for condition matching:
 
 ```typescript
-import { enrichArgsFromQuery } from '@agentshield/core';
+import { enrichArgsFromQuery } from '@agentshieldhq/core';
 
 const args = { query: 'DROP TABLE users' };
 const enriched = enrichArgsFromQuery(args);
@@ -321,7 +321,7 @@ interface Trace {
 ## Related Packages
 
 - **[agentshield](https://www.npmjs.com/package/agentshield)** — Full SDK with hosted and embedded modes
-- **[@agentshield/langchain](https://www.npmjs.com/package/@agentshield/langchain)** — LangChain callback handler integration
+- **[@agentshieldhq/langchain](https://www.npmjs.com/package/@agentshieldhq/langchain)** — LangChain callback handler integration
 
 ## License
 

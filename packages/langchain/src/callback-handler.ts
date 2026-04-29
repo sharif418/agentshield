@@ -12,7 +12,7 @@
  * ## Quick Start
  *
  * ```typescript
- * import { AgentShieldCallbackHandler } from '@agentshield/langchain';
+ * import { AgentShieldCallbackHandler } from '@agentshieldhq/langchain';
  * import { AgentExecutor } from 'langchain/agents';
  *
  * const handler = new AgentShieldCallbackHandler({
@@ -58,8 +58,8 @@
  * @packageDocumentation
  */
 
-import { AgentShield } from 'agentshield';
-import type { EvaluateResult } from '@agentshield/core';
+import { AgentShield } from '@agentshieldhq/sdk';
+import type { EvaluateResult } from '@agentshieldhq/core';
 import type { AgentShieldLangChainConfig, AgentShieldEvent } from './types.js';
 
 // ---------------------------------------------------------------------------

@@ -7,7 +7,7 @@
  *
  * @example Hosted Mode
  * ```typescript
- * import { AgentShield } from 'agentshield'
+ * import { AgentShield } from '@agentshieldhq/sdk'
  *
  * const shield = new AgentShield({
  *   mode: 'hosted',
@@ -27,7 +27,7 @@
  *
  * @example Embedded Mode
  * ```typescript
- * import { AgentShield } from 'agentshield'
+ * import { AgentShield } from '@agentshieldhq/sdk'
  *
  * const shield = new AgentShield({
  *   mode: 'embedded',
@@ -91,4 +91,4 @@ export {
   inferAction,
   enrichArgsFromQuery,
   getMatchingActions,
-} from '@agentshield/core';
+} from '@agentshieldhq/core';

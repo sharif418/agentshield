@@ -102,7 +102,7 @@ export async function PUT(request: NextRequest) {
 
     const webhook = await db.webhookConfig.update({
       where: { id },
-      data: updateData,
+      data: updateData as any,  
     });
 
     return NextResponse.json(webhook);

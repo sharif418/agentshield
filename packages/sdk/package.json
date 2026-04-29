@@ -1,20 +1,20 @@
 {
-  "name": "agentshield",
+  "name": "@agentshieldhq/sdk",
   "version": "1.0.0",
   "description": "AgentShield — Deterministic Runtime Policy Engine for AI Agents. Intercept, evaluate, and govern every tool call.",
-  "main": "src/index.ts",
-  "types": "src/index.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "type": "module",
   "exports": {
     ".": {
-      "types": "./src/index.ts",
-      "import": "./src/index.ts",
-      "default": "./src/index.ts"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     }
   },
   "files": [
-    "src",
-    "dist"
+    "dist",
+    "src"
   ],
   "scripts": {
     "build": "tsc",
@@ -23,7 +23,7 @@
     "test:watch": "vitest",
     "lint": "tsc --noEmit"
   },
-  "license": "MIT",
+  "license": "Apache-2.0",
   "keywords": [
     "ai",
     "agent",
@@ -43,17 +43,20 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/agentshield/agentshield",
+    "url": "git+https://github.com/sharif418/agentshield.git",
     "directory": "packages/sdk"
   },
-  "homepage": "https://github.com/agentshield/agentshield#readme",
+  "homepage": "https://github.com/sharif418/agentshield#readme",
   "sideEffects": false,
   "dependencies": {
-    "@agentshield/core": "workspace:*"
+    "@agentshieldhq/core": "^1.0.0"
   },
   "peerDependencies": {},
   "devDependencies": {
     "typescript": "^5",
     "vitest": "^4.1.4"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

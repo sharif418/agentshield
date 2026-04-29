@@ -716,7 +716,7 @@ ${sectionTitle('Recommendations')}
 
       {/* === 1. Section Header === */}
       <div className="section-header-gradient rounded-xl px-4 py-3 -mx-4 -mt-2 md:-mx-6 md:-mt-4 mb-2 relative overflow-hidden">
-        <h2 className="text-lg font-bold tracking-tight flex items-center gap-2 bg-gradient-to-r from-emerald-700 to-teal-600 dark:from-emerald-400 dark:to-teal-400 bg-clip-text text-transparent">
+        <h2 className="text-lg font-bold tracking-tight flex items-center gap-2 bg-linear-to-r from-emerald-700 to-teal-600 dark:from-emerald-400 dark:to-teal-400 bg-clip-text text-transparent">
           <FileCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
           Compliance
         </h2>

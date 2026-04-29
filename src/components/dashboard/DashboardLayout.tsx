@@ -218,10 +218,10 @@ export function DashboardLayout() {
               </Sheet>
 
               <div className="flex items-center gap-2.5">
-                <div className="flex items-center justify-center h-7 w-7 rounded-md bg-gradient-to-br from-emerald-500 to-teal-600 shadow-sm">
+                <div className="flex items-center justify-center h-7 w-7 rounded-md bg-linear-to-br from-emerald-500 to-teal-600 shadow-sm">
                   <Shield className="h-4 w-4 text-white" />
                 </div>
-                <h1 className="font-bold text-sm md:text-base tracking-tight bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-400 dark:to-teal-400 bg-clip-text text-transparent">AgentShield</h1>
+                <h1 className="font-bold text-sm md:text-base tracking-tight bg-linear-to-r from-emerald-600 to-teal-600 dark:from-emerald-400 dark:to-teal-400 bg-clip-text text-transparent">AgentShield</h1>
               </div>
 
               {/* Breadcrumb / Section indicator */}
@@ -315,7 +315,7 @@ export function DashboardLayout() {
       {/* Enhanced Footer */}
       <footer className="border-t border-border bg-card/60 backdrop-blur-md py-2 px-4 flex items-center justify-between text-xs text-muted-foreground shrink-0 z-10 relative overflow-hidden">
         {/* Subtle gradient accent line at top */}
-        <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent" />
+        <div className="absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-emerald-500/30 to-transparent" />
         <div className="flex items-center gap-3">
           <button className="hover:text-foreground transition-colors duration-200 cursor-default flex items-center gap-1.5" type="button">
             <Shield className="h-3 w-3 text-emerald-500" />
@@ -344,7 +344,7 @@ export function DashboardLayout() {
             </span>
           )}
           <span className="hidden md:inline text-border">|</span>
-          <span className="hidden md:inline flex items-center gap-1">
+          <span className="md:inline md:flex items-center gap-1 hidden">
             <span className="inline-flex items-center rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
               DEV
             </span>

@@ -102,8 +102,8 @@ export function PolicyConflictDetector() {
               found.push({
                 type: 'contradiction',
                 severity: 'high',
-                policy1,
-                policy2,
+                policy1: p1,
+                policy2: p2,
                 description: `Conflicting decisions for ${p1.agentRole} on ${p1.resource}: "${p1.name}" is ${p1.permissionLevel} while "${p2.name}" is ${p2.permissionLevel}`,
                 recommendation: 'Resolve by adjusting priorities or scoping with condition rules to prevent non-deterministic behavior.',
               })
@@ -122,8 +122,8 @@ export function PolicyConflictDetector() {
                 found.push({
                   type: 'overlap',
                   severity: 'medium',
-                  policy1,
-                  policy2,
+                  policy1: p1,
+                  policy2: p2,
                   description: `Overlapping policies for ${p1.agentRole} on ${p1.resource}: both "${p1.name}" and "${p2.name}" handle ${p1.action === '*' ? 'all actions' : p1.action}`,
                   recommendation: 'Consider merging these policies or using more specific condition rules to differentiate.',
                 })

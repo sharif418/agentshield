@@ -287,8 +287,8 @@ export function DataExportManager() {
           let exportType = 'traces'
           if (type === 'auditLogs') exportType = 'audit'
           else if (type === 'policies' || type === 'approvals' || type === 'webhooks') {
-            // For types not directly supported by /api/export, fetch as JSON and convert
-            const res = await fetch(`/api/${type === 'auditLogs' ? 'audit' : type === 'approvals' ? 'approvals' : type === 'webhooks' ? 'webhooks' : 'policies'}${type === 'traces' ? '?limit=200' : ''}`)
+            const apiPath = type === 'approvals' ? 'approvals' : type === 'webhooks' ? 'webhooks' : 'policies'
+            const res = await fetch(`/api/${apiPath}`)
             if (res.ok) {
               const data = await res.json()
               const csvContent = jsonToCsv(Array.isArray(data) ? data : [data])
@@ -450,7 +450,7 @@ export function DataExportManager() {
 
       if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
         const obj = parsed as Record<string, unknown>
-        if (obj._meta && (obj as Record<string, unknown>)._meta?.type === 'agentshield-full-backup') {
+        if (obj._meta && (obj._meta as Record<string, unknown>)?.type === 'agentshield-full-backup') {
           importType = 'full'
         } else if (obj.policies || obj.webhooks) {
           importType = 'full'
@@ -699,7 +699,7 @@ export function DataExportManager() {
 
             {/* Export Button */}
             <Button
-              className="w-full h-10 text-sm bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white active:scale-[0.98] transition-transform font-medium"
+              className="w-full h-10 text-sm bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white active:scale-[0.98] transition-transform font-medium"
               onClick={handleExport}
               disabled={isExporting || selectedTypes.size === 0}
             >
@@ -866,7 +866,7 @@ export function DataExportManager() {
         <CardContent className="space-y-4">
           <div className="flex items-center gap-3 flex-wrap">
             <Button
-              className="h-9 text-xs bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white active:scale-[0.98] transition-transform font-medium"
+              className="h-9 text-xs bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white active:scale-[0.98] transition-transform font-medium"
               onClick={handleCreateBackup}
               disabled={isCreatingBackup}
             >

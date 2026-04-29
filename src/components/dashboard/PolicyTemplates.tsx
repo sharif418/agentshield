@@ -412,7 +412,7 @@ export function PolicyTemplates() {
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [importedIds, setImportedIds] = useState<Set<string>>(new Set())
   const [previewTemplate, setPreviewTemplate] = useState<PolicyTemplate | null>(null)
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>()
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined)
 
   // Debounced search
   useEffect(() => {

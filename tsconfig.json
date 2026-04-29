@@ -26,6 +26,15 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@agentshieldhq/core": [
+        "./packages/core/src/index.ts"
+      ],
+      "agentshield": [
+        "./packages/sdk/src/index.ts"
+      ],
+      "@agentshieldhq/langchain": [
+        "./packages/langchain/src/index.ts"
       ]
     }
   },

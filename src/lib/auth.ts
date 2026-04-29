@@ -3,13 +3,13 @@ import { NextRequest, NextResponse } from 'next/server'
 /**
  * API key authentication middleware for AgentShield.
  * In development mode, all requests are allowed.
- * In production, requires AGENTSHEILD_API_KEY env var to be set and matched.
+ * In production, requires AGENTSHIELD_API_KEY env var to be set and matched.
  */
 const API_KEY_HEADER = 'x-api-key'
 const API_KEY_QUERY = 'api_key'
 
 export function getApiKey(): string {
-  return process.env.AGENTSHEILD_API_KEY ?? ''
+  return process.env.AGENTSHIELD_API_KEY ?? ''
 }
 
 export function isAuthEnabled(): boolean {
@@ -22,7 +22,7 @@ export function validateApiKey(request: NextRequest): NextResponse | null {
 
   const apiKey = getApiKey()
   if (!apiKey) {
-    console.warn('[AUTH] AGENTSHEILD_API_KEY not set - API is unprotected!')
+    console.warn('[AUTH] AGENTSHIELD_API_KEY not set - API is unprotected!')
     return null
   }
 

@@ -49,8 +49,8 @@ function MiniSparkline({ data, color = '#10b981' }: { data: number[]; color?: st
   const height = 20
   const padding = 2
 
-  const points = useMemo(() => {
-    if (data.length < 2) return []
+  const points = useMemo((): string => {
+    if (data.length < 2) return ''
     const max = Math.max(...data, 1)
     const min = Math.min(...data, 0)
     const range = max - min || 1
@@ -133,7 +133,7 @@ export function StatCard({ title, value, icon: Icon, trend, trendUp, suffix = ''
   return (
     <Card className="relative overflow-hidden group hover:shadow-md transition-all duration-300 border-0 shadow-sm gradient-border-hover shimmer-hover card-shine hover-lift animated-border neon-glow stat-accent-top">
       {/* Inner shadow at top for depth */}
-      <div className="absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-black/[0.03] to-transparent dark:from-white/[0.02] dark:to-transparent pointer-events-none" />
+      <div className="absolute inset-x-0 top-0 h-8 bg-linear-to-b from-black/3 to-transparent dark:from-white/2 dark:to-transparent pointer-events-none" />
       {/* Dot grid pattern for subtle texture */}
       <div className="absolute inset-0 dot-grid opacity-40 pointer-events-none" />
       {/* Diagonal lines background pattern */}
@@ -144,14 +144,14 @@ export function StatCard({ title, value, icon: Icon, trend, trendUp, suffix = ''
       {/* Gradient background */}
       <div className={cn(
         'absolute inset-0 opacity-[0.04] group-hover:opacity-[0.08] transition-opacity duration-300',
-        gradient ?? 'bg-gradient-to-br from-emerald-500 to-teal-600'
+        gradient ?? 'bg-linear-to-br from-emerald-500 to-teal-600'
       )} />
 
       {/* Gradient accent bar at bottom - animated on hover */}
       <motion.div
         className={cn(
           'absolute bottom-0 inset-x-0 h-[3px] rounded-b-xl',
-          gradient ?? 'bg-gradient-to-r from-emerald-500 to-teal-600'
+          gradient ?? 'bg-linear-to-r from-emerald-500 to-teal-600'
         )}
         initial={{ opacity: 0.3, scaleX: 0.8 }}
         animate={{ opacity: 0.3, scaleX: 0.8 }}

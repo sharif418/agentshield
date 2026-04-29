@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { formatDistanceToNow } from 'date-fns'
-import { motion } from 'framer-motion'
+import { motion, type Variants } from 'framer-motion'
 import {
   Clock,
   GitCommit,
@@ -89,9 +89,9 @@ const containerVariants = {
   },
 }
 
-const itemVariants = {
+const itemVariants: Variants = {
   hidden: { opacity: 0, x: -12 },
-  show: { opacity: 1, x: 0, transition: { duration: 0.3, ease: 'easeOut' } },
+  show: { opacity: 1, x: 0, transition: { duration: 0.3, ease: [0.25, 0.1, 0.25, 1] } },
 }
 
 export function PolicyVersionHistory({ policyId, open, onOpenChange }: PolicyVersionHistoryProps) {

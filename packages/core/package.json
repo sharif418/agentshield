@@ -1,5 +1,5 @@
 {
-  "name": "@agentshield/core",
+  "name": "@agentshieldhq/core",
   "version": "1.0.0",
   "description": "AgentShield core policy evaluation engine — deterministic runtime governance for AI agents",
   "main": "dist/index.js",
@@ -15,8 +15,7 @@
     "dist",
     "src"
   ],
-  "license": "MIT",
-  "private": true,
+  "license": "Apache-2.0",
   "scripts": {
     "build": "tsc",
     "prepublishOnly": "npm run build",
@@ -38,13 +37,16 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/agentshield/agentshield",
+    "url": "git+https://github.com/sharif418/agentshield.git",
     "directory": "packages/core"
   },
-  "homepage": "https://github.com/agentshield/agentshield#readme",
+  "homepage": "https://github.com/sharif418/agentshield#readme",
   "sideEffects": false,
   "devDependencies": {
     "typescript": "^5",
     "vitest": "^4.1.4"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
       orderBy: { priority: 'desc' },
     });
 
-    // Use the shared evaluation engine from @agentshield/core
+    // Use the shared evaluation engine from @agentshieldhq/core
     // Convert DB policies to the core Policy format
     const corePolicies: Policy[] = policies.map((p) => ({
       policyId: p.policyId,
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
     });
 
     // If REQUIRE_APPROVAL, auto-create ApprovalRequest
-    let approvalRequest = null;
+    let approvalRequest: { requestId: string } | null = null;
     if (decision === 'REQUIRE_APPROVAL') {
       const requestId = `APR-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 8)}`;
       approvalRequest = await db.approvalRequest.create({

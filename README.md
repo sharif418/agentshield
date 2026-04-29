@@ -1,126 +1,107 @@
 # AgentShield
 
-**A deterministic runtime policy engine — zero-trust governance layer for AI agent tool calls.**
+**Firewall for AI agent tool calls.**
 
-AgentShield intercepts every tool invocation from AI agents and makes real-time **ALLOW / BLOCK / REQUIRE_APPROVAL** decisions based on configurable policies, context-aware condition rules, and priority ordering. It provides a comprehensive 22-section dashboard for monitoring, analysis, and management of agent governance.
+AgentShield is a deterministic runtime policy engine for AI agents. It intercepts tool calls before they execute and returns one of three decisions: **ALLOW**, **BLOCK**, or **REQUIRE_APPROVAL**.
 
----
+Prompts are not permissions. If an agent can call tools, write files, query databases, hit APIs, or trigger workflows, it needs runtime governance. AgentShield gives agentic systems a zero-trust control layer with policy rules, approval queues, immutable audit logs, SDKs, LangChain integration, and a self-hosted dashboard.
 
-## Table of Contents
-
-- [Quick Start](#quick-start)
-- [Features](#features)
-- [Tech Stack](#tech-stack)
-- [Architecture Overview](#architecture-overview)
-- [Getting Started](#getting-started)
-- [API Documentation](#api-documentation)
-- [Dashboard Sections](#dashboard-sections)
-- [Project Structure](#project-structure)
-- [Environment Variables](#environment-variables)
-- [License](#license)
+> Built for teams who want powerful AI agents without handing them an unchecked production keyboard.
 
 ---
 
-## Quick Start
+## Why AgentShield?
 
-### Option 1: Docker (Recommended)
+AI agents are moving from chat boxes into operational systems. They can now call tools, mutate state, deploy code, touch databases, and send messages. Most guardrails focus on prompts or model outputs. AgentShield focuses on the moment that matters most: **the tool call**.
 
-```bash
-docker compose up
-```
+```ts
+import { AgentShield } from '@agentshieldhq/sdk'
 
-The dashboard will be available at `http://localhost:3000`.
-
-### Option 2: Install the SDK
-
-```bash
-npm install agentshield
-```
-
-```typescript
-import { AgentShield } from 'agentshield';
-
-// Create a shield with embedded policies (no server needed)
 const shield = new AgentShield({
   mode: 'embedded',
   policies: [
     {
       policyId: 'POL-001',
-      name: 'Block SQL DROP',
+      name: 'Block destructive SQL',
       agentRole: 'DataAgent',
       resource: 'PostgreSQL',
       action: 'DROP',
       permissionLevel: 'BLOCK',
-      priority: 20,
+      priority: 100,
       enabled: true,
     },
   ],
-});
-
-// Evaluate a tool call
-const result = await shield.evaluate({
-  agentRole: 'DataAgent',
-  toolName: 'PostgreSQL',
-  arguments: { query: 'DROP TABLE users' },
-});
-
-console.log(result.decision); // 'BLOCK'
-console.log(result.reason);   // 'Blocked by policy: Block SQL DROP'
-```
-
-### Option 3: LangChain Integration
-
-```bash
-npm install @agentshield/langchain
-```
-
-```typescript
-import { AgentShieldCallbackHandler } from '@agentshield/langchain';
-
-const handler = new AgentShieldCallbackHandler({
-  mode: 'embedded',
-  policies: [...],
-  toolNameMap: { 'sql_db_query': 'PostgreSQL' },
-});
-
-// Add to your LangChain agent
-const executor = AgentExecutor.fromAgentAndTools({
-  agent,
-  tools,
-  callbacks: [handler],
-});
-```
-
-### Option 4: Self-Hosted Dashboard
-
-```bash
-git clone <repository-url>
-cd my-project
-bun install
-bun run db:push
-curl -X POST http://localhost:3000/api/seed  # Seed demo data
-bun run dev
-```
-
-Then connect via the hosted SDK:
-
-```typescript
-import { AgentShield } from 'agentshield';
-
-const shield = new AgentShield({
-  mode: 'hosted',
-  serverUrl: 'http://localhost:3000',
-  apiKey: 'your-api-key',
-});
+})
 
 const result = await shield.evaluate({
   agentRole: 'DataAgent',
   toolName: 'PostgreSQL',
   arguments: { query: 'DROP TABLE users' },
-});
+})
+
+console.log(result.decision) // BLOCK
 ```
 
 ---
+
+## Packages
+
+```bash
+npm install @agentshieldhq/sdk
+npm install @agentshieldhq/core
+npm install @agentshieldhq/langchain
+```
+
+| Package | Purpose |
+|---|---|
+| `@agentshieldhq/core` | Deterministic policy evaluation engine |
+| `@agentshieldhq/sdk` | Embedded and hosted client SDK |
+| `@agentshieldhq/langchain` | LangChain callback integration |
+
+---
+
+## Quick Start
+
+### Self-host the dashboard
+
+```bash
+git clone https://github.com/sharif418/agentshield.git
+cd agentshield
+cp .env.example .env
+bun install
+bun run db:push
+curl -X POST http://localhost:3000/api/seed
+bun run dev
+```
+
+Open `http://localhost:3000`.
+
+### Docker
+
+```bash
+cp .env.example .env
+docker compose up
+```
+
+---
+
+## What is production-grade today?
+
+- Core policy engine: priority-based ALLOW / BLOCK / REQUIRE_APPROVAL decisions
+- Condition rules: `$and`, `$or`, `$contains`, `$equals`, `$in`, `$gt`, `$lt`
+- API key authentication for protected endpoints
+- Zod validation on API input
+- Policy CRUD, evaluation, traces, approvals, import/export, audit APIs
+- Immutable audit-log protection at the Prisma client layer
+- SDK packages for embedded and hosted usage
+- LangChain callback handler
+- WebSocket approval notifications
+- Dashboard for policies, approvals, traces, compliance, and simulations
+
+## Showcase / roadmap components
+
+Some dashboard panels are intentionally demo-oriented in this release and marked for future hardening: threat-intelligence feed, security scanner, synthetic system-health metrics, policy scheduler persistence, and deeper simulator persistence. The core policy engine and API workflow are the primary release surface.
+
 
 ## Features
 
@@ -193,7 +174,7 @@ const result = await shield.evaluate({
 | **Server State** | [TanStack Query](https://tanstack.com/query) | 5 |
 | **Charts** | [Recharts](https://recharts.org/) | 2 |
 | **Animations** | [Framer Motion](https://www.framer.com/motion/) | 12 |
-| **Validation** | [Zod](https://zod.dev/) | 4 |
+| **Validation** | [Zod](https://zod.dev/) | 3 |
 | **Icons** | [Lucide React](https://lucide.dev/) | 0.525 |
 | **Package Manager** | [Bun](https://bun.sh/) | 1+ |
 
@@ -281,22 +262,25 @@ const result = await shield.evaluate({
 ```bash
 # 1. Clone the repository
 git clone <repository-url>
-cd my-project
+cd agentshield-dashboard
 
 # 2. Install dependencies
 bun install
 
-# 3. Configure environment
+# 3. Build the core package (required for first run)
+cd packages/core && bun run build && cd ../..
+
+# 4. Configure environment
 cp .env.example .env
 # Edit .env with your configuration (see Environment Variables section)
 
-# 4. Push database schema
+# 5. Push database schema
 bun run db:push
 
-# 5. Seed with demo data (development only)
+# 6. Seed with demo data (development only)
 curl -X POST http://localhost:3000/api/seed
 
-# 6. Start the Next.js dev server (port 3000)
+# 7. Start the Next.js dev server (port 3000)
 bun run dev
 
 # 7. Start the WebSocket notification service (port 3003)
@@ -334,7 +318,7 @@ bun run lint
 
 ### Authentication
 
-In production mode (`NODE_ENV=production`), all API endpoints require authentication via the `x-api-key` header or `api_key` query parameter. Set `AGENTSHEILD_API_KEY` in your environment.
+In production mode (`NODE_ENV=production`), all API endpoints require authentication via the `x-api-key` header or `api_key` query parameter. Set `AGENTSHIELD_API_KEY` in your environment.
 
 In development mode, authentication is disabled for convenience.
 
@@ -690,7 +674,7 @@ The AgentShield dashboard provides 22 comprehensive sections for monitoring, ana
 │       └── run.sh                   # Start script
 ├── __tests__/                       # Unit tests
 ├── .env.example                     # Environment variable template
-├── Caddyfile                        # Gateway configuration
+├── packages/                        # Publishable npm packages (@agentshieldhq/core, sdk, langchain)
 ├── package.json                     # Project dependencies
 ├── tsconfig.json                    # TypeScript configuration
 ├── next.config.ts                   # Next.js configuration
@@ -708,7 +692,7 @@ The AgentShield dashboard provides 22 comprehensive sections for monitoring, ana
 | Variable | Default | Required | Description |
 |----------|---------|----------|-------------|
 | `DATABASE_URL` | `file:./../db/custom.db` | Yes | SQLite database connection string. Relative path from the `prisma/` directory. |
-| `AGENTSHEILD_API_KEY` | — | Production | API key for authenticating requests. Required when `NODE_ENV=production`. In development mode, auth is disabled. |
+| `AGENTSHIELD_API_KEY` | — | Production | API key for authenticating requests. Required when `NODE_ENV=production`. In development mode, auth is disabled. |
 | `WS_PORT` | `3003` | No | Port for the Socket.IO WebSocket notification service. |
 | `NODE_ENV` | `development` | No | Application environment. Set to `production` to enable API key authentication and disable seed endpoint. |
 
@@ -720,7 +704,7 @@ DATABASE_URL=file:./../db/custom.db
 
 # API Authentication — Required in production mode
 # In development mode, API key auth is skipped for convenience
-AGENTSHEILD_API_KEY=your-secret-api-key-here
+AGENTSHIELD_API_KEY=your-secret-api-key-here
 
 # WebSocket Service Port
 WS_PORT=3003

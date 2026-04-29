@@ -6,7 +6,7 @@
  *
  * @example Embedded Mode
  * ```typescript
- * import { AgentShieldCallbackHandler } from '@agentshield/langchain';
+ * import { AgentShieldCallbackHandler } from '@agentshieldhq/langchain';
  * import { AgentExecutor } from 'langchain/agents';
  *
  * const handler = new AgentShieldCallbackHandler({
@@ -36,7 +36,7 @@
  *
  * @example Hosted Mode
  * ```typescript
- * import { AgentShieldCallbackHandler } from '@agentshield/langchain';
+ * import { AgentShieldCallbackHandler } from '@agentshieldhq/langchain';
  *
  * const handler = new AgentShieldCallbackHandler({
  *   serverUrl: 'https://agentshield.example.com',
@@ -79,4 +79,4 @@ export type {
   ConditionRule,
   PermissionLevel,
   Trace,
-} from '@agentshield/core';
+} from '@agentshieldhq/core';

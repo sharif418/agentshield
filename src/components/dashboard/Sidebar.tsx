@@ -97,14 +97,14 @@ export function Sidebar() {
         )}
       >
         {/* Subtle gradient accent at bottom of sidebar */}
-        <div className="absolute bottom-0 inset-x-0 h-24 bg-gradient-to-t from-emerald-500/[0.03] to-transparent pointer-events-none" />
+        <div className="absolute bottom-0 inset-x-0 h-24 bg-linear-to-t from-emerald-500/3 to-transparent pointer-events-none" />
         {/* App header */}
         <div className="flex items-center gap-2 px-3 h-14 border-b border-border shrink-0">
-          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 shadow-sm shrink-0">
+          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-linear-to-br from-emerald-500 to-teal-600 shadow-sm shrink-0">
             <Shield className="h-4 w-4 text-white" />
           </div>
           {!sidebarCollapsed && (
-            <span className="font-bold text-sm tracking-tight bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-400 dark:to-teal-400 bg-clip-text text-transparent whitespace-nowrap">
+            <span className="font-bold text-sm tracking-tight bg-linear-to-r from-emerald-600 to-teal-600 dark:from-emerald-400 dark:to-teal-400 bg-clip-text text-transparent whitespace-nowrap">
               AgentShield
             </span>
           )}
@@ -338,7 +338,7 @@ export function Sidebar() {
         {/* Quick Stats section */}
         {!sidebarCollapsed && (
           <div className="px-3 pb-2 space-y-1.5">
-            <div className="section-divider !my-2" />
+            <div className="section-divider my-2!" />
             <div className="flex items-center gap-2 text-[11px] text-muted-foreground hover:text-foreground transition-colors">
               <ShieldCheck className="h-3 w-3 text-emerald-500" />
               <span>{stats?.totalPolicies ?? 0} policies</span>
@@ -351,7 +351,7 @@ export function Sidebar() {
               <span>{stats?.pendingApprovals ?? 0} approvals</span>
               {(stats?.pendingApprovals ?? 0) > 0 && (
                 <span className="ml-auto micro-badge bg-amber-500/10 text-amber-600 dark:text-amber-400">
-                  {stats.pendingApprovals}
+                  {stats?.pendingApprovals}
                 </span>
               )}
             </div>
