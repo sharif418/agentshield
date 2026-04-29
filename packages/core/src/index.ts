@@ -8,12 +8,12 @@
  */
 
 // Core evaluation functions
-export { evaluateConditions } from './conditions';
-export { inferAction, enrichArgsFromQuery, getMatchingActions } from './inference';
-export { evaluatePolicies } from './evaluate';
+export { evaluateConditions } from './conditions.js';
+export { inferAction, enrichArgsFromQuery, getMatchingActions } from './inference.js';
+export { evaluatePolicies } from './evaluate.js';
 
 // Core types
-export type { Decision, Policy, EvaluateRequest, EvaluateResult, Trace } from './types';
+export type { Decision, Policy, EvaluateRequest, EvaluateResult, Trace } from './types.js';
 
 // Backward-compatible type exports (for SDK and existing consumers)
 export type {
@@ -23,4 +23,4 @@ export type {
   EvaluateInput,
   MatchedPolicy,
   AgentShieldConfig,
-} from './types';
+} from './types.js';

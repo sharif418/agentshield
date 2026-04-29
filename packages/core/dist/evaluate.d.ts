@@ -5,7 +5,7 @@
  * Pure function - no DB, no side effects.
  * Both the SDK (embedded mode) and the API route use this.
  */
-import { Policy, EvaluateRequest, EvaluateResult } from './types';
+import { Policy, EvaluateRequest, EvaluateResult } from './types.js';
 /**
  * Core policy evaluation function. Pure function - no DB, no side effects.
  * Both the SDK (embedded mode) and the API route use this.

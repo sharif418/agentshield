@@ -6,9 +6,9 @@
  *
  * @packageDocumentation
  */
-export { evaluateConditions } from './conditions';
-export { inferAction, enrichArgsFromQuery, getMatchingActions } from './inference';
-export { evaluatePolicies } from './evaluate';
-export type { Decision, Policy, EvaluateRequest, EvaluateResult, Trace } from './types';
-export type { PermissionLevel, ConditionRule, PolicyDefinition, EvaluateInput, MatchedPolicy, AgentShieldConfig, } from './types';
+export { evaluateConditions } from './conditions.js';
+export { inferAction, enrichArgsFromQuery, getMatchingActions } from './inference.js';
+export { evaluatePolicies } from './evaluate.js';
+export type { Decision, Policy, EvaluateRequest, EvaluateResult, Trace } from './types.js';
+export type { PermissionLevel, ConditionRule, PolicyDefinition, EvaluateInput, MatchedPolicy, AgentShieldConfig, } from './types.js';
 //# sourceMappingURL=index.d.ts.map

@@ -7,7 +7,7 @@
  * @packageDocumentation
  */
 // Core evaluation functions
-export { evaluateConditions } from './conditions';
-export { inferAction, enrichArgsFromQuery, getMatchingActions } from './inference';
-export { evaluatePolicies } from './evaluate';
+export { evaluateConditions } from './conditions.js';
+export { inferAction, enrichArgsFromQuery, getMatchingActions } from './inference.js';
+export { evaluatePolicies } from './evaluate.js';
 //# sourceMappingURL=index.js.map

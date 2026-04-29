@@ -6,9 +6,9 @@
  * Both the SDK (embedded mode) and the API route use this.
  */
 
-import { Decision, Policy, EvaluateRequest, EvaluateResult, ConditionRule } from './types';
-import { evaluateConditions } from './conditions';
-import { inferAction, enrichArgsFromQuery, getMatchingActions } from './inference';
+import { Decision, Policy, EvaluateRequest, EvaluateResult, ConditionRule } from './types.js';
+import { evaluateConditions } from './conditions.js';
+import { inferAction, enrichArgsFromQuery, getMatchingActions } from './inference.js';
 
 /**
  * Parse condition rules from various formats into an object suitable for evaluateConditions.

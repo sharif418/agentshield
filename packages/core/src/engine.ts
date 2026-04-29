@@ -10,6 +10,6 @@
  * This file re-exports everything for consumers that import from engine.js directly.
  */
 
-export { evaluateConditions } from './conditions';
-export { getMatchingActions, inferAction, enrichArgsFromQuery } from './inference';
-export { evaluatePolicies } from './evaluate';
+export { evaluateConditions } from './conditions.js';
+export { getMatchingActions, inferAction, enrichArgsFromQuery } from './inference.js';
+export { evaluatePolicies } from './evaluate.js';

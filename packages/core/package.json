@@ -1,7 +1,7 @@
 {
   "name": "@agentshieldhq/core",
-  "version": "1.0.0",
-  "description": "AgentShield core policy evaluation engine — deterministic runtime governance for AI agents",
+  "version": "1.0.1",
+  "description": "AgentShield core policy evaluation engine \u2014 deterministic runtime governance for AI agents",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
