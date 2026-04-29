@@ -1,5 +1,12 @@
 # AgentShield
 
+
+[![npm core](https://img.shields.io/npm/v/@agentshieldhq/core?label=core&color=0f766e)](https://www.npmjs.com/package/@agentshieldhq/core)
+[![npm sdk](https://img.shields.io/npm/v/@agentshieldhq/sdk?label=sdk&color=2563eb)](https://www.npmjs.com/package/@agentshieldhq/sdk)
+[![npm langchain](https://img.shields.io/npm/v/@agentshieldhq/langchain?label=langchain&color=7c3aed)](https://www.npmjs.com/package/@agentshieldhq/langchain)
+[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-green.svg)](./LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-ready-blue.svg)](https://www.typescriptlang.org/)
+
 **Firewall for AI agent tool calls.**
 
 AgentShield is a deterministic runtime policy engine for AI agents. It intercepts tool calls before they execute and returns one of three decisions: **ALLOW**, **BLOCK**, or **REQUIRE_APPROVAL**.
@@ -7,6 +14,26 @@ AgentShield is a deterministic runtime policy engine for AI agents. It intercept
 Prompts are not permissions. If an agent can call tools, write files, query databases, hit APIs, or trigger workflows, it needs runtime governance. AgentShield gives agentic systems a zero-trust control layer with policy rules, approval queues, immutable audit logs, SDKs, LangChain integration, and a self-hosted dashboard.
 
 > Built for teams who want powerful AI agents without handing them an unchecked production keyboard.
+
+---
+
+## Install
+
+```bash
+npm install @agentshieldhq/sdk
+```
+
+Need only the policy engine?
+
+```bash
+npm install @agentshieldhq/core
+```
+
+Using LangChain?
+
+```bash
+npm install @agentshieldhq/langchain
+```
 
 ---
 
