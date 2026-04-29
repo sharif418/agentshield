@@ -1,0 +1,46 @@
+name: Package Smoke Test
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/**'
+      - 'package.json'
+      - 'bun.lock'
+      - '.github/workflows/package-smoke.yml'
+
+jobs:
+  smoke:
+    name: Fresh npm install and import
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Create clean consumer project
+        run: |
+          mkdir /tmp/agentshield-consumer
+          cd /tmp/agentshield-consumer
+          bun init -y
+          bun add @agentshieldhq/core @agentshieldhq/sdk @agentshieldhq/langchain
+          cat > test.mjs <<'JS'
+          import * as core from '@agentshieldhq/core';
+          import * as sdk from '@agentshieldhq/sdk';
+          import * as langchain from '@agentshieldhq/langchain';
+
+          if (typeof core.evaluatePolicies !== 'function') throw new Error('core evaluatePolicies missing');
+          if (typeof sdk.createAgentShield !== 'function') throw new Error('sdk createAgentShield missing');
+          if (typeof langchain.AgentShieldCallbackHandler !== 'function') throw new Error('langchain callback handler missing');
+
+          console.log('AgentShield package smoke test passed');
+          JS
+          node test.mjs
