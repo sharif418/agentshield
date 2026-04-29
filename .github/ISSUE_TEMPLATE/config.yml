@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/sharif418/agentshield/security/advisories/new
+    about: Please report sensitive vulnerabilities privately.

@@ -1,0 +1,30 @@
+name: Policy bypass / security concern
+description: Report a possible policy bypass or sensitive security issue
+title: "security: "
+labels: [security]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        If this is sensitive or exploitable, please do **not** include exploit details publicly. Use GitHub Security Advisories or contact the maintainer privately.
+  - type: textarea
+    id: summary
+    attributes:
+      label: High-level summary
+      description: Describe the issue without exposing sensitive exploit details.
+    validations:
+      required: true
+  - type: dropdown
+    id: impact
+    attributes:
+      label: Potential impact
+      options:
+        - Incorrect ALLOW decision
+        - Incorrect BLOCK decision
+        - Incorrect REQUIRE_APPROVAL decision
+        - Audit/log integrity
+        - Sensitive data exposure
+        - Package/supply-chain concern
+        - Other
+    validations:
+      required: true

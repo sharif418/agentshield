@@ -1,0 +1,35 @@
+name: Feature request
+description: Suggest an improvement or integration
+title: "feat: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What agent-governance problem should this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What should AgentShield do?
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - core policy engine
+        - SDK
+        - LangChain integration
+        - dashboard/API
+        - docs/examples
+        - security/audit
+        - other
